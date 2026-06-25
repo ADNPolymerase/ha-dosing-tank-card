@@ -25,7 +25,8 @@ const DTL = {
     totalUsed:'Total used', adjust:'Adjust', loading:'Loading…',
     noData:'No data yet', pctLeft: p=>`${p}% left`,
     lowLevel: p=>`⚠️ Low level — refill soon (${p}% remaining)`,
-    helperMissing:'Helper not found',
+    helperMissing:'Counter not found', createHelper:'Create counter',
+    creating:'Creating…', helperCreated: id=>`Counter created: ${id}`,
     adjustQty:'Adjust quantity', addToTank:'Add to tank',
     removeFromTank:'Remove from tank', resetFull:'Tank refilled — Reset',
     resetting:'Resetting…', on:'ON', off:'OFF',
@@ -37,7 +38,8 @@ const DTL = {
     totalUsed:'Total consommé', adjust:'Ajustement', loading:'Chargement…',
     noData:'Aucune donnée', pctLeft: p=>`${p}% restant`,
     lowLevel: p=>`⚠️ Niveau bas — rechargez dès que possible (${p}% restant)`,
-    helperMissing:'Helper introuvable',
+    helperMissing:'Compteur introuvable', createHelper:'Créer le compteur',
+    creating:'Création…', helperCreated: id=>`Compteur créé : ${id}`,
     adjustQty:'Ajuster la quantité', addToTank:'Ajouter au bidon',
     removeFromTank:'Retirer du bidon', resetFull:'Bidon rempli — Réinitialiser',
     resetting:'Réinitialisation…', on:'ACTIF', off:'INACTIF',
@@ -49,7 +51,8 @@ const DTL = {
     totalUsed:'Total usado', adjust:'Ajuste', loading:'Cargando…',
     noData:'Sin datos', pctLeft: p=>`${p}% restante`,
     lowLevel: p=>`⚠️ Nivel bajo — recargar pronto (${p}% restante)`,
-    helperMissing:'Helper no encontrado',
+    helperMissing:'Contador no encontrado', createHelper:'Crear contador',
+    creating:'Creando…', helperCreated: id=>`Contador creado: ${id}`,
     adjustQty:'Ajustar cantidad', addToTank:'Añadir al depósito',
     removeFromTank:'Retirar del depósito', resetFull:'Depósito lleno — Reiniciar',
     resetting:'Reiniciando…', on:'ON', off:'OFF',
@@ -61,7 +64,8 @@ const DTL = {
     totalUsed:'Gesamt verbraucht', adjust:'Anpassen', loading:'Lädt…',
     noData:'Keine Daten', pctLeft: p=>`${p}% verbleibend`,
     lowLevel: p=>`⚠️ Niedriger Stand — bald nachfüllen (${p}% verbleibend)`,
-    helperMissing:'Helper nicht gefunden',
+    helperMissing:'Zähler nicht gefunden', createHelper:'Zähler erstellen',
+    creating:'Erstelle…', helperCreated: id=>`Zähler erstellt: ${id}`,
     adjustQty:'Menge anpassen', addToTank:'Zum Tank hinzufügen',
     removeFromTank:'Aus Tank entnehmen', resetFull:'Tank voll — Zurücksetzen',
     resetting:'Zurücksetzen…', on:'AN', off:'AUS',
@@ -73,7 +77,8 @@ const DTL = {
     totalUsed:'Totale consumato', adjust:'Regolazione', loading:'Caricamento…',
     noData:'Nessun dato', pctLeft: p=>`${p}% rimanente`,
     lowLevel: p=>`⚠️ Livello basso — ricaricare presto (${p}% rimanente)`,
-    helperMissing:'Helper non trovato',
+    helperMissing:'Contatore non trovato', createHelper:'Crea contatore',
+    creating:'Creazione…', helperCreated: id=>`Contatore creato: ${id}`,
     adjustQty:'Regola quantità', addToTank:'Aggiungi al serbatoio',
     removeFromTank:'Rimuovi dal serbatoio', resetFull:'Serbatoio pieno — Azzera',
     resetting:'Azzerando…', on:'ON', off:'OFF',
@@ -85,12 +90,21 @@ const DTL = {
     totalUsed:'Totaal verbruikt', adjust:'Aanpassen', loading:'Laden…',
     noData:'Geen gegevens', pctLeft: p=>`${p}% resterend`,
     lowLevel: p=>`⚠️ Laag niveau — spoedig bijvullen (${p}% resterend)`,
-    helperMissing:'Helper niet gevonden',
+    helperMissing:'Teller niet gevonden', createHelper:'Teller aanmaken',
+    creating:'Aanmaken…', helperCreated: id=>`Teller aangemaakt: ${id}`,
     adjustQty:'Hoeveelheid aanpassen', addToTank:'Toevoegen aan tank',
     removeFromTank:'Verwijderen uit tank', resetFull:'Tank gevuld — Resetten',
     resetting:'Resetten…', on:'AAN', off:'UIT',
   },
 };
+
+// Mirrors HA's slugify to predict the entity_id generated from a helper name
+function _slugify(s) {
+  return s.toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+}
 
 // ── Visual editor ─────────────────────────────────────────────────────────────
 
@@ -151,11 +165,23 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
 .color-row input[type=color]{width:40px;height:36px;padding:2px;border-radius:6px;
   border:1px solid var(--divider-color,rgba(255,255,255,.15));background:none;cursor:pointer}
 .color-row input[type=text]{flex:1}
+.create-row{display:flex;align-items:center;gap:8px;margin-top:4px}
+.create-btn{flex:none;padding:7px 12px;border-radius:6px;font-size:12px;font-weight:600;
+  cursor:pointer;border:1px solid var(--primary-color,#03a9f4);
+  background:rgba(3,169,244,.1);color:var(--primary-color,#03a9f4);
+  white-space:nowrap;transition:background .15s}
+.create-btn:hover:not(:disabled){background:var(--primary-color,#03a9f4);color:#fff}
+.create-btn:disabled{opacity:.5;cursor:default}
+.create-status{font-size:11px;color:var(--secondary-text-color,#888);flex:1;word-break:break-all}
 </style>
 <div class="form">
   <div class="sec">Entities</div>
   <div class="field" id="pump-wrap"><label>Pump entity</label></div>
   <div class="field" id="reset-wrap"><label>Counter entity (input_number)</label></div>
+  <div class="create-row" id="create-row" style="display:none">
+    <button class="create-btn" id="create-btn">✨ Create counter</button>
+    <span class="create-status" id="create-status"></span>
+  </div>
 
   <div class="sec">Tank</div>
   <div class="grid2">
@@ -219,6 +245,16 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
     makePicker('pump-wrap',  'pump_entity',  'Pump entity');
     makePicker('reset-wrap', 'reset_entity', 'Counter entity (input_number)');
 
+    // Show create button when counter entity is missing
+    const resetMissing = !this._config.reset_entity
+      || !this._hass?.states[this._config.reset_entity];
+    const createRow = this.shadowRoot.getElementById('create-row');
+    if (createRow && resetMissing) {
+      createRow.style.display = 'flex';
+      this.shadowRoot.getElementById('create-btn')
+        ?.addEventListener('click', () => this._createHelper());
+    }
+
     // Simple inputs
     const bind = (id, key, toVal) => {
       const el = this.shadowRoot.getElementById(id);
@@ -250,6 +286,32 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
       }
     });
   }
+
+  async _createHelper() {
+    const btn    = this.shadowRoot.getElementById('create-btn');
+    const status = this.shadowRoot.getElementById('create-status');
+    if (btn) { btn.disabled = true; btn.textContent = 'Creating…'; }
+
+    const cardName   = this._config.name || 'Dosing Tank';
+    const helperName = `${cardName} consumed`;
+    const entityId   = `input_number.${_slugify(helperName)}`;
+
+    try {
+      await this._hass.callWS({
+        type: 'input_number/create',
+        name: helperName,
+        min: 0, max: 9999999, step: 1,
+        unit_of_measurement: 'mL', mode: 'box', icon: 'mdi:cup-water',
+      });
+      // Update config with derived entity_id and re-render editor
+      this._config = { ...this._config, reset_entity: entityId };
+      this._fire(this._config);
+      this._render();
+    } catch(e) {
+      if (status) status.textContent = '❌ ' + (e.message || 'Error');
+      if (btn) { btn.disabled = false; btn.textContent = '✨ Create counter'; }
+    }
+  }
 }
 
 customElements.define('dosing-tank-card-editor', DosingTankCardEditor);
@@ -276,14 +338,13 @@ class DosingTankCard extends HTMLElement {
   }
 
   setConfig(config) {
-    if (!config.pump_entity)  throw new Error('dosing-tank-card: pump_entity is required');
-    if (!config.reset_entity) throw new Error('dosing-tank-card: reset_entity is required');
+    if (!config.pump_entity) throw new Error('dosing-tank-card: pump_entity is required');
     this._config = {
       pump_entity:             config.pump_entity,
       flow_rate_ml_per_min:    Number(config.flow_rate_ml_per_min) || 15,
       tank_volume_liters:      Number(config.tank_volume_liters) || 5,
       alert_threshold_percent: Number(config.alert_threshold_percent) || 20,
-      reset_entity:            config.reset_entity,
+      reset_entity:            config.reset_entity || null,
       name:                    config.name || 'Dosing Tank',
       liquid_color:            config.liquid_color || '#3b82f6',
       language:                config.language || null,
@@ -310,8 +371,8 @@ class DosingTankCard extends HTMLElement {
 
     const pump      = hass.states[this._config.pump_entity];
     const prevPump  = prev?.states[this._config.pump_entity];
-    const reset     = hass.states[this._config.reset_entity];
-    const prevReset = prev?.states[this._config.reset_entity];
+    const reset     = this._config.reset_entity ? hass.states[this._config.reset_entity] : null;
+    const prevReset = this._config.reset_entity ? prev?.states[this._config.reset_entity] : null;
 
     if (!prev && pump?.state === 'on')
       this._pumpOnSince = new Date(pump.last_changed);
@@ -392,6 +453,7 @@ class DosingTankCard extends HTMLElement {
   // ── HA services ───────────────────────────────────────────────────────────
 
   async _setCounter(value) {
+    if (!this._config.reset_entity) return;
     await this._hass.callService('input_number', 'set_value', {
       entity_id: this._config.reset_entity,
       value: Math.round(Math.max(0, Math.min(9999999, value))),
@@ -399,6 +461,7 @@ class DosingTankCard extends HTMLElement {
   }
 
   async _incrementConsumed(minutes) {
+    if (!this._config.reset_entity) return;
     const cur = Number(this._hass?.states[this._config.reset_entity]?.state) || 0;
     try { await this._setCounter(cur + minutes * this._config.flow_rate_ml_per_min); }
     catch (e) { console.error('[dosing-tank-card] Increment error:', e); }
@@ -431,7 +494,7 @@ class DosingTankCard extends HTMLElement {
   // ── Calculations ──────────────────────────────────────────────────────────
 
   _getConsumedMl() {
-    const stored = Number(this._hass?.states[this._config.reset_entity]?.state) || 0;
+    const stored = Number(this._config.reset_entity && this._hass?.states[this._config.reset_entity]?.state) || 0;
     const live   = this._pumpOnSince
       ? (Date.now() - this._pumpOnSince.getTime()) / 60000 * this._config.flow_rate_ml_per_min : 0;
     return stored + live;
@@ -542,7 +605,12 @@ ${[25,50,75].map(lv=>{const ly=BY+BH-(lv/100)*BH;return `<line x1="${BX}" y1="${
 .badge-off{background:rgba(148,163,184,.08);color:var(--secondary-text-color,#888);border:1px solid rgba(148,163,184,.2)}
 .warn{border-radius:8px;padding:8px 12px;font-size:12px;display:flex;align-items:center;gap:7px;margin-bottom:12px}
 .warn.alert  {background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);color:#ef4444}
-.warn.missing{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);color:#f59e0b}
+.warn.missing{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);color:#f59e0b;flex-wrap:wrap;gap:6px}
+.warn-create{padding:5px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;
+  border:1px solid #f59e0b;background:rgba(245,158,11,.15);color:#f59e0b;white-space:nowrap;
+  transition:background .15s}
+.warn-create:hover:not(:disabled){background:#f59e0b;color:#000}
+.warn-create:disabled{opacity:.5;cursor:default}
 .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
 .metric{background:var(--secondary-background-color,rgba(255,255,255,.05));border-radius:8px;padding:10px 6px;text-align:center}
 .mv{font-size:16px;font-weight:700;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -619,7 +687,10 @@ ${[25,50,75].map(lv=>{const ly=BY+BH-(lv/100)*BH;return `<line x1="${BX}" y1="${
     </div>
   </div>
 
-  ${!resetState?`<div class="warn missing">⚠️ ${T.helperMissing}: <strong>${this._config.reset_entity}</strong></div>`:''}
+  ${!resetState?`<div class="warn missing">
+    <span>⚠️ ${T.helperMissing}${this._config.reset_entity ? ': <strong>'+this._config.reset_entity+'</strong>' : ''}</span>
+    <button class="warn-create" id="dtc-create-helper">✨ ${T.createHelper}</button>
+  </div>`:''}
   ${isAlert&&resetState?`<div class="warn alert">${T.lowLevel(pct.toFixed(0))}</div>`:''}
 
   <div class="metrics">
@@ -699,6 +770,8 @@ ${[25,50,75].map(lv=>{const ly=BY+BH-(lv/100)*BH;return `<line x1="${BX}" y1="${
 </div>`;
 
     // Events
+    this.shadowRoot.getElementById('dtc-create-helper')
+      ?.addEventListener('click', () => this._createHelper());
     this.shadowRoot.getElementById('dtc-adj-toggle')
       ?.addEventListener('click', () => { this._showAdjust = !this._showAdjust; this._render(); });
 
@@ -729,6 +802,30 @@ ${[25,50,75].map(lv=>{const ly=BY+BH-(lv/100)*BH;return `<line x1="${BX}" y1="${
       this._ticker = setInterval(() => { if (!this._showAdjust) this._render(); }, 30000);
     } else if (!isPumpOn && this._ticker) {
       clearInterval(this._ticker); this._ticker = null;
+    }
+  }
+
+  async _createHelper() {
+    const T      = this._t();
+    const btn    = this.shadowRoot.getElementById('dtc-create-helper');
+    if (btn) { btn.disabled = true; btn.textContent = T.creating; }
+
+    const cardName   = this._config.name || 'Dosing Tank';
+    const helperName = `${cardName} consumed`;
+    const entityId   = `input_number.${_slugify(helperName)}`;
+
+    try {
+      await this._hass.callWS({
+        type: 'input_number/create',
+        name: helperName,
+        min: 0, max: 9999999, step: 1,
+        unit_of_measurement: 'mL', mode: 'box', icon: 'mdi:cup-water',
+      });
+      this._config = { ...this._config, reset_entity: entityId };
+      this._render();
+    } catch(e) {
+      console.error('[dosing-tank-card] Create helper error:', e);
+      if (btn) { btn.disabled = false; btn.textContent = `✨ ${T.createHelper}`; }
     }
   }
 
