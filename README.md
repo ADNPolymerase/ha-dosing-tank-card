@@ -63,7 +63,7 @@ input_number:
 ### Via HACS (recommended)
 
 1. In HACS → **Frontend** → **⋮** → **Custom repositories**
-2. Add `https://github.com/ADNPolymerase/dosing-tank-card` — category **Lovelace**
+2. Add `https://github.com/ADNPolymerase/ha-dosing-tank-card` — category **Lovelace**
 3. Click **Download**
 4. Hard-reload the browser (`Shift`+`F5`)
 

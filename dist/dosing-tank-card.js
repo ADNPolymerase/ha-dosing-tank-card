@@ -528,5 +528,5 @@ window.customCards.push({
   name: 'Dosing Tank Card',
   description: 'Track liquid level of a dosing tank (chlorine, pH-, pH+, flocculant…) based on pump runtime',
   preview: true,
-  documentationURL: 'https://github.com/ADNPolymerase/dosing-tank-card',
+  documentationURL: 'https://github.com/ADNPolymerase/ha-dosing-tank-card',
 });
