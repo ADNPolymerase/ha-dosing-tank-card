@@ -121,31 +121,6 @@ liquid_color: "#3b82f6"
 | Flocculant | Yellow | `#eab308` |
 | Algaecide | Green | `#22c55e` |
 
----
-
-## Multi-tank example
-
-You can add one card per product on the same dashboard:
-
-```yaml
-# Chlorine
-type: custom:dosing-tank-card
-pump_entity: switch.pump_chlorine
-reset_entity: input_number.chlorine_consumed
-name: "Chlorine"
-liquid_color: "#3b82f6"
-flow_rate_ml_per_min: 15
-tank_volume_liters: 5
----
-# pH−
-type: custom:dosing-tank-card
-pump_entity: switch.pump_ph_minus
-reset_entity: input_number.ph_minus_consumed
-name: "pH−"
-liquid_color: "#f97316"
-flow_rate_ml_per_min: 10
-tank_volume_liters: 3
-```
 
 ---
 
