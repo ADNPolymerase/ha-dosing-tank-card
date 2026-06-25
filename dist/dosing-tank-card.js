@@ -122,8 +122,12 @@ class DosingTankCardEditor extends HTMLElement {
 
   _render() {
     const c = this._config;
-    const langOptions = ['auto','en','fr','es','de','it','nl']
-      .map(l => `<option value="${l}"${(c.language||'auto')===l?' selected':''}>${l}</option>`)
+    const LANG_LABELS = {
+      auto:'Auto (HA locale)', en:'English', fr:'Français',
+      es:'Español', de:'Deutsch', it:'Italiano', nl:'Nederlands',
+    };
+    const langOptions = Object.entries(LANG_LABELS)
+      .map(([k,v]) => `<option value="${k}"${(c.language||'auto')===k?' selected':''}>${v}</option>`)
       .join('');
 
     this.shadowRoot.innerHTML = `
