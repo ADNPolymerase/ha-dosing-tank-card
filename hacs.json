@@ -1,0 +1,6 @@
+{
+  "name": "Dosing Tank Card",
+  "render_readme": true,
+  "filename": "dist/dosing-tank-card.js",
+  "homeassistant": "2024.1.0"
+}
