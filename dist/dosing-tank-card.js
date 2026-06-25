@@ -272,6 +272,7 @@ class DosingTankCard extends HTMLElement {
     this._ticker          = null;
     this._showAdjust      = false;
     this._adjustAmount    = 500;
+    this._uid             = Math.random().toString(36).slice(2, 7);
   }
 
   setConfig(config) {
@@ -458,13 +459,14 @@ class DosingTankCard extends HTMLElement {
   _svgTank(pct, base, light) {
     const W=86,H=140,BX=3,BY=22,BW=80,BH=105,BR=10,NX=28,NY=3,NW=30,NH=18,NR=6;
     const s = Math.max(0, Math.min(1, pct / 100));
+    const u = this._uid;
     return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
 <defs>
-  <clipPath id="dtc-cp"><rect x="${BX}" y="${BY}" width="${BW}" height="${BH}" rx="${BR}"/></clipPath>
-  <linearGradient id="dtc-lg" x1="0" y1="0" x2="1" y2="0">
+  <clipPath id="dtc-cp-${u}"><rect x="${BX}" y="${BY}" width="${BW}" height="${BH}" rx="${BR}"/></clipPath>
+  <linearGradient id="dtc-lg-${u}" x1="0" y1="0" x2="1" y2="0">
     <stop offset="0%" stop-color="${base}"/><stop offset="100%" stop-color="${light}"/>
   </linearGradient>
-  <linearGradient id="dtc-sh" x1="0" y1="0" x2="1" y2="0">
+  <linearGradient id="dtc-sh-${u}" x1="0" y1="0" x2="1" y2="0">
     <stop offset="0%" stop-color="rgba(255,255,255,0)"/>
     <stop offset="30%" stop-color="rgba(255,255,255,.12)"/>
     <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
@@ -476,11 +478,11 @@ class DosingTankCard extends HTMLElement {
 <rect x="${NX+4}" y="${NY+5}" width="${NW-8}" height="3" rx="1.5" fill="rgba(255,255,255,.08)"/>
 <rect x="${BX}" y="${BY}" width="${BW}" height="${BH}" rx="${BR}"
   fill="rgba(0,0,0,.3)" stroke="var(--divider-color,rgba(255,255,255,.18))" stroke-width="1.5"/>
-<g clip-path="url(#dtc-cp)">
-  <rect x="${BX}" y="${BY}" width="${BW}" height="${BH}" fill="url(#dtc-lg)"
+<g clip-path="url(#dtc-cp-${u})">
+  <rect x="${BX}" y="${BY}" width="${BW}" height="${BH}" fill="url(#dtc-lg-${u})"
     style="transform-box:fill-box;transform-origin:50% 100%;transform:scaleY(${s});transition:transform .9s cubic-bezier(.4,0,.2,1)"/>
 </g>
-<rect x="${BX}" y="${BY}" width="${BW}" height="${BH}" rx="${BR}" fill="url(#dtc-sh)" pointer-events="none"/>
+<rect x="${BX}" y="${BY}" width="${BW}" height="${BH}" rx="${BR}" fill="url(#dtc-sh-${u})" pointer-events="none"/>
 <rect x="${BX+5}" y="${BY+6}" width="5" height="${BH-12}" rx="2.5" fill="rgba(255,255,255,.07)" pointer-events="none"/>
 ${[25,50,75].map(lv=>{const ly=BY+BH-(lv/100)*BH;return `<line x1="${BX}" y1="${ly}" x2="${BX+10}" y2="${ly}" stroke="var(--divider-color,rgba(255,255,255,.25))" stroke-width="1"/>
 <text x="${BX+13}" y="${ly+4}" font-size="7" fill="var(--secondary-text-color,#888)">${lv}%</text>`;}).join('')}
