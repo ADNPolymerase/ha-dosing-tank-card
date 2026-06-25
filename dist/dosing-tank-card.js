@@ -307,8 +307,10 @@ class DosingTankCard extends HTMLElement {
     this._hass = hass;
     if (!this._config) return;
 
-    const pump     = hass.states[this._config.pump_entity];
-    const prevPump = prev?.states[this._config.pump_entity];
+    const pump      = hass.states[this._config.pump_entity];
+    const prevPump  = prev?.states[this._config.pump_entity];
+    const reset     = hass.states[this._config.reset_entity];
+    const prevReset = prev?.states[this._config.reset_entity];
 
     if (!prev && pump?.state === 'on')
       this._pumpOnSince = new Date(pump.last_changed);
@@ -326,7 +328,10 @@ class DosingTankCard extends HTMLElement {
     if (!this._historyLoading && Date.now() - this._lastHistoryFetch > 900000)
       this._loadHistory();
 
-    this._render();
+    // Only re-render when entities that affect the display actually change
+    const pumpChanged  = !prev || pump?.state !== prevPump?.state || pump?.last_changed !== prevPump?.last_changed;
+    const resetChanged = reset?.state !== prevReset?.state;
+    if (pumpChanged || resetChanged) this._render();
   }
 
   // ── History ───────────────────────────────────────────────────────────────
@@ -718,7 +723,8 @@ ${[25,50,75].map(lv=>{const ly=BY+BH-(lv/100)*BH;return `<line x1="${BX}" y1="${
     }
 
     if (isPumpOn && !this._ticker) {
-      this._ticker = setInterval(() => this._render(), 30000);
+      // Only re-render from ticker when adjustment panel is closed (avoids flicker)
+      this._ticker = setInterval(() => { if (!this._showAdjust) this._render(); }, 30000);
     } else if (!isPumpOn && this._ticker) {
       clearInterval(this._ticker); this._ticker = null;
     }
