@@ -17,8 +17,8 @@ Home Assistant Lovelace custom card to visually track the level of a **liquid do
 - **3 key metrics** — remaining volume (L), today's consumption (mL), 7-day pump runtime
 - **7-day bar chart** — built from HA history, no extra sensors needed
 - **Low-level alert** — configurable threshold; card turns red + shows a warning banner
-- **Reset button** — one click when you refill the tank
-- **Configurable labels** — card title and reset button text are customizable
+- **Collapsible adjustment panel** — toggle to show Add/Remove/Reset controls, hidden by default
+- **Multilingual** — auto-detected from your HA language setting: 🇬🇧 EN · 🇫🇷 FR · 🇪🇸 ES · 🇩🇪 DE · 🇮🇹 IT · 🇳🇱 NL
 - **Dark mode ready** — uses HA CSS variables throughout
 - **Responsive** — adapts to 1-, 2- or 3-column dashboard layouts
 - **Zero dependencies** — vanilla JS, no framework, no npm
@@ -89,7 +89,7 @@ alert_threshold_percent: 20
 reset_entity: input_number.dosing_tank_consumed
 name: "Chlorine"
 liquid_color: "#3b82f6"
-reset_label: "Tank refilled — Reset"
+# language: "fr"  # optional — auto-detected from HA locale by default
 ```
 
 ### Options
@@ -103,7 +103,7 @@ reset_label: "Tank refilled — Reset"
 | `alert_threshold_percent` | `number` | | `20` | Alert threshold (%) |
 | `name` | `string` | | `"Dosing Tank"` | Title shown in the card header |
 | `liquid_color` | `string` | | `"#3b82f6"` | Liquid color (any CSS hex color) |
-| `reset_label` | `string` | | `"Tank refilled — Reset"` | Reset button label |
+| `language` | `string` | | auto | Language override: `en`, `fr`, `es`, `de`, `it`, `nl` (default: auto-detected from HA locale) |
 
 ### Color suggestions
 
