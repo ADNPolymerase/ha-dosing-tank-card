@@ -177,9 +177,11 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
 <div class="form">
   <div class="sec">Entities</div>
   <div class="field" id="pump-wrap"><label>Pump entity</label></div>
-  <div class="field" id="reset-wrap"><label>Counter entity (input_number)</label></div>
+  <div class="field" id="reset-wrap"><label>Counter entity (input_number, mL)</label></div>
+  <div class="field" id="flow-wrap"><label>Flow-rate entity (input_number, mL/min — optional)</label></div>
+  <div class="field" id="sync-wrap"><label>Sync entity (input_datetime — runtime watermark)</label></div>
   <div class="create-row" id="create-row" style="display:none">
-    <button class="create-btn" id="create-btn">✨ Create counter</button>
+    <button class="create-btn" id="create-btn">✨ Create helpers</button>
     <span class="create-status" id="create-status"></span>
   </div>
 
@@ -243,13 +245,17 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
       }
     };
     makePicker('pump-wrap',  'pump_entity',  'Pump entity');
-    makePicker('reset-wrap', 'reset_entity', 'Counter entity (input_number)');
+    makePicker('reset-wrap', 'reset_entity', 'Counter entity (input_number, mL)');
+    makePicker('flow-wrap',  'flow_entity',  'Flow-rate entity (input_number, mL/min)');
+    makePicker('sync-wrap',  'sync_entity',  'Sync entity (input_datetime)');
 
-    // Show create button when counter entity is missing
-    const resetMissing = !this._config.reset_entity
-      || !this._hass?.states[this._config.reset_entity];
+    // Show create button when the counter or the sync watermark is missing
+    const missing = !this._config.reset_entity
+      || !this._hass?.states[this._config.reset_entity]
+      || !this._config.sync_entity
+      || !this._hass?.states[this._config.sync_entity];
     const createRow = this.shadowRoot.getElementById('create-row');
-    if (createRow && resetMissing) {
+    if (createRow && missing) {
       createRow.style.display = 'flex';
       this.shadowRoot.getElementById('create-btn')
         ?.addEventListener('click', () => this._createHelper());
@@ -292,24 +298,45 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
     const status = this.shadowRoot.getElementById('create-status');
     if (btn) { btn.disabled = true; btn.textContent = 'Creating…'; }
 
-    const cardName   = this._config.name || 'Dosing Tank';
-    const helperName = `${cardName} consumed`;
-    const entityId   = `input_number.${_slugify(helperName)}`;
+    const cardName = this._config.name || 'Dosing Tank';
+    const cfg      = { ...this._config };
 
     try {
-      await this._hass.callWS({
-        type: 'input_number/create',
-        name: helperName,
-        min: 0, max: 9999999, step: 1,
-        unit_of_measurement: 'mL', mode: 'box', icon: 'mdi:cup-water',
-      });
-      // Update config with derived entity_id and re-render editor
-      this._config = { ...this._config, reset_entity: entityId };
+      // Consumed counter (mL)
+      if (!cfg.reset_entity || !this._hass?.states[cfg.reset_entity]) {
+        const n = `${cardName} consumed`;
+        await this._hass.callWS({
+          type: 'input_number/create', name: n,
+          min: 0, max: 9999999, step: 1,
+          unit_of_measurement: 'mL', mode: 'box', icon: 'mdi:cup-water',
+        });
+        cfg.reset_entity = `input_number.${_slugify(n)}`;
+      }
+      // Flow-rate helper (mL/min) — seeded with the current config flow rate
+      if (!cfg.flow_entity || !this._hass?.states[cfg.flow_entity]) {
+        const n = `${cardName} flow rate`;
+        await this._hass.callWS({
+          type: 'input_number/create', name: n,
+          min: 0, max: 100000, step: 1, initial: cfg.flow_rate_ml_per_min || 50,
+          unit_of_measurement: 'mL/min', mode: 'box', icon: 'mdi:pump',
+        });
+        cfg.flow_entity = `input_number.${_slugify(n)}`;
+      }
+      // Sync watermark (input_datetime, date + time)
+      if (!cfg.sync_entity || !this._hass?.states[cfg.sync_entity]) {
+        const n = `${cardName} sync`;
+        await this._hass.callWS({
+          type: 'input_datetime/create', name: n,
+          has_date: true, has_time: true, icon: 'mdi:clock-check',
+        });
+        cfg.sync_entity = `input_datetime.${_slugify(n)}`;
+      }
+      this._config = cfg;
       this._fire(this._config);
       this._render();
     } catch(e) {
       if (status) status.textContent = '❌ ' + (e.message || 'Error');
-      if (btn) { btn.disabled = false; btn.textContent = '✨ Create counter'; }
+      if (btn) { btn.disabled = false; btn.textContent = '✨ Create helpers'; }
     }
   }
 }
@@ -345,10 +372,36 @@ class DosingTankCard extends HTMLElement {
       tank_volume_liters:      Number(config.tank_volume_liters) || 5,
       alert_threshold_percent: Number(config.alert_threshold_percent) || 20,
       reset_entity:            config.reset_entity || null,
+      flow_entity:             config.flow_entity || null,
+      sync_entity:             config.sync_entity || null,
       name:                    config.name || 'Dosing Tank',
       liquid_color:            config.liquid_color || '#3b82f6',
       language:                config.language || null,
     };
+  }
+
+  // Flow rate (mL/min): live helper value if configured & valid, else config value.
+  _currentFlow() {
+    const fe = this._config.flow_entity
+      ? Number(this._hass?.states[this._config.flow_entity]?.state) : NaN;
+    return fe > 0 ? fe : this._config.flow_rate_ml_per_min;
+  }
+
+  // Watermark = timestamp up to which pump runtime has already been counted into
+  // the consumed counter. Stored in an input_datetime helper (tz-safe via .timestamp).
+  _watermark() {
+    const st = this._config.sync_entity
+      ? this._hass?.states[this._config.sync_entity] : null;
+    const ts = Number(st?.attributes?.timestamp);
+    return ts > 0 ? new Date(ts * 1000) : null;
+  }
+
+  async _setWatermark(date) {
+    if (!this._config.sync_entity) return;
+    await this._hass.callService('input_datetime', 'set_datetime', {
+      entity_id: this._config.sync_entity,
+      timestamp: Math.floor(date.getTime() / 1000),
+    });
   }
 
   static getConfigElement() {
@@ -380,10 +433,12 @@ class DosingTankCard extends HTMLElement {
     if (prevPump && pump && pump.state !== prevPump.state) {
       if (pump.state === 'on') {
         this._pumpOnSince = new Date();
-      } else if (pump.state === 'off' && this._pumpOnSince) {
-        const mins = (Date.now() - this._pumpOnSince.getTime()) / 60000;
-        this._incrementConsumed(mins);
+      } else if (pump.state === 'off') {
+        // Pump just stopped: reconcile the counter from history right away
+        // (the history catch-up is the single source of truth — no live write
+        // here, to avoid double-counting the same runtime).
         this._pumpOnSince = null;
+        this._loadHistory(true);
       }
     }
 
@@ -398,24 +453,66 @@ class DosingTankCard extends HTMLElement {
 
   // ── History ───────────────────────────────────────────────────────────────
 
-  async _loadHistory() {
+  async _loadHistory(force = false) {
     if (!this._hass || this._historyLoading) return;
-    this._historyLoading  = true;
+    if (!force && Date.now() - this._lastHistoryFetch <= 900000) return;
+    this._historyLoading   = true;
     this._lastHistoryFetch = Date.now();
     try {
-      const end   = new Date();
-      const start = new Date(end.getTime() - 7 * 86400000);
-      const url   = `history/period/${start.toISOString()}` +
+      const end       = new Date();
+      const chartFrom = new Date(end.getTime() - 7 * 86400000);
+      const watermark = this._watermark();
+      // Fetch far enough back to cover both the 7-day chart and the
+      // uncounted runtime since the watermark (capped at 90 days).
+      const floor90   = new Date(end.getTime() - 90 * 86400000);
+      let start = chartFrom;
+      if (watermark && watermark < start) start = watermark;
+      if (start < floor90) start = floor90;
+
+      const url = `history/period/${start.toISOString()}` +
         `?filter_entity_id=${this._config.pump_entity}` +
         `&end_time=${end.toISOString()}&significant_changes_only=0&no_attributes=1`;
       const history = await this._hass.callApi('GET', url);
-      if (history?.[0]?.length > 0) this._processHistory(history[0], start, end);
+      const states  = history?.[0]?.length > 0 ? history[0] : [];
+
+      if (states.length) this._processHistory(states, chartFrom, end);
       else this._dailyStats = this._emptyDays();
+
+      await this._syncFromHistory(states, watermark, end);
     } catch (e) {
       console.error('[dosing-tank-card] History error:', e);
       this._dailyStats = this._emptyDays();
     } finally { this._historyLoading = false; }
     this._render();
+  }
+
+  // Add the pump runtime accumulated since the watermark into the consumed
+  // counter, then advance the watermark to `now`. This is what makes the card
+  // accurate even when no browser tab was open during a pump cycle.
+  async _syncFromHistory(states, watermark, now) {
+    if (!this._config.reset_entity || !this._config.sync_entity) return;
+    if (!watermark) { await this._setWatermark(now); return; }   // first run: anchor only
+    const onMin = this._onMinutesInWindow(states, watermark, now);
+    if (onMin > 0) {
+      const cur = Number(this._hass?.states[this._config.reset_entity]?.state) || 0;
+      await this._setCounter(cur + onMin * this._currentFlow());
+      await this._setWatermark(now);   // advance only when runtime was counted
+    }
+  }
+
+  // Total minutes the pump was 'on' within the [from, to] window.
+  _onMinutesInWindow(states, from, to) {
+    let last = null, lt = null, total = 0;
+    const f = from.getTime(), tt = to.getTime();
+    const acc = (a, b) => { const x = Math.max(a, f), y = Math.min(b, tt);
+      if (y > x) total += (y - x) / 60000; };
+    for (const s of states) {
+      const t = new Date(s.last_changed).getTime();
+      if (last === 'on' && lt != null) acc(lt, t);
+      last = s.state; lt = t;
+    }
+    if (last === 'on' && lt != null) acc(lt, tt);
+    return total;
   }
 
   _emptyDays() {
@@ -439,7 +536,7 @@ class DosingTankCard extends HTMLElement {
     }
     if (last === 'on') this._addToDays(days, lt, end);
     this._dailyStats      = days;
-    this._todayConsumedMl = Math.round((days[6]?.minutes || 0) * this._config.flow_rate_ml_per_min);
+    this._todayConsumedMl = Math.round((days[6]?.minutes || 0) * this._currentFlow());
     this._week7dMinutes   = days.reduce((s, d) => s + d.minutes, 0);
   }
 
@@ -454,17 +551,13 @@ class DosingTankCard extends HTMLElement {
 
   async _setCounter(value) {
     if (!this._config.reset_entity) return;
-    await this._hass.callService('input_number', 'set_value', {
+    // Domain-aware: works with input_number.* helpers AND number.* entities
+    // (e.g. an integration-provided consumption counter). Both expose set_value.
+    const domain = this._config.reset_entity.split('.')[0];
+    await this._hass.callService(domain, 'set_value', {
       entity_id: this._config.reset_entity,
       value: Math.round(Math.max(0, Math.min(9999999, value))),
     });
-  }
-
-  async _incrementConsumed(minutes) {
-    if (!this._config.reset_entity) return;
-    const cur = Number(this._hass?.states[this._config.reset_entity]?.state) || 0;
-    try { await this._setCounter(cur + minutes * this._config.flow_rate_ml_per_min); }
-    catch (e) { console.error('[dosing-tank-card] Increment error:', e); }
   }
 
   async _resetTank() {
@@ -472,6 +565,7 @@ class DosingTankCard extends HTMLElement {
     if (btn) { btn.disabled = true; btn.textContent = this._t().resetting; }
     try {
       await this._setCounter(0);
+      await this._setWatermark(new Date());   // refill point: start counting fresh
       this._pumpOnSince      = null;
       this._dailyStats       = this._emptyDays();
       this._todayConsumedMl  = 0;
@@ -495,8 +589,13 @@ class DosingTankCard extends HTMLElement {
 
   _getConsumedMl() {
     const stored = Number(this._config.reset_entity && this._hass?.states[this._config.reset_entity]?.state) || 0;
-    const live   = this._pumpOnSince
-      ? (Date.now() - this._pumpOnSince.getTime()) / 60000 * this._config.flow_rate_ml_per_min : 0;
+    // Live tail: runtime since the watermark not yet folded into the counter.
+    let live = 0;
+    if (this._hass?.states[this._config.pump_entity]?.state === 'on') {
+      const wmTs    = this._watermark()?.getTime() || 0;
+      const sinceTs = Math.max(this._pumpOnSince?.getTime() || Date.now(), wmTs);
+      live = Math.max(0, Date.now() - sinceTs) / 60000 * this._currentFlow();
+    }
     return stored + live;
   }
 
@@ -585,7 +684,7 @@ ${[25,50,75].map(lv=>{const ly=BY+BH-(lv/100)*BH;return `<line x1="${BX}" y1="${
     const maxMin  = Math.max(1, ...days.map(d => d.minutes));
     const hasDays = days.some(d => d.minutes > 0);
     const liveToday = isPumpOn && this._pumpOnSince
-      ? (Date.now()-this._pumpOnSince.getTime())/60000*this._config.flow_rate_ml_per_min : 0;
+      ? (Date.now()-this._pumpOnSince.getTime())/60000*this._currentFlow() : 0;
     const todayMl = this._todayConsumedMl + liveToday;
 
     this.shadowRoot.innerHTML = `
@@ -722,7 +821,7 @@ ${[25,50,75].map(lv=>{const ly=BY+BH-(lv/100)*BH;return `<line x1="${BX}" y1="${
             :!hasDays
               ?`<div class="nodata">${T.noData}</div>`
               :days.map((d,i)=>{
-                const ml=Math.round(d.minutes*this._config.flow_rate_ml_per_min);
+                const ml=Math.round(d.minutes*this._currentFlow());
                 const h=Math.max(3,(d.minutes/maxMin)*100);
                 const col=i===days.length-1?base:base+'55';
                 return `<div class="bw"><div class="bi">
@@ -734,7 +833,7 @@ ${[25,50,75].map(lv=>{const ly=BY+BH-(lv/100)*BH;return `<line x1="${BX}" y1="${
       <div>
         <div class="stitle">${T.settings}</div>
         <div class="cfg">
-          <div class="cfgr"><span class="l">${T.flowRate}</span><span class="v">${this._config.flow_rate_ml_per_min} mL/min</span></div>
+          <div class="cfgr"><span class="l">${T.flowRate}</span><span class="v">${this._currentFlow()} mL/min</span></div>
           <div class="cfgr"><span class="l">${T.tankSize}</span><span class="v">${this._config.tank_volume_liters} L</span></div>
           <div class="cfgr"><span class="l">${T.alertAt}</span><span class="v">${this._config.alert_threshold_percent}%</span></div>
           <div class="cfgr"><span class="l">${T.totalUsed}</span><span class="v">${this._fmtVol(consumedMl)}</span></div>
@@ -810,18 +909,37 @@ ${[25,50,75].map(lv=>{const ly=BY+BH-(lv/100)*BH;return `<line x1="${BX}" y1="${
     const btn    = this.shadowRoot.getElementById('dtc-create-helper');
     if (btn) { btn.disabled = true; btn.textContent = T.creating; }
 
-    const cardName   = this._config.name || 'Dosing Tank';
-    const helperName = `${cardName} consumed`;
-    const entityId   = `input_number.${_slugify(helperName)}`;
+    const cardName = this._config.name || 'Dosing Tank';
+    const cfg      = { ...this._config };
 
     try {
-      await this._hass.callWS({
-        type: 'input_number/create',
-        name: helperName,
-        min: 0, max: 9999999, step: 1,
-        unit_of_measurement: 'mL', mode: 'box', icon: 'mdi:cup-water',
-      });
-      this._config = { ...this._config, reset_entity: entityId };
+      if (!cfg.reset_entity || !this._hass?.states[cfg.reset_entity]) {
+        const n = `${cardName} consumed`;
+        await this._hass.callWS({
+          type: 'input_number/create', name: n,
+          min: 0, max: 9999999, step: 1,
+          unit_of_measurement: 'mL', mode: 'box', icon: 'mdi:cup-water',
+        });
+        cfg.reset_entity = `input_number.${_slugify(n)}`;
+      }
+      if (!cfg.flow_entity || !this._hass?.states[cfg.flow_entity]) {
+        const n = `${cardName} flow rate`;
+        await this._hass.callWS({
+          type: 'input_number/create', name: n,
+          min: 0, max: 100000, step: 1, initial: cfg.flow_rate_ml_per_min || 50,
+          unit_of_measurement: 'mL/min', mode: 'box', icon: 'mdi:pump',
+        });
+        cfg.flow_entity = `input_number.${_slugify(n)}`;
+      }
+      if (!cfg.sync_entity || !this._hass?.states[cfg.sync_entity]) {
+        const n = `${cardName} sync`;
+        await this._hass.callWS({
+          type: 'input_datetime/create', name: n,
+          has_date: true, has_time: true, icon: 'mdi:clock-check',
+        });
+        cfg.sync_entity = `input_datetime.${_slugify(n)}`;
+      }
+      this._config = cfg;
       this._render();
     } catch(e) {
       console.error('[dosing-tank-card] Create helper error:', e);
