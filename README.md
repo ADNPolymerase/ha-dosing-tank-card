@@ -33,7 +33,20 @@ Home Assistant Lovelace custom card to visually track the level of a **liquid do
 
 ## Prerequisites
 
-**A dosing pump switch entity** — any `switch.*` or `input_boolean.*` whose state is `on` while the pump injects product.
+**A pump entity** — any `switch.*`, `input_boolean.*` or `binary_sensor.*` whose state is `on` while product is being injected.
+
+### What can I use as the pump entity? (no "smart dosing pump" required)
+
+You do **not** need a special connected/cloud dosing pump. The card only needs an on/off signal that reflects when the pump runs. Common setups:
+
+| Your setup | Pump entity to use |
+|---|---|
+| Dosing pump plugged into a **smart plug** (Shelly, Sonoff, Tasmota…) | the plug's `switch.*` — its on/off = pump runtime |
+| Dosing pump **slaved to the filtration pump** (runs whenever filtration runs) | your **filtration pump** `switch.*` — consumption = filtration runtime × dosing flow rate |
+| Smart plug that reports **power (W)** but no on/off | create a **Threshold** helper (Settings → Devices & Services → Helpers) to turn watts into a `binary_sensor`, then point the card at it |
+| Pump driven by a pool controller (Oklyn, etc.) | the controller's auxiliary `switch.*` / `binary_sensor.*` |
+
+The flow rate (mL/min) is set in the card, so as long as you have a "pump is running" signal, consumption is computed for you. If you dose **by hand** (no pump), the automatic calculation doesn't apply — but you can still use the **+/- adjustment panel** to track the tank level manually.
 
 **An `input_number` helper** to persist the consumed volume across HA restarts.
 
