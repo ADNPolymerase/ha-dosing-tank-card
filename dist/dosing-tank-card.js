@@ -96,6 +96,58 @@ const DTL = {
     removeFromTank:'Verwijderen uit tank', resetFull:'Tank gevuld — Resetten',
     resetting:'Resetten…', on:'AAN', off:'UIT',
   },
+  sv: {
+    remaining:'Återstår', today:'Idag', pump7d:'Pump 7d',
+    dailyChart:'Daglig förbrukning (mL)', settings:'Inställningar',
+    flowRate:'Flöde', tankSize:'Tankstorlek', alertAt:'Larm vid',
+    totalUsed:'Totalt använt', adjust:'Justera', loading:'Laddar…',
+    noData:'Ingen data än', pctLeft: p=>`${p}% kvar`,
+    lowLevel: p=>`⚠️ Låg nivå — fyll på snart (${p}% kvar)`,
+    helperMissing:'Räknare hittades inte', createHelper:'Skapa räknare',
+    creating:'Skapar…', helperCreated: id=>`Räknare skapad: ${id}`,
+    adjustQty:'Justera mängd', addToTank:'Lägg till i tank',
+    removeFromTank:'Ta bort från tank', resetFull:'Tank påfylld — Återställ',
+    resetting:'Återställer…', on:'PÅ', off:'AV',
+  },
+  no: {
+    remaining:'Gjenstår', today:'I dag', pump7d:'Pumpe 7d',
+    dailyChart:'Daglig forbruk (mL)', settings:'Innstillinger',
+    flowRate:'Strømning', tankSize:'Tankstørrelse', alertAt:'Varsel ved',
+    totalUsed:'Totalt brukt', adjust:'Juster', loading:'Laster…',
+    noData:'Ingen data ennå', pctLeft: p=>`${p}% igjen`,
+    lowLevel: p=>`⚠️ Lavt nivå — fyll på snart (${p}% igjen)`,
+    helperMissing:'Teller ikke funnet', createHelper:'Opprett teller',
+    creating:'Oppretter…', helperCreated: id=>`Teller opprettet: ${id}`,
+    adjustQty:'Juster mengde', addToTank:'Legg til i tank',
+    removeFromTank:'Fjern fra tank', resetFull:'Tank fylt — Tilbakestill',
+    resetting:'Tilbakestiller…', on:'PÅ', off:'AV',
+  },
+  da: {
+    remaining:'Tilbage', today:'I dag', pump7d:'Pumpe 7d',
+    dailyChart:'Dagligt forbrug (mL)', settings:'Indstillinger',
+    flowRate:'Flow', tankSize:'Tankstørrelse', alertAt:'Alarm ved',
+    totalUsed:'Total brugt', adjust:'Juster', loading:'Indlæser…',
+    noData:'Ingen data endnu', pctLeft: p=>`${p}% tilbage`,
+    lowLevel: p=>`⚠️ Lavt niveau — genopfyld snart (${p}% tilbage)`,
+    helperMissing:'Tæller ikke fundet', createHelper:'Opret tæller',
+    creating:'Opretter…', helperCreated: id=>`Tæller oprettet: ${id}`,
+    adjustQty:'Juster mængde', addToTank:'Tilføj til tank',
+    removeFromTank:'Fjern fra tank', resetFull:'Tank fyldt — Nulstil',
+    resetting:'Nulstiller…', on:'TIL', off:'FRA',
+  },
+  pl: {
+    remaining:'Pozostało', today:'Dziś', pump7d:'Pompa 7d',
+    dailyChart:'Dzienne zużycie (mL)', settings:'Ustawienia',
+    flowRate:'Przepływ', tankSize:'Pojemność zbiornika', alertAt:'Alarm przy',
+    totalUsed:'Łącznie zużyto', adjust:'Dostosuj', loading:'Ładowanie…',
+    noData:'Brak danych', pctLeft: p=>`${p}% pozostało`,
+    lowLevel: p=>`⚠️ Niski poziom — uzupełnij wkrótce (${p}% pozostało)`,
+    helperMissing:'Licznik nie znaleziony', createHelper:'Utwórz licznik',
+    creating:'Tworzenie…', helperCreated: id=>`Licznik utworzony: ${id}`,
+    adjustQty:'Dostosuj ilość', addToTank:'Dodaj do zbiornika',
+    removeFromTank:'Usuń ze zbiornika', resetFull:'Zbiornik napełniony — Reset',
+    resetting:'Resetowanie…', on:'WŁ.', off:'WYŁ.',
+  },
 };
 
 // Mirrors HA's slugify to predict the entity_id generated from a helper name
@@ -139,6 +191,7 @@ class DosingTankCardEditor extends HTMLElement {
     const LANG_LABELS = {
       auto:'Auto (HA locale)', en:'English', fr:'Français',
       es:'Español', de:'Deutsch', it:'Italiano', nl:'Nederlands',
+      sv:'Svenska', no:'Norsk', da:'Dansk', pl:'Polski',
     };
     const langOptions = Object.entries(LANG_LABELS)
       .map(([k,v]) => `<option value="${k}"${(c.language||'auto')===k?' selected':''}>${v}</option>`)
