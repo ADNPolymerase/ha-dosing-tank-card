@@ -12,6 +12,8 @@
 
 Home Assistant Lovelace custom card to visually track the level of a **liquid dosing tank** — chlorine, pH−, pH+, flocculant, algaecide, or any product injected by a pump at a constant flow rate.
 
+> 🇫🇷 [Lire en français](README.fr.md)
+
 ![Screenshot](docs/screenshot.png)
 
 ---
