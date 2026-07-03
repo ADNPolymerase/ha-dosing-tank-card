@@ -30,6 +30,13 @@ const DTL = {
     adjustQty:'Adjust quantity', addToTank:'Add to tank',
     removeFromTank:'Remove from tank', resetFull:'Tank refilled — Reset',
     resetting:'Resetting…', on:'ON', off:'OFF',
+    // editor
+    edEntities:'Entities', edPump:'Pump entity',
+    edCounter:'Counter (mL)', edFlowEnt:'Flow-rate entity (mL/min)',
+    edSync:'Sync entity', edTank:'Tank',
+    edFlowRate:'Flow rate (mL/min)', edTankVol:'Tank volume (L)',
+    edAlert:'Alert threshold (%)', edLang:'Language',
+    edAppearance:'Appearance', edTitle:'Card title', edColor:'Liquid color',
   },
   fr: {
     remaining:'Restant', today:"Aujourd'hui", pump7d:'Pompe 7j',
@@ -43,6 +50,13 @@ const DTL = {
     adjustQty:'Ajuster la quantité', addToTank:'Ajouter au bidon',
     removeFromTank:'Retirer du bidon', resetFull:'Bidon rempli — Réinitialiser',
     resetting:'Réinitialisation…', on:'ACTIF', off:'INACTIF',
+    // editor
+    edEntities:'Entités', edPump:'Entité pompe',
+    edCounter:'Compteur (mL)', edFlowEnt:'Entité débit (mL/min)',
+    edSync:'Entité sync', edTank:'Bidon',
+    edFlowRate:'Débit (mL/min)', edTankVol:'Volume du bidon (L)',
+    edAlert:'Seuil d\'alerte (%)', edLang:'Langue',
+    edAppearance:'Apparence', edTitle:'Titre de la carte', edColor:'Couleur du liquide',
   },
   es: {
     remaining:'Restante', today:'Hoy', pump7d:'Bomba 7d',
@@ -56,6 +70,13 @@ const DTL = {
     adjustQty:'Ajustar cantidad', addToTank:'Añadir al depósito',
     removeFromTank:'Retirar del depósito', resetFull:'Depósito lleno — Reiniciar',
     resetting:'Reiniciando…', on:'ON', off:'OFF',
+    // editor
+    edEntities:'Entidades', edPump:'Entidad bomba',
+    edCounter:'Contador (mL)', edFlowEnt:'Entidad caudal (mL/min)',
+    edSync:'Entidad sync', edTank:'Depósito',
+    edFlowRate:'Caudal (mL/min)', edTankVol:'Volumen (L)',
+    edAlert:'Umbral de alerta (%)', edLang:'Idioma',
+    edAppearance:'Apariencia', edTitle:'Título de la tarjeta', edColor:'Color del líquido',
   },
   de: {
     remaining:'Verbleibend', today:'Heute', pump7d:'Pumpe 7T',
@@ -69,6 +90,13 @@ const DTL = {
     adjustQty:'Menge anpassen', addToTank:'Zum Tank hinzufügen',
     removeFromTank:'Aus Tank entnehmen', resetFull:'Tank voll — Zurücksetzen',
     resetting:'Zurücksetzen…', on:'AN', off:'AUS',
+    // editor
+    edEntities:'Entitäten', edPump:'Pumpen-Entität',
+    edCounter:'Zähler (mL)', edFlowEnt:'Durchfluss-Entität (mL/min)',
+    edSync:'Sync-Entität', edTank:'Tank',
+    edFlowRate:'Durchfluss (mL/min)', edTankVol:'Tankvolumen (L)',
+    edAlert:'Alarmschwelle (%)', edLang:'Sprache',
+    edAppearance:'Darstellung', edTitle:'Kartentitel', edColor:'Flüssigkeitsfarbe',
   },
   it: {
     remaining:'Rimanente', today:'Oggi', pump7d:'Pompa 7g',
@@ -82,6 +110,13 @@ const DTL = {
     adjustQty:'Regola quantità', addToTank:'Aggiungi al serbatoio',
     removeFromTank:'Rimuovi dal serbatoio', resetFull:'Serbatoio pieno — Azzera',
     resetting:'Azzerando…', on:'ON', off:'OFF',
+    // editor
+    edEntities:'Entità', edPump:'Entità pompa',
+    edCounter:'Contatore (mL)', edFlowEnt:'Entità portata (mL/min)',
+    edSync:'Entità sync', edTank:'Serbatoio',
+    edFlowRate:'Portata (mL/min)', edTankVol:'Volume serbatoio (L)',
+    edAlert:'Soglia allarme (%)', edLang:'Lingua',
+    edAppearance:'Aspetto', edTitle:'Titolo scheda', edColor:'Colore liquido',
   },
   nl: {
     remaining:'Resterend', today:'Vandaag', pump7d:'Pomp 7d',
@@ -95,6 +130,13 @@ const DTL = {
     adjustQty:'Hoeveelheid aanpassen', addToTank:'Toevoegen aan tank',
     removeFromTank:'Verwijderen uit tank', resetFull:'Tank gevuld — Resetten',
     resetting:'Resetten…', on:'AAN', off:'UIT',
+    // editor
+    edEntities:'Entiteiten', edPump:'Pomp entiteit',
+    edCounter:'Teller (mL)', edFlowEnt:'Doorstroom entiteit (mL/min)',
+    edSync:'Sync entiteit', edTank:'Tank',
+    edFlowRate:'Doorstroomsnelheid (mL/min)', edTankVol:'Tankinhoud (L)',
+    edAlert:'Alarmdrempel (%)', edLang:'Taal',
+    edAppearance:'Weergave', edTitle:'Kaarttitel', edColor:'Vloeistofkleur',
   },
   sv: {
     remaining:'Återstår', today:'Idag', pump7d:'Pump 7d',
@@ -108,6 +150,13 @@ const DTL = {
     adjustQty:'Justera mängd', addToTank:'Lägg till i tank',
     removeFromTank:'Ta bort från tank', resetFull:'Tank påfylld — Återställ',
     resetting:'Återställer…', on:'PÅ', off:'AV',
+    // editor
+    edEntities:'Entiteter', edPump:'Pumpenhet',
+    edCounter:'Räknare (mL)', edFlowEnt:'Flödesenhet (mL/min)',
+    edSync:'Synkroniseringsenhet', edTank:'Tank',
+    edFlowRate:'Flöde (mL/min)', edTankVol:'Tankvolym (L)',
+    edAlert:'Larmnivå (%)', edLang:'Språk',
+    edAppearance:'Utseende', edTitle:'Korttitel', edColor:'Vätskefärg',
   },
   no: {
     remaining:'Gjenstår', today:'I dag', pump7d:'Pumpe 7d',
@@ -121,6 +170,13 @@ const DTL = {
     adjustQty:'Juster mengde', addToTank:'Legg til i tank',
     removeFromTank:'Fjern fra tank', resetFull:'Tank fylt — Tilbakestill',
     resetting:'Tilbakestiller…', on:'PÅ', off:'AV',
+    // editor
+    edEntities:'Entiteter', edPump:'Pumpenhet',
+    edCounter:'Teller (mL)', edFlowEnt:'Strømenhet (mL/min)',
+    edSync:'Synkenhet', edTank:'Tank',
+    edFlowRate:'Strømning (mL/min)', edTankVol:'Tankvolum (L)',
+    edAlert:'Varselgrense (%)', edLang:'Språk',
+    edAppearance:'Utseende', edTitle:'Korttittel', edColor:'Væskefarge',
   },
   da: {
     remaining:'Tilbage', today:'I dag', pump7d:'Pumpe 7d',
@@ -134,6 +190,13 @@ const DTL = {
     adjustQty:'Juster mængde', addToTank:'Tilføj til tank',
     removeFromTank:'Fjern fra tank', resetFull:'Tank fyldt — Nulstil',
     resetting:'Nulstiller…', on:'TIL', off:'FRA',
+    // editor
+    edEntities:'Entiteter', edPump:'Pumpeenhed',
+    edCounter:'Tæller (mL)', edFlowEnt:'Flow entitet (mL/min)',
+    edSync:'Synkroniseringsenhed', edTank:'Tank',
+    edFlowRate:'Flow (mL/min)', edTankVol:'Tankvolumen (L)',
+    edAlert:'Alarmgrænse (%)', edLang:'Sprog',
+    edAppearance:'Udseende', edTitle:'Korttitel', edColor:'Væskefarve',
   },
   pl: {
     remaining:'Pozostało', today:'Dziś', pump7d:'Pompa 7d',
@@ -147,6 +210,13 @@ const DTL = {
     adjustQty:'Dostosuj ilość', addToTank:'Dodaj do zbiornika',
     removeFromTank:'Usuń ze zbiornika', resetFull:'Zbiornik napełniony — Reset',
     resetting:'Resetowanie…', on:'WŁ.', off:'WYŁ.',
+    // editor
+    edEntities:'Encje', edPump:'Encja pompy',
+    edCounter:'Licznik (mL)', edFlowEnt:'Encja przepływu (mL/min)',
+    edSync:'Encja sync', edTank:'Zbiornik',
+    edFlowRate:'Przepływ (mL/min)', edTankVol:'Pojemność (L)',
+    edAlert:'Próg alarmu (%)', edLang:'Język',
+    edAppearance:'Wygląd', edTitle:'Tytuł karty', edColor:'Kolor cieczy',
   },
 };
 
@@ -186,8 +256,16 @@ class DosingTankCardEditor extends HTMLElement {
     }));
   }
 
+  _t() {
+    const lang = this._config?.language && this._config.language !== 'auto'
+      ? this._config.language
+      : (this._hass?.locale?.language || this._hass?.language || navigator.language || 'en');
+    return DTL[lang.split('-')[0].toLowerCase()] || DTL.en;
+  }
+
   _render() {
     const c = this._config;
+    const T = this._t();
     const LANG_LABELS = {
       auto:'Auto (HA locale)', en:'English', fr:'Français',
       es:'Español', de:'Deutsch', it:'Italiano', nl:'Nederlands',
@@ -228,45 +306,45 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
 .create-status{font-size:11px;color:var(--secondary-text-color,#888);flex:1;word-break:break-all}
 </style>
 <div class="form">
-  <div class="sec">Entities</div>
-  <div class="field" id="pump-wrap"><label>Pump entity</label></div>
-  <div class="field" id="reset-wrap"><label>Counter entity (input_number, mL)</label></div>
-  <div class="field" id="flow-wrap"><label>Flow-rate entity (input_number, mL/min — optional)</label></div>
-  <div class="field" id="sync-wrap"><label>Sync entity (input_datetime — runtime watermark)</label></div>
+  <div class="sec">${T.edEntities}</div>
+  <div class="field" id="pump-wrap"></div>
+  <div class="field" id="reset-wrap"></div>
+  <div class="field" id="flow-wrap"></div>
+  <div class="field" id="sync-wrap"></div>
   <div class="create-row" id="create-row" style="display:none">
-    <button class="create-btn" id="create-btn">✨ Create helpers</button>
+    <button class="create-btn" id="create-btn">✨ ${T.createHelper}</button>
     <span class="create-status" id="create-status"></span>
   </div>
 
-  <div class="sec">Tank</div>
+  <div class="sec">${T.edTank}</div>
   <div class="grid2">
     <div class="field">
-      <label>Flow rate (mL/min)</label>
+      <label>${T.edFlowRate}</label>
       <input type="number" id="flow" min="0.1" step="0.1" value="${c.flow_rate_ml_per_min??15}">
     </div>
     <div class="field">
-      <label>Tank volume (L)</label>
+      <label>${T.edTankVol}</label>
       <input type="number" id="volume" min="0.1" step="0.1" value="${c.tank_volume_liters??5}">
     </div>
   </div>
   <div class="grid2">
     <div class="field">
-      <label>Alert threshold (%)</label>
+      <label>${T.edAlert}</label>
       <input type="number" id="alert" min="0" max="100" step="1" value="${c.alert_threshold_percent??20}">
     </div>
     <div class="field">
-      <label>Language</label>
+      <label>${T.edLang}</label>
       <select id="lang">${langOptions}</select>
     </div>
   </div>
 
-  <div class="sec">Appearance</div>
+  <div class="sec">${T.edAppearance}</div>
   <div class="field">
-    <label>Card title</label>
+    <label>${T.edTitle}</label>
     <input type="text" id="name" value="${c.name??'Dosing Tank'}">
   </div>
   <div class="field">
-    <label>Liquid color</label>
+    <label>${T.edColor}</label>
     <div class="color-row">
       <input type="color" id="cpick" value="${c.liquid_color??'#3b82f6'}">
       <input type="text"  id="ctext" value="${c.liquid_color??'#3b82f6'}" placeholder="#3b82f6" maxlength="7">
@@ -274,7 +352,7 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
   </div>
 </div>`;
 
-    // Entity pickers
+    // Entity pickers — label comes from ha-entity-picker itself (no duplicate <label>)
     const makePicker = (wrapId, key, label) => {
       const wrap = this.shadowRoot.getElementById(wrapId);
       if (!wrap) return;
@@ -289,18 +367,21 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
           this._fire({ ...this._config, [key]: e.detail.value }));
         wrap.appendChild(p);
       } else {
+        const lbl = document.createElement('label');
+        lbl.textContent = label;
         const inp = document.createElement('input');
         inp.type = 'text';
         inp.value = this._config[key] || '';
         inp.addEventListener('change', e =>
           this._fire({ ...this._config, [key]: e.target.value }));
+        wrap.appendChild(lbl);
         wrap.appendChild(inp);
       }
     };
-    makePicker('pump-wrap',  'pump_entity',  'Pump entity');
-    makePicker('reset-wrap', 'reset_entity', 'Counter entity (input_number, mL)');
-    makePicker('flow-wrap',  'flow_entity',  'Flow-rate entity (input_number, mL/min)');
-    makePicker('sync-wrap',  'sync_entity',  'Sync entity (input_datetime)');
+    makePicker('pump-wrap',  'pump_entity',  T.edPump);
+    makePicker('reset-wrap', 'reset_entity', T.edCounter);
+    makePicker('flow-wrap',  'flow_entity',  T.edFlowEnt);
+    makePicker('sync-wrap',  'sync_entity',  T.edSync);
 
     // Show create button when the counter or the sync watermark is missing
     const missing = !this._config.reset_entity
@@ -349,7 +430,7 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
   async _createHelper() {
     const btn    = this.shadowRoot.getElementById('create-btn');
     const status = this.shadowRoot.getElementById('create-status');
-    if (btn) { btn.disabled = true; btn.textContent = 'Creating…'; }
+    if (btn) { btn.disabled = true; btn.textContent = this._t().creating; }
 
     const cardName = this._config.name || 'Dosing Tank';
     const cfg      = { ...this._config };
@@ -389,7 +470,7 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
       this._render();
     } catch(e) {
       if (status) status.textContent = '❌ ' + (e.message || 'Error');
-      if (btn) { btn.disabled = false; btn.textContent = '✨ Create helpers'; }
+      if (btn) { btn.disabled = false; btn.textContent = `✨ ${this._t().createHelper}`; }
     }
   }
 }
