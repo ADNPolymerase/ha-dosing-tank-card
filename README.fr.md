@@ -14,7 +14,7 @@ Une carte Lovelace pour suivre le niveau d'un **bidon de dosage liquide** — ch
 
 > 🇬🇧 [Read in English](README.md)
 
-![Capture d'écran](https://raw.githubusercontent.com/ADNPolymerase/ha-dosing-tank-card/main/docs/screenshot.png)
+![Capture d'écran](https://raw.githubusercontent.com/ADNPolymerase/ha-dosing-tank-card/main/docs/screenshot.fr.png)
 
 ---
 
