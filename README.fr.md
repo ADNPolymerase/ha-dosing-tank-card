@@ -23,7 +23,7 @@ Une carte Lovelace pour suivre le niveau d'un **bidon de dosage liquide** — ch
 - **Bidon SVG animé** avec couleur de liquide configurable, badge pompe en temps réel et alerte de niveau bas (carte rouge + bannière).
 - **3 métriques clés** — volume restant (L), consommation du jour (mL), marche pompe sur 7 jours — plus un **graphique en barres 7 jours** construit depuis l'historique HA, aucun capteur supplémentaire.
 - **Panneau d'ajustement repliable** — Ajouter/Retirer/Réinitialiser, masqué par défaut.
-- **Multilingue** (7 langues, auto-détectée depuis HA), mode sombre, responsive, zéro dépendance.
+- **Multilingue** (11 langues : FR, EN, ES, DE, IT, NL, SV, NO, DA, PL, RU — auto-détectée depuis HA), mode sombre, responsive, zéro dépendance.
 
 ---
 
@@ -78,7 +78,7 @@ liquid_color: "#3b82f6"
 | `alert_threshold_percent` | `number` | | `20` | Seuil d'alerte (%) |
 | `name` | `string` | | `"Dosing Tank"` | Titre affiché dans l'en-tête de la carte |
 | `liquid_color` | `string` | | `"#3b82f6"` | Couleur du liquide (toute couleur CSS hexadécimale) |
-| `language` | `string` | | auto | Forcer la langue : `en`, `fr`, `es`, `de`, `it`, `nl`, `ru` (défaut : auto-détectée depuis la locale HA) |
+| `language` | `string` | | auto | Forcer la langue : `en`, `fr`, `es`, `de`, `it`, `nl`, `sv`, `no`, `da`, `pl`, `ru` (défaut : auto-détectée depuis la locale HA) |
 
 ### Suggestions de couleurs
 

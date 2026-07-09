@@ -23,7 +23,7 @@ A Lovelace card to track the level of a **liquid dosing tank** — chlorine, pH�
 - **Animated SVG tank** with configurable liquid color, real-time pump badge and low-level alert (card turns red + warning banner).
 - **3 key metrics** — remaining volume (L), today's consumption (mL), 7-day pump runtime — plus a **7-day bar chart** built from HA history, no extra sensors needed.
 - **Collapsible adjustment panel** — Add/Remove/Reset controls, hidden by default.
-- **Multilingual** (7 languages, auto-detected from HA), dark-mode ready, responsive, zero dependencies.
+- **Multilingual** (11 languages: EN, FR, ES, DE, IT, NL, SV, NO, DA, PL, RU — auto-detected from HA), dark-mode ready, responsive, zero dependencies.
 
 ---
 
@@ -78,7 +78,7 @@ liquid_color: "#3b82f6"
 | `alert_threshold_percent` | `number` | | `20` | Alert threshold (%) |
 | `name` | `string` | | `"Dosing Tank"` | Title shown in the card header |
 | `liquid_color` | `string` | | `"#3b82f6"` | Liquid color (any CSS hex color) |
-| `language` | `string` | | auto | Language override: `en`, `fr`, `es`, `de`, `it`, `nl`, `ru` (default: auto-detected from HA locale) |
+| `language` | `string` | | auto | Language override: `en`, `fr`, `es`, `de`, `it`, `nl`, `sv`, `no`, `da`, `pl`, `ru` (default: auto-detected from HA locale) |
 
 ### Color suggestions
 
