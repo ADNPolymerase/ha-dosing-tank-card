@@ -27,7 +27,7 @@ Home Assistant Lovelace custom card to visually track the level of a **liquid do
 - **7-day bar chart** — built from HA history, no extra sensors needed
 - **Low-level alert** — configurable threshold; card turns red + shows a warning banner
 - **Collapsible adjustment panel** — toggle to show Add/Remove/Reset controls, hidden by default
-- **Multilingual** — auto-detected from your HA language setting: 🇬🇧 EN · 🇫🇷 FR · 🇪🇸 ES · 🇩🇪 DE · 🇮🇹 IT · 🇳🇱 NL
+- **Multilingual** — auto-detected from your HA language setting: 🇬🇧 EN · 🇫🇷 FR · 🇪🇸 ES · 🇩🇪 DE · 🇮🇹 IT · 🇳🇱 NL · 🇷🇺 RU
 - **Dark mode ready** — uses HA CSS variables throughout
 - **Responsive** — adapts to 1-, 2- or 3-column dashboard layouts
 - **Zero dependencies** — vanilla JS, no framework, no npm
@@ -125,7 +125,7 @@ liquid_color: "#3b82f6"
 | `alert_threshold_percent` | `number` | | `20` | Alert threshold (%) |
 | `name` | `string` | | `"Dosing Tank"` | Title shown in the card header |
 | `liquid_color` | `string` | | `"#3b82f6"` | Liquid color (any CSS hex color) |
-| `language` | `string` | | auto | Language override: `en`, `fr`, `es`, `de`, `it`, `nl` (default: auto-detected from HA locale) |
+| `language` | `string` | | auto | Language override: `en`, `fr`, `es`, `de`, `it`, `nl`, `ru` (default: auto-detected from HA locale) |
 
 ### Color suggestions
 

@@ -27,7 +27,7 @@ Carte Lovelace personnalisée pour Home Assistant permettant de suivre visuellem
 - **Graphique en barres sur 7 jours** — construit depuis l'historique HA, aucun capteur supplémentaire nécessaire
 - **Alerte de niveau bas** — seuil configurable ; la carte passe au rouge + affiche une bannière d'avertissement
 - **Panneau d'ajustement repliable** — bascule pour afficher les contrôles Ajouter/Retirer/Réinitialiser, masqué par défaut
-- **Multilingue** — détecté automatiquement depuis la langue de votre HA : 🇬🇧 EN · 🇫🇷 FR · 🇪🇸 ES · 🇩🇪 DE · 🇮🇹 IT · 🇳🇱 NL
+- **Multilingue** — détecté automatiquement depuis la langue de votre HA : 🇬🇧 EN · 🇫🇷 FR · 🇪🇸 ES · 🇩🇪 DE · 🇮🇹 IT · 🇳🇱 NL · 🇷🇺 RU
 - **Compatible mode sombre** — utilise les variables CSS HA de bout en bout
 - **Responsive** — s'adapte aux tableaux de bord 1, 2 ou 3 colonnes
 - **Zéro dépendance** — JavaScript pur, aucun framework, aucun npm
@@ -125,7 +125,7 @@ liquid_color: "#3b82f6"
 | `alert_threshold_percent` | `number` | | `20` | Seuil d'alerte (%) |
 | `name` | `string` | | `"Dosing Tank"` | Titre affiché dans l'en-tête de la carte |
 | `liquid_color` | `string` | | `"#3b82f6"` | Couleur du liquide (toute couleur CSS hexadécimale) |
-| `language` | `string` | | auto | Forcer la langue : `en`, `fr`, `es`, `de`, `it`, `nl` (défaut : auto-détectée depuis la locale HA) |
+| `language` | `string` | | auto | Forcer la langue : `en`, `fr`, `es`, `de`, `it`, `nl`, `ru` (défaut : auto-détectée depuis la locale HA) |
 
 ### Suggestions de couleurs
 
