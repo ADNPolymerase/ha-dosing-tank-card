@@ -10,7 +10,7 @@
 <a href="https://buymeacoffee.com/adnpolymerase" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-orange.png" alt="Buy Me A Coffee" height="60"></a>
 <a href="https://adnpolymerase.github.io/HA/" target="_blank"><img src="https://raw.githubusercontent.com/ADNPolymerase/HA/main/assets/site-button.svg" alt="Link to my github.io for my other projects" height="60"></a>
 
-Carte Lovelace personnalisée pour Home Assistant permettant de suivre visuellement le niveau d'un **bidon de dosage liquide** — chlore, pH−, pH+, floculant, algicide, ou tout produit injecté par une pompe à débit constant.
+Une carte Lovelace pour suivre le niveau d'un **bidon de dosage liquide** — chlore, pH−, pH+, floculant, algicide, ou tout produit injecté par une pompe à débit constant.
 
 > 🇬🇧 [Read in English](README.md)
 
@@ -20,83 +20,36 @@ Carte Lovelace personnalisée pour Home Assistant permettant de suivre visuellem
 
 ## Fonctionnalités
 
-- **Bidon SVG animé** — le niveau de liquide évolue en douceur au fur et à mesure du calcul de consommation
-- **Couleur du liquide configurable** — bleu pour le pH−, jaune pour le floculant, vert pour l'algicide…
-- **Badge pompe en temps réel** — ON / OFF reflète l'état actuel du switch
-- **3 métriques clés** — volume restant (L), consommation du jour (mL), temps de marche pompe sur 7 jours
-- **Graphique en barres sur 7 jours** — construit depuis l'historique HA, aucun capteur supplémentaire nécessaire
-- **Alerte de niveau bas** — seuil configurable ; la carte passe au rouge + affiche une bannière d'avertissement
-- **Panneau d'ajustement repliable** — bascule pour afficher les contrôles Ajouter/Retirer/Réinitialiser, masqué par défaut
-- **Multilingue** — détecté automatiquement depuis la langue de votre HA : 🇬🇧 EN · 🇫🇷 FR · 🇪🇸 ES · 🇩🇪 DE · 🇮🇹 IT · 🇳🇱 NL · 🇷🇺 RU
-- **Compatible mode sombre** — utilise les variables CSS HA de bout en bout
-- **Responsive** — s'adapte aux tableaux de bord 1, 2 ou 3 colonnes
-- **Zéro dépendance** — JavaScript pur, aucun framework, aucun npm
+- **Bidon SVG animé** avec couleur de liquide configurable, badge pompe en temps réel et alerte de niveau bas (carte rouge + bannière).
+- **3 métriques clés** — volume restant (L), consommation du jour (mL), marche pompe sur 7 jours — plus un **graphique en barres 7 jours** construit depuis l'historique HA, aucun capteur supplémentaire.
+- **Panneau d'ajustement repliable** — Ajouter/Retirer/Réinitialiser, masqué par défaut.
+- **Multilingue** (7 langues, auto-détectée depuis HA), mode sombre, responsive, zéro dépendance.
 
 ---
 
 ## Prérequis
 
-**Une entité pompe** — n'importe quel `switch.*`, `input_boolean.*` ou `binary_sensor.*` dont l'état est `on` pendant l'injection du produit.
-
-### Que puis-je utiliser comme entité pompe ? (pas besoin d'une "pompe doseuse connectée")
-
-Vous n'avez **pas besoin** d'une pompe doseuse connectée/cloud spéciale. La carte a seulement besoin d'un signal on/off qui reflète le fonctionnement de la pompe. Configurations courantes :
+**Une entité pompe** — n'importe quel `switch.*`, `input_boolean.*` ou `binary_sensor.*` dont l'état est `on` pendant l'injection du produit. Pas besoin d'une « pompe doseuse connectée » :
 
 | Votre installation | Entité pompe à utiliser |
 |---|---|
-| Pompe doseuse branchée sur une **prise connectée** (Shelly, Sonoff, Tasmota…) | le `switch.*` de la prise — son on/off = temps de marche pompe |
-| Pompe doseuse **asservie à la pompe de filtration** (fonctionne dès que la filtration tourne) | le `switch.*` de votre **pompe de filtration** — consommation = temps de filtration × débit de dosage |
-| Prise connectée qui remonte la **puissance (W)** mais pas d'on/off | créer un helper **Seuil** (Paramètres → Appareils et services → Assistants) pour transformer les watts en `binary_sensor`, puis y pointer la carte |
-| Pompe pilotée par un contrôleur piscine (Oklyn, etc.) | le `switch.*` / `binary_sensor.*` auxiliaire du contrôleur |
+| Pompe doseuse sur une **prise connectée** (Shelly, Sonoff, Tasmota…) | le `switch.*` de la prise |
+| Pompe **asservie à la pompe de filtration** | le `switch.*` de la pompe de filtration |
+| Prise connectée remontant la **puissance (W)** seule | un helper **Seuil** transformant les watts en `binary_sensor` |
+| Pompe pilotée par un contrôleur piscine (Oklyn…) | le `switch.*` / `binary_sensor.*` auxiliaire du contrôleur |
 
-Le débit (mL/min) est réglé dans la carte, donc tant que vous avez un signal "la pompe tourne", la consommation est calculée automatiquement. Si vous dosez **à la main** (sans pompe), le calcul automatique ne s'applique pas — mais vous pouvez quand même utiliser le **panneau d'ajustement +/-** pour suivre le niveau du bidon manuellement.
+Si vous dosez **à la main** (sans pompe), utilisez le panneau d'ajustement +/- pour suivre le niveau manuellement.
 
-**Un helper `input_number`** pour conserver le volume consommé entre les redémarrages de HA.
-
-Le créer via **Paramètres → Appareils et services → Assistants → Créer un assistant → Nombre** :
-
-| Champ | Valeur |
-|---|---|
-| Nom | _(votre choix, ex. "Chlore consommé")_ |
-| ID d'entité | _(votre choix, ex. `dosing_tank_consumed`)_ |
-| Minimum | `0` |
-| Maximum | `9999999` |
-| Pas | `1` |
-| Unité | `mL` |
-
-Ou ajouter dans `configuration.yaml` :
-
-```yaml
-input_number:
-  dosing_tank_consumed:
-    name: "Bidon de dosage — volume consommé"
-    min: 0
-    max: 9999999
-    step: 1
-    unit_of_measurement: mL
-    icon: mdi:cup-water
-    mode: box
-```
+**Un helper `input_number`** pour conserver le volume consommé entre les redémarrages — **Paramètres → Appareils et services → Assistants → Créer un assistant → Nombre** (min `0`, max `9999999`, pas `1`, unité `mL`).
 
 ---
 
 ## Installation
 
-### Via HACS (recommandé)
+1. HACS → **⋮** → **Dépôts personnalisés** → `https://github.com/ADNPolymerase/ha-dosing-tank-card`, catégorie **Dashboard**.
+2. Téléchargez **Dosing Tank Card**, puis rechargez le navigateur en vidant le cache (`Shift`+`F5`).
 
-1. Dans HACS → **Frontend** → **⋮** → **Dépôts personnalisés**
-2. Ajouter `https://github.com/ADNPolymerase/ha-dosing-tank-card` — catégorie **Lovelace**
-3. Cliquer sur **Télécharger**
-4. Recharger le navigateur en vidant le cache (`Shift`+`F5`)
-
-### Manuelle
-
-1. Télécharger `dosing-tank-card.js` depuis la [dernière version](../../releases/latest)
-2. Copier vers `config/www/dosing-tank-card.js`
-3. **Paramètres → Tableaux de bord → ⋮ → Ressources → Ajouter une ressource**
-   - URL : `/local/dosing-tank-card.js`
-   - Type : Module JavaScript
-4. Recharger le navigateur en vidant le cache
+Alternative manuelle : copiez `dosing-tank-card.js` depuis la [dernière version](../../releases/latest) vers `config/www/`, puis ajoutez `/local/dosing-tank-card.js` comme ressource module JavaScript.
 
 ---
 
@@ -142,23 +95,9 @@ liquid_color: "#3b82f6"
 
 ## Fonctionnement
 
-### Suivi du volume
+Chaque fois que la pompe passe sur **OFF**, la carte calcule la durée de la session et incrémente le compteur de mL consommés (`restant = volume_bidon × 1000 − consommé`). Le graphique interroge l'API historique HA. Le bouton de réinitialisation remet le compteur à `0` quand vous remplissez.
 
-Chaque fois que la pompe passe sur **OFF**, la carte calcule la durée de la session et appelle `input_number.set_value` pour incrémenter le compteur de mL consommés :
-
-```
-restant = tank_volume_liters × 1000 − input_number.state − session_en_cours_mL
-```
-
-> **Remarque :** le compteur n'est incrémenté que lorsqu'un onglet du navigateur avec cette carte est ouvert. Pour un suivi précis en arrière-plan, utilisez l'automatisation ci-dessous.
-
-### Graphique en barres sur 7 jours
-
-Interroge l'API REST de l'historique HA — aucun capteur supplémentaire nécessaire. Rafraîchi toutes les 15 minutes.
-
-### Réinitialisation
-
-Cliquez sur le bouton de réinitialisation lorsque vous remplissez le bidon. Cela remet l'`input_number` à `0`.
+> **Remarque :** le compteur n'est incrémenté que lorsqu'un onglet du navigateur affichant la carte est ouvert. Pour un suivi précis en arrière-plan, utilisez l'automatisation ci-dessous.
 
 ---
 
@@ -189,17 +128,7 @@ mode: queued
 max: 5
 ```
 
-Dupliquer et ajuster pour chaque bidon supplémentaire.
-
----
-
-## Types d'entités compatibles
-
-| Type d'entité | Remarques |
-|---|---|
-| `switch.*` | Support complet |
-| `input_boolean.*` | Support complet |
-| `binary_sensor.*` | Graphique et affichage fonctionnels ; utiliser l'automatisation pour les mises à jour du compteur |
+Dupliquer et ajuster pour chaque bidon supplémentaire. `switch.*` et `input_boolean.*` sont totalement supportés ; avec un `binary_sensor.*`, utilisez l'automatisation pour les mises à jour du compteur.
 
 ---
 

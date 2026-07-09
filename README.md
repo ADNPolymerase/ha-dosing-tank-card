@@ -10,7 +10,7 @@
 <a href="https://buymeacoffee.com/adnpolymerase" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-orange.png" alt="Buy Me A Coffee" height="60"></a>
 <a href="https://adnpolymerase.github.io/HA/" target="_blank"><img src="https://raw.githubusercontent.com/ADNPolymerase/HA/main/assets/site-button.svg" alt="Link to my github.io for my other projects" height="60"></a>
 
-Home Assistant Lovelace custom card to visually track the level of a **liquid dosing tank** — chlorine, pH−, pH+, flocculant, algaecide, or any product injected by a pump at a constant flow rate.
+A Lovelace card to track the level of a **liquid dosing tank** — chlorine, pH−, pH+, flocculant, algaecide, or any product injected by a pump at a constant flow rate.
 
 > 🇫🇷 [Lire en français](README.fr.md)
 
@@ -20,83 +20,36 @@ Home Assistant Lovelace custom card to visually track the level of a **liquid do
 
 ## Features
 
-- **Animated SVG tank** — liquid level transitions smoothly as consumption is calculated
-- **Configurable liquid color** — blue for pH−, yellow for flocculant, green for algaecide…
-- **Real-time pump badge** — ON / OFF reflects the current switch state
-- **3 key metrics** — remaining volume (L), today's consumption (mL), 7-day pump runtime
-- **7-day bar chart** — built from HA history, no extra sensors needed
-- **Low-level alert** — configurable threshold; card turns red + shows a warning banner
-- **Collapsible adjustment panel** — toggle to show Add/Remove/Reset controls, hidden by default
-- **Multilingual** — auto-detected from your HA language setting: 🇬🇧 EN · 🇫🇷 FR · 🇪🇸 ES · 🇩🇪 DE · 🇮🇹 IT · 🇳🇱 NL · 🇷🇺 RU
-- **Dark mode ready** — uses HA CSS variables throughout
-- **Responsive** — adapts to 1-, 2- or 3-column dashboard layouts
-- **Zero dependencies** — vanilla JS, no framework, no npm
+- **Animated SVG tank** with configurable liquid color, real-time pump badge and low-level alert (card turns red + warning banner).
+- **3 key metrics** — remaining volume (L), today's consumption (mL), 7-day pump runtime — plus a **7-day bar chart** built from HA history, no extra sensors needed.
+- **Collapsible adjustment panel** — Add/Remove/Reset controls, hidden by default.
+- **Multilingual** (7 languages, auto-detected from HA), dark-mode ready, responsive, zero dependencies.
 
 ---
 
 ## Prerequisites
 
-**A pump entity** — any `switch.*`, `input_boolean.*` or `binary_sensor.*` whose state is `on` while product is being injected.
-
-### What can I use as the pump entity? (no "smart dosing pump" required)
-
-You do **not** need a special connected/cloud dosing pump. The card only needs an on/off signal that reflects when the pump runs. Common setups:
+**A pump entity** — any `switch.*`, `input_boolean.*` or `binary_sensor.*` whose state is `on` while product is being injected. No "smart dosing pump" required:
 
 | Your setup | Pump entity to use |
 |---|---|
-| Dosing pump plugged into a **smart plug** (Shelly, Sonoff, Tasmota…) | the plug's `switch.*` — its on/off = pump runtime |
-| Dosing pump **slaved to the filtration pump** (runs whenever filtration runs) | your **filtration pump** `switch.*` — consumption = filtration runtime × dosing flow rate |
-| Smart plug that reports **power (W)** but no on/off | create a **Threshold** helper (Settings → Devices & Services → Helpers) to turn watts into a `binary_sensor`, then point the card at it |
-| Pump driven by a pool controller (Oklyn, etc.) | the controller's auxiliary `switch.*` / `binary_sensor.*` |
+| Dosing pump on a **smart plug** (Shelly, Sonoff, Tasmota…) | the plug's `switch.*` |
+| Pump **slaved to the filtration pump** | the filtration pump's `switch.*` |
+| Smart plug reporting **power (W)** only | a **Threshold** helper turning watts into a `binary_sensor` |
+| Pump driven by a pool controller (Oklyn…) | the controller's auxiliary `switch.*` / `binary_sensor.*` |
 
-The flow rate (mL/min) is set in the card, so as long as you have a "pump is running" signal, consumption is computed for you. If you dose **by hand** (no pump), the automatic calculation doesn't apply — but you can still use the **+/- adjustment panel** to track the tank level manually.
+If you dose **by hand** (no pump), use the +/- adjustment panel to track the level manually.
 
-**An `input_number` helper** to persist the consumed volume across HA restarts.
-
-Create it via **Settings → Devices & Services → Helpers → Create helper → Number**:
-
-| Field | Value |
-|---|---|
-| Name | _(your choice, e.g. "Chlorine consumed")_ |
-| Entity ID | _(your choice, e.g. `dosing_tank_consumed`)_ |
-| Minimum | `0` |
-| Maximum | `9999999` |
-| Step | `1` |
-| Unit | `mL` |
-
-Or add to `configuration.yaml`:
-
-```yaml
-input_number:
-  dosing_tank_consumed:
-    name: "Dosing tank — consumed volume"
-    min: 0
-    max: 9999999
-    step: 1
-    unit_of_measurement: mL
-    icon: mdi:cup-water
-    mode: box
-```
+**An `input_number` helper** to persist the consumed volume across restarts — **Settings → Devices & Services → Helpers → Create helper → Number** (min `0`, max `9999999`, step `1`, unit `mL`).
 
 ---
 
 ## Installation
 
-### Via HACS (recommended)
+1. HACS → **⋮** → **Custom repositories** → `https://github.com/ADNPolymerase/ha-dosing-tank-card`, category **Dashboard**.
+2. Download **Dosing Tank Card**, then hard-reload the browser (`Shift`+`F5`).
 
-1. In HACS → **Frontend** → **⋮** → **Custom repositories**
-2. Add `https://github.com/ADNPolymerase/ha-dosing-tank-card` — category **Lovelace**
-3. Click **Download**
-4. Hard-reload the browser (`Shift`+`F5`)
-
-### Manual
-
-1. Download `dosing-tank-card.js` from the [latest release](../../releases/latest)
-2. Copy to `config/www/dosing-tank-card.js`
-3. **Settings → Dashboards → ⋮ → Resources → Add resource**
-   - URL: `/local/dosing-tank-card.js`
-   - Type: JavaScript module
-4. Hard-reload the browser
+Manual alternative: copy `dosing-tank-card.js` from the [latest release](../../releases/latest) to `config/www/`, then add `/local/dosing-tank-card.js` as a JavaScript-module resource.
 
 ---
 
@@ -142,23 +95,9 @@ liquid_color: "#3b82f6"
 
 ## How it works
 
-### Volume tracking
+Each time the pump switches **OFF**, the card computes the session duration and increments the consumed-mL counter (`remaining = tank_volume × 1000 − consumed`). The bar chart queries the HA history API. The reset button sets the counter back to `0` when you refill.
 
-Each time the pump switches **OFF**, the card calculates the session duration and calls `input_number.set_value` to increment the consumed-mL counter:
-
-```
-remaining = tank_volume_liters × 1000 − input_number.state − live_session_mL
-```
-
-> **Note:** The counter is only incremented while a browser tab with this card is open. For accurate tracking in the background, use the automation below.
-
-### 7-day bar chart
-
-Queries the HA history REST API — no extra sensors needed. Refreshed every 15 minutes.
-
-### Reset
-
-Click the reset button when you refill the tank. This sets the `input_number` to `0`.
+> **Note:** the counter is only incremented while a browser tab showing the card is open. For accurate background tracking, use the automation below.
 
 ---
 
@@ -189,17 +128,7 @@ mode: queued
 max: 5
 ```
 
-Duplicate and adjust for each additional tank.
-
----
-
-## Compatible entity types
-
-| Entity type | Notes |
-|---|---|
-| `switch.*` | Full support |
-| `input_boolean.*` | Full support |
-| `binary_sensor.*` | Chart and display work; use the automation for counter updates |
+Duplicate and adjust for each additional tank. `switch.*` and `input_boolean.*` are fully supported; with a `binary_sensor.*`, use the automation for counter updates.
 
 ---
 
