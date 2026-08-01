@@ -1,2 +1,5 @@
+* text=auto
+*.js text eol=lf
 dist/dosing-tank-card.js linguist-vendored=false
+dist/dosing-tank-card.js linguist-generated=false
 dist/dosing-tank-card.js linguist-detectable=true
