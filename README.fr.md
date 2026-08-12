@@ -10,7 +10,10 @@
 <a href="https://buymeacoffee.com/adnpolymerase" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-orange.png" alt="Buy Me A Coffee" height="60"></a>
 <a href="https://adnpolymerase.github.io/HA/" target="_blank"><img src="https://raw.githubusercontent.com/ADNPolymerase/HA/main/assets/site-button.svg" alt="Link to my github.io for my other projects" height="60"></a>
 
-Une carte Lovelace pour suivre le niveau d'un **bidon de dosage liquide** — chlore, pH−, pH+, floculant, algicide, ou tout produit injecté par une pompe à débit constant.
+Une carte Lovelace pour suivre le niveau d'une cuve. Deux modes :
+
+- **Temps de pompe** — chlore, pH−, pH+, floculant, algicide, ou tout produit injecté par une pompe à débit constant. La carte compte la pompe et convertit en millilitres.
+- **Niveau direct** — un bac à sel d'adoucisseur, une sonde ESP32 sur un bidon, ou tout ce dont le niveau est déjà remonté par un capteur. La carte le lit et y ajoute un historique de consommation et une estimation d'autonomie.
 
 > 🇬🇧 [Read in English](README.md)
 
@@ -24,11 +27,14 @@ Une carte Lovelace pour suivre le niveau d'un **bidon de dosage liquide** — ch
 - **3 métriques clés** — volume restant (L), consommation du jour (mL), marche pompe sur 7 jours — plus un **graphique en barres 7 jours** construit depuis l'historique HA, aucun capteur supplémentaire.
 - **Comptage en arrière-plan** — le temps de marche est reconstitué depuis l'API d'historique HA : rien n'est perdu quand aucun onglet n'est ouvert. Aucune automatisation nécessaire.
 - **Panneau d'ajustement repliable** — Ajouter/Retirer/Réinitialiser, masqué par défaut.
+- **Ou pas de pompe du tout** — pointez-la sur un capteur de niveau et elle affiche le niveau, la consommation sur 7 jours et l'autonomie restante.
 - **Multilingue** (11 langues : FR, EN, ES, DE, IT, NL, SV, NO, DA, PL, RU — auto-détectée depuis HA), mode sombre, responsive, zéro dépendance.
 
 ---
 
 ## Prérequis
+
+> Toute cette section concerne le **mode temps de pompe**. En [mode niveau direct](#mode-niveau-direct), le capteur suffit — aucun helper, aucune pompe.
 
 **Une entité pompe** — n'importe quel `switch.*`, `input_boolean.*` ou `binary_sensor.*` dont l'état est `on` pendant l'injection du produit. Pas besoin d'une « pompe doseuse connectée » :
 
@@ -82,16 +88,52 @@ liquid_color: "#3b82f6"
 
 | Option | Type | Requis | Défaut | Description |
 |---|---|---|---|---|
-| `pump_entity` | `string` | ✅ | — | Entité switch pilotant la pompe doseuse |
-| `reset_entity` | `string` | ✅ | — | Entité `input_number` (ou `number`) qui stocke les mL consommés |
-| `sync_entity` | `string` | ✅ | — | Entité `input_datetime` (date + heure) portant le repère de rattrapage — **sans elle, rien n'est jamais enregistré** |
-| `flow_entity` | `string` | | — | Entité `input_number` portant le débit en direct (mL/min) ; prend le pas sur `flow_rate_ml_per_min` si > 0 |
-| `flow_rate_ml_per_min` | `number` | | `15` | Débit de la pompe en mL/min |
-| `tank_volume_liters` | `number` | | `5` | Capacité du bidon en litres |
+| `pump_entity` | `string` | ✅ ¹ | — | Entité switch pilotant la pompe doseuse |
+| `reset_entity` | `string` | ✅ ¹ | — | Entité `input_number` (ou `number`) qui stocke les mL consommés |
+| `sync_entity` | `string` | ✅ ¹ | — | Entité `input_datetime` (date + heure) portant le repère de rattrapage — **sans elle, rien n'est jamais enregistré** |
+| `flow_entity` | `string` | ¹ | — | Entité `input_number` portant le débit en direct (mL/min) ; prend le pas sur `flow_rate_ml_per_min` si > 0 |
+| `flow_rate_ml_per_min` | `number` | ¹ | `15` | Débit de la pompe en mL/min |
+| `tank_volume_liters` | `number` | ¹ | `5` | Capacité du bidon en litres |
+| `level_entity` | `string` | ✅ ² | — | Capteur remontant le niveau. **La renseigner bascule la carte en mode niveau direct** et toute la chaîne pompe ci-dessus devient sans objet |
+| `level_full` | `number` | ² | `100` si l'unité est `%` | Valeur du capteur bidon plein |
+| `level_empty` | `number` | ² | `0` | Valeur du capteur bidon vide |
 | `alert_threshold_percent` | `number` | | `20` | Seuil d'alerte (%) |
 | `name` | `string` | | `"Dosing Tank"` | Titre affiché dans l'en-tête de la carte |
 | `liquid_color` | `string` | | `"#3b82f6"` | Couleur du liquide (toute couleur CSS hexadécimale) |
 | `language` | `string` | | auto | Forcer la langue : `en`, `fr`, `es`, `de`, `it`, `nl`, `sv`, `no`, `da`, `pl`, `ru` (défaut : auto-détectée depuis la locale HA) |
+
+¹ mode temps de pompe uniquement &nbsp;&nbsp; ² mode niveau direct uniquement
+
+---
+
+## Mode niveau direct
+
+Pour une cuve dont le niveau est déjà mesuré — bac à sel d'adoucisseur, sonde ESP32, n'importe quel `sensor.*` contenant un nombre. Renseignez `level_entity` et la carte cesse totalement de compter le temps de pompe : plus de compteur, plus de repère, plus de panneau d'ajustement.
+
+```yaml
+type: custom:dosing-tank-card
+level_entity: sensor.adoucisseur_niveau_sel
+level_full: 25          # kg dans un bac plein
+name: "Sel adoucisseur"
+liquid_color: "#94a3b8"
+alert_threshold_percent: 15
+```
+
+Un capteur qui remonte déjà des `%` n'a besoin d'aucune plage. Pour toute autre unité, `level_full` indique ce que lit le capteur quand la cuve est pleine.
+
+**Les sondes inversées fonctionnent telles quelles.** Un capteur ultrason mesure la distance jusqu'à la surface : une cuve pleine donne donc une *petite* valeur. Donnez simplement les deux lectures dans cet ordre :
+
+```yaml
+level_entity: sensor.ph_moins_distance
+level_full: 5           # cm entre le capteur et la surface, cuve pleine
+level_empty: 30         # cm, cuve vide
+```
+
+Les trois tuiles changent de sens dans ce mode : niveau actuel, consommation des 7 derniers jours, et **autonomie** — combien de temps la cuve tient au rythme moyen récent.
+
+Cette moyenne ignore délibérément les journées où le niveau est **monté** : un remplissage masque ce qui a été consommé en parallèle, et le compter comme une journée à consommation nulle gonflerait l'autonomie d'une cuve qui est en réalité en train de se vider. Les jours de remplissage apparaissent en `+` vert dans le graphe. Les journées où le niveau n'a réellement pas bougé sont conservées — un adoucisseur qui n'a pas régénéré, c'est une vraie information. L'autonomie affiche `—` tant qu'il n'y a pas au moins deux journées complètes de baisse.
+
+---
 
 ### Suggestions de couleurs
 

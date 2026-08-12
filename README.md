@@ -10,7 +10,10 @@
 <a href="https://buymeacoffee.com/adnpolymerase" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-orange.png" alt="Buy Me A Coffee" height="60"></a>
 <a href="https://adnpolymerase.github.io/HA/" target="_blank"><img src="https://raw.githubusercontent.com/ADNPolymerase/HA/main/assets/site-button.svg" alt="Link to my github.io for my other projects" height="60"></a>
 
-A Lovelace card to track the level of a **liquid dosing tank** — chlorine, pH−, pH+, flocculant, algaecide, or any product injected by a pump at a constant flow rate.
+A Lovelace card to track the level of a tank. Two modes:
+
+- **Pump runtime** — chlorine, pH−, pH+, flocculant, algaecide, or any product injected by a pump at a constant flow rate. The card counts the pump and converts it to millilitres.
+- **Direct level** — a water-softener salt tank, an ESP32 probe on a drum, or anything whose level is already reported by a sensor. The card reads it and adds a consumption history and a runs-out-in estimate on top.
 
 > 🇫🇷 [Lire en français](README.fr.md)
 
@@ -24,11 +27,14 @@ A Lovelace card to track the level of a **liquid dosing tank** — chlorine, pH�
 - **3 key metrics** — remaining volume (L), today's consumption (mL), 7-day pump runtime — plus a **7-day bar chart** built from HA history, no extra sensors needed.
 - **Counts in the background** — runtime is reconciled from the HA history API, so nothing is lost while no browser tab is open. No automation required.
 - **Collapsible adjustment panel** — Add/Remove/Reset controls, hidden by default.
+- **Or no pump at all** — point it at a level sensor instead and it shows the level, the 7-day consumption and how long the tank will last.
 - **Multilingual** (11 languages: EN, FR, ES, DE, IT, NL, SV, NO, DA, PL, RU — auto-detected from HA), dark-mode ready, responsive, zero dependencies.
 
 ---
 
 ## Prerequisites
+
+> Everything in this section is for **pump-runtime mode**. In [direct level mode](#direct-level-mode) the sensor is the only thing you need — no helper, no pump.
 
 **A pump entity** — any `switch.*`, `input_boolean.*` or `binary_sensor.*` whose state is `on` while product is being injected. No "smart dosing pump" required:
 
@@ -82,16 +88,52 @@ liquid_color: "#3b82f6"
 
 | Option | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `pump_entity` | `string` | ✅ | — | Switch entity controlling the dosing pump |
-| `reset_entity` | `string` | ✅ | — | `input_number` (or `number`) entity that stores consumed mL |
-| `sync_entity` | `string` | ✅ | — | `input_datetime` (date + time) holding the catch-up watermark — **without it nothing is ever saved** |
-| `flow_entity` | `string` | | — | `input_number` holding the live flow rate in mL/min; takes over from `flow_rate_ml_per_min` when > 0 |
-| `flow_rate_ml_per_min` | `number` | | `15` | Pump flow rate in mL/min |
-| `tank_volume_liters` | `number` | | `5` | Tank capacity in litres |
+| `pump_entity` | `string` | ✅ ¹ | — | Switch entity controlling the dosing pump |
+| `reset_entity` | `string` | ✅ ¹ | — | `input_number` (or `number`) entity that stores consumed mL |
+| `sync_entity` | `string` | ✅ ¹ | — | `input_datetime` (date + time) holding the catch-up watermark — **without it nothing is ever saved** |
+| `flow_entity` | `string` | ¹ | — | `input_number` holding the live flow rate in mL/min; takes over from `flow_rate_ml_per_min` when > 0 |
+| `flow_rate_ml_per_min` | `number` | ¹ | `15` | Pump flow rate in mL/min |
+| `tank_volume_liters` | `number` | ¹ | `5` | Tank capacity in litres |
+| `level_entity` | `string` | ✅ ² | — | Sensor reporting the level. **Setting it switches the card to direct-level mode** and the whole pump chain above becomes irrelevant |
+| `level_full` | `number` | ² | `100` if unit is `%` | Sensor value for a full tank |
+| `level_empty` | `number` | ² | `0` | Sensor value for an empty tank |
 | `alert_threshold_percent` | `number` | | `20` | Alert threshold (%) |
 | `name` | `string` | | `"Dosing Tank"` | Title shown in the card header |
 | `liquid_color` | `string` | | `"#3b82f6"` | Liquid color (any CSS hex color) |
 | `language` | `string` | | auto | Language override: `en`, `fr`, `es`, `de`, `it`, `nl`, `sv`, `no`, `da`, `pl`, `ru` (default: auto-detected from HA locale) |
+
+¹ pump-runtime mode only &nbsp;&nbsp; ² direct-level mode only
+
+---
+
+## Direct level mode
+
+For a tank whose level is already measured — a softener salt tank, an ESP32 probe, any `sensor.*` holding a number. Set `level_entity` and the card stops counting pump runtime entirely: no counter, no watermark, no adjustment panel.
+
+```yaml
+type: custom:dosing-tank-card
+level_entity: sensor.softener_salt_level
+level_full: 25          # kg in a full tank
+name: "Softener salt"
+liquid_color: "#94a3b8"
+alert_threshold_percent: 15
+```
+
+A sensor already reporting `%` needs no range at all. For any other unit, `level_full` says what a full tank reads.
+
+**Inverted probes work as-is.** An ultrasonic sensor measures the distance down to the surface, so a full tank reads *small*. Just give the two readings in the order they happen:
+
+```yaml
+level_entity: sensor.ph_minus_distance
+level_full: 5           # cm from the sensor to the surface, tank full
+level_empty: 30         # cm, tank empty
+```
+
+The three tiles change meaning in this mode: current level, consumption over the last 7 days, and **autonomy** — how long the tank lasts at the recent average rate.
+
+That average deliberately ignores days when the level went **up**: a refill hides whatever was consumed alongside it, and counting it as a zero-consumption day would inflate the autonomy of a tank that is in fact running out. Refill days appear as a green `+` in the chart. Days where the level genuinely did not move are kept — a softener that did not regenerate is real information. Autonomy shows `—` until there are at least two complete days of decline.
+
+---
 
 ### Color suggestions
 
