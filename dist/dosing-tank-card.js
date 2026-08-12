@@ -38,7 +38,7 @@ const DTL = {
     lowLevel: p=>`⚠️ Low level — refill soon (${p}% remaining)`,
     helperMissing:'Counter not found', createHelper:'Create counter',
     creating:'Creating…', helperCreated: id=>`Created: ${id}`,
-    syncMissing:'Sync helper missing — consumption is not being saved',
+    syncMissing:'No sync helper: the card does not write the counter itself',
     saveInEditor:'Add them in the card editor to keep them after a reload.',
     adjustQty:'Adjust quantity', addToTank:'Add to tank',
     removeFromTank:'Remove from tank', resetFull:'Tank refilled — Reset',
@@ -68,7 +68,7 @@ const DTL = {
     lowLevel: p=>`⚠️ Niveau bas — rechargez dès que possible (${p}% restant)`,
     helperMissing:'Compteur introuvable', createHelper:'Créer le compteur',
     creating:'Création…', helperCreated: id=>`Créé : ${id}`,
-    syncMissing:"Entité sync manquante — la consommation n'est pas enregistrée",
+    syncMissing:"Sans entité sync, la carte n'écrit pas le compteur elle-même",
     saveInEditor:"Renseignez-les dans l'éditeur de carte pour les conserver après rechargement.",
     adjustQty:'Ajuster la quantité', addToTank:'Ajouter au bidon',
     removeFromTank:'Retirer du bidon', resetFull:'Bidon rempli — Réinitialiser',
@@ -98,7 +98,7 @@ const DTL = {
     lowLevel: p=>`⚠️ Nivel bajo — recargar pronto (${p}% restante)`,
     helperMissing:'Contador no encontrado', createHelper:'Crear contador',
     creating:'Creando…', helperCreated: id=>`Creado: ${id}`,
-    syncMissing:'Falta la entidad de sincronización — el consumo no se guarda',
+    syncMissing:'Sin entidad de sincronización, la tarjeta no escribe el contador',
     saveInEditor:'Añádelos en el editor de la tarjeta para conservarlos tras recargar.',
     adjustQty:'Ajustar cantidad', addToTank:'Añadir al depósito',
     removeFromTank:'Retirar del depósito', resetFull:'Depósito lleno — Reiniciar',
@@ -128,7 +128,7 @@ const DTL = {
     lowLevel: p=>`⚠️ Низкий уровень — пополните бак (${p}% осталось)`,
     helperMissing:'Счётчик не найден', createHelper:'Создать счётчик',
     creating:'Создание…', helperCreated: id=>`Создано: ${id}`,
-    syncMissing:'Нет сущности синхронизации — расход не сохраняется',
+    syncMissing:'Без сущности синхронизации карточка сама не пишет счётчик',
     saveInEditor:'Добавьте их в редакторе карточки, чтобы сохранить после перезагрузки.',
     adjustQty:'Изменить количество', addToTank:'Добавить в бак',
     removeFromTank:'Убрать из бака', resetFull:'Бак заполнен — Сбросить',
@@ -158,7 +158,7 @@ const DTL = {
     lowLevel: p=>`⚠️ Niedriger Stand — bald nachfüllen (${p}% verbleibend)`,
     helperMissing:'Zähler nicht gefunden', createHelper:'Zähler erstellen',
     creating:'Erstelle…', helperCreated: id=>`Erstellt: ${id}`,
-    syncMissing:'Sync-Entität fehlt — Verbrauch wird nicht gespeichert',
+    syncMissing:'Ohne Sync-Entität schreibt die Karte den Zähler nicht selbst',
     saveInEditor:'Trage sie im Karten-Editor ein, damit sie nach dem Neuladen erhalten bleiben.',
     adjustQty:'Menge anpassen', addToTank:'Zum Tank hinzufügen',
     removeFromTank:'Aus Tank entnehmen', resetFull:'Tank voll — Zurücksetzen',
@@ -188,7 +188,7 @@ const DTL = {
     lowLevel: p=>`⚠️ Livello basso — ricaricare presto (${p}% rimanente)`,
     helperMissing:'Contatore non trovato', createHelper:'Crea contatore',
     creating:'Creazione…', helperCreated: id=>`Creato: ${id}`,
-    syncMissing:'Entità sync mancante — il consumo non viene salvato',
+    syncMissing:'Senza entità sync, la scheda non scrive il contatore',
     saveInEditor:"Inseriscili nell'editor della scheda per conservarli dopo il ricaricamento.",
     adjustQty:'Regola quantità', addToTank:'Aggiungi al serbatoio',
     removeFromTank:'Rimuovi dal serbatoio', resetFull:'Serbatoio pieno — Azzera',
@@ -218,7 +218,7 @@ const DTL = {
     lowLevel: p=>`⚠️ Laag niveau — spoedig bijvullen (${p}% resterend)`,
     helperMissing:'Teller niet gevonden', createHelper:'Teller aanmaken',
     creating:'Aanmaken…', helperCreated: id=>`Aangemaakt: ${id}`,
-    syncMissing:'Sync-entiteit ontbreekt — verbruik wordt niet opgeslagen',
+    syncMissing:'Zonder sync-entiteit schrijft de kaart de teller niet zelf',
     saveInEditor:'Voeg ze toe in de kaarteditor om ze na herladen te behouden.',
     adjustQty:'Hoeveelheid aanpassen', addToTank:'Toevoegen aan tank',
     removeFromTank:'Verwijderen uit tank', resetFull:'Tank gevuld — Resetten',
@@ -248,7 +248,7 @@ const DTL = {
     lowLevel: p=>`⚠️ Låg nivå — fyll på snart (${p}% kvar)`,
     helperMissing:'Räknare hittades inte', createHelper:'Skapa räknare',
     creating:'Skapar…', helperCreated: id=>`Skapad: ${id}`,
-    syncMissing:'Synkroniseringsenhet saknas — förbrukningen sparas inte',
+    syncMissing:'Utan synkroniseringsenhet skriver kortet inte räknaren självt',
     saveInEditor:'Lägg till dem i kortredigeraren för att behålla dem efter omladdning.',
     adjustQty:'Justera mängd', addToTank:'Lägg till i tank',
     removeFromTank:'Ta bort från tank', resetFull:'Tank påfylld — Återställ',
@@ -278,7 +278,7 @@ const DTL = {
     lowLevel: p=>`⚠️ Lavt nivå — fyll på snart (${p}% igjen)`,
     helperMissing:'Teller ikke funnet', createHelper:'Opprett teller',
     creating:'Oppretter…', helperCreated: id=>`Opprettet: ${id}`,
-    syncMissing:'Synkenhet mangler — forbruket lagres ikke',
+    syncMissing:'Uten synkenhet skriver ikke kortet telleren selv',
     saveInEditor:'Legg dem til i kortredigeringen for å beholde dem etter omlasting.',
     adjustQty:'Juster mengde', addToTank:'Legg til i tank',
     removeFromTank:'Fjern fra tank', resetFull:'Tank fylt — Tilbakestill',
@@ -308,7 +308,7 @@ const DTL = {
     lowLevel: p=>`⚠️ Lavt niveau — genopfyld snart (${p}% tilbage)`,
     helperMissing:'Tæller ikke fundet', createHelper:'Opret tæller',
     creating:'Opretter…', helperCreated: id=>`Oprettet: ${id}`,
-    syncMissing:'Synkroniseringsenhed mangler — forbruget gemmes ikke',
+    syncMissing:'Uden synkroniseringsenhed skriver kortet ikke selv tælleren',
     saveInEditor:'Tilføj dem i kortredigeringen for at bevare dem efter genindlæsning.',
     adjustQty:'Juster mængde', addToTank:'Tilføj til tank',
     removeFromTank:'Fjern fra tank', resetFull:'Tank fyldt — Nulstil',
@@ -338,7 +338,7 @@ const DTL = {
     lowLevel: p=>`⚠️ Niski poziom — uzupełnij wkrótce (${p}% pozostało)`,
     helperMissing:'Licznik nie znaleziony', createHelper:'Utwórz licznik',
     creating:'Tworzenie…', helperCreated: id=>`Utworzono: ${id}`,
-    syncMissing:'Brak encji sync — zużycie nie jest zapisywane',
+    syncMissing:'Bez encji sync karta sama nie zapisuje licznika',
     saveInEditor:'Dodaj je w edytorze karty, aby zachować je po przeładowaniu.',
     adjustQty:'Dostosuj ilość', addToTank:'Dodaj do zbiornika',
     removeFromTank:'Usuń ze zbiornika', resetFull:'Zbiornik napełniony — Reset',
@@ -432,8 +432,10 @@ class DosingTankCardEditor extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
-    this._config = {};
-    this._hass   = null;
+    this._config  = {};
+    this._hass    = null;
+    this._built   = false;
+    this._touched = false;
   }
 
   set hass(hass) {
@@ -441,6 +443,7 @@ class DosingTankCardEditor extends HTMLElement {
     this.shadowRoot.querySelectorAll('ha-entity-picker').forEach(el => {
       if (el.hass !== hass) el.hass = hass;
     });
+    this._syncCreateRow();
   }
 
   setConfig(config) {
@@ -450,7 +453,69 @@ class DosingTankCardEditor extends HTMLElement {
     // level_entity exists to infer the mode from.
     if (this._mode === undefined)
       this._mode = config.level_entity ? 'direct' : 'pump';
-    this._render();
+    // Home Assistant calls setConfig again after every config-changed the
+    // editor itself emits. Rebuilding the form here would recreate the entity
+    // pickers each time, and a picker recreated that way can emit an empty
+    // value-changed which is then saved over a configured entity. That is how
+    // a card silently loses its counter. Build once; afterwards refresh the
+    // values in place, and only rebuild when the structure really differs.
+    // Compared against the mode the DOM was built with, not the previous value
+    // of _mode: the mode select changes _mode before setConfig ever runs.
+    if (!this._built || this._builtMode !== this._mode) this._render();
+    else this._syncFields();
+  }
+
+  /**
+   * Whether a picker event should be written to the config.
+   * Refuses echoes, and refuses to clear an entity that is already set until
+   * the user has actually touched the form: an empty value arriving before any
+   * interaction is the picker initialising, never a deliberate clear.
+   */
+  _acceptsPick(key, v) {
+    const cur = this._config[key] ?? '';
+    if (v === cur) return false;
+    if (!v && cur && !this._touched) return false;
+    return true;
+  }
+
+  // Refreshes values without touching the DOM structure.
+  _syncFields() {
+    const c = this._config;
+    const set = (id, v) => {
+      const el = this.shadowRoot.getElementById(id);
+      if (el && el.value !== String(v)) el.value = v;
+    };
+    set('flow',   c.flow_rate_ml_per_min    ?? 15);
+    set('volume', c.tank_volume_liters       ?? 5);
+    set('alert',  c.alert_threshold_percent  ?? 20);
+    set('name',   c.name                     ?? 'Dosing Tank');
+    set('cpick',  c.liquid_color             ?? '#3b82f6');
+    set('ctext',  c.liquid_color             ?? '#3b82f6');
+    set('lang',   c.language                 ?? 'auto');
+    set('lfull',  c.level_full               ?? '');
+    set('lempty', c.level_empty              ?? '');
+
+    const keys = this._mode === 'direct'
+      ? { 'level-wrap': 'level_entity' }
+      : { 'pump-wrap': 'pump_entity',  'reset-wrap': 'reset_entity',
+          'flow-wrap': 'flow_entity',  'sync-wrap':  'sync_entity' };
+    for (const [wrapId, key] of Object.entries(keys)) {
+      const el = this.shadowRoot.getElementById(wrapId)
+        ?.querySelector('ha-entity-picker, input');
+      const v = this._config[key] || '';
+      if (el && el.value !== v) el.value = v;
+    }
+    this._syncCreateRow();
+  }
+
+  _syncCreateRow() {
+    const row = this.shadowRoot?.getElementById('create-row');
+    if (!row) return;
+    const missing = !this._config.reset_entity
+      || !this._hass?.states[this._config.reset_entity]
+      || !this._config.sync_entity
+      || !this._hass?.states[this._config.sync_entity];
+    row.style.display = missing ? 'flex' : 'none';
   }
 
   _fire(cfg) {
@@ -578,7 +643,10 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
     const makePicker = (wrapId, key, label, onPick) => {
       const wrap = this.shadowRoot.getElementById(wrapId);
       if (!wrap) return;
-      const pick = v => this._fire(onPick ? onPick(v) : { ...this._config, [key]: v });
+      const pick = v => {
+        if (!this._acceptsPick(key, v)) return;
+        this._fire(onPick ? onPick(v) : { ...this._config, [key]: v });
+      };
       const hasPicker = !!customElements.get('ha-entity-picker');
       if (hasPicker) {
         const p = document.createElement('ha-entity-picker');
@@ -619,17 +687,11 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
       makePicker('flow-wrap',  'flow_entity',  T.edFlowEnt);
       makePicker('sync-wrap',  'sync_entity',  T.edSync);
 
-      // Show create button when the counter or the sync watermark is missing
-      const missing = !this._config.reset_entity
-        || !this._hass?.states[this._config.reset_entity]
-        || !this._config.sync_entity
-        || !this._hass?.states[this._config.sync_entity];
-      const createRow = this.shadowRoot.getElementById('create-row');
-      if (createRow && missing) {
-        createRow.style.display = 'flex';
-        this.shadowRoot.getElementById('create-btn')
-          ?.addEventListener('click', () => this._createHelper());
-      }
+      // Wired once; visibility is refreshed by _syncCreateRow as config and
+      // hass come in, so the row never needs the form to be rebuilt.
+      this.shadowRoot.getElementById('create-btn')
+        ?.addEventListener('click', () => this._createHelper());
+      this._syncCreateRow();
     }
 
     // Mode switch. Leaving direct mode clears the level keys, otherwise the
@@ -684,6 +746,14 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
         this._fire({ ...this._config, liquid_color: v });
       }
     });
+
+    // Anything a picker emits before this fires came from the picker setting
+    // itself up, not from the user. See _acceptsPick.
+    for (const ev of ['focusin', 'pointerdown', 'keydown'])
+      this.shadowRoot.addEventListener(ev, () => { this._touched = true; }, { once: true });
+
+    this._built     = true;
+    this._builtMode = this._mode;
   }
 
   async _createHelper() {
@@ -1294,7 +1364,13 @@ ${[25,50,75].map(lv=>{const ly=BY+BH-(lv/100)*BH;return `<line x1="${BX}" y1="${
       : lvl === null     ? T.sensorUnavailable
       : lvl.pct === null ? T.rangeMissing
       : null;
-    const showHelperWarn = !direct && (!resetState || !syncState);
+    // Something else may be writing the counter, typically the automation the
+    // pre-0.2 README suggested and that many installs still run. If it moved
+    // recently, saying nothing is recorded is a false alarm, so the missing
+    // watermark is only raised when the counter looks genuinely stalled.
+    const counterMoved = !!resetState?.last_changed &&
+      Date.now() - new Date(resetState.last_changed).getTime() < 7 * 86400000;
+    const showHelperWarn = !direct && (!resetState || (!syncState && !counterMoved));
     const showAlert      = isAlert && (direct ? !!lvl : !!resetState);
 
     const base  = _esc(isAlert ? '#ef4444' : this._config.liquid_color);

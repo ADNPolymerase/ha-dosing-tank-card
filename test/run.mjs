@@ -27,12 +27,13 @@ const T0   = freezeClock('2026-08-12T12:00:00Z'); // midday, so day buckets are
  */
 function makeCard({ pumpOn = true, onSinceMin = 30, lastFetchMin = null,
                     todayMl = 0, sync = true, reset = true,
-                    name = 'Chlorine' } = {}) {
+                    counterAgeDays = 30, name = 'Chlorine' } = {}) {
   const states = {
     'switch.pump': { state: pumpOn ? 'on' : 'off',
                      last_changed: new Date(now()).toISOString() },
   };
-  if (reset) states['input_number.consumed'] = { state: '0' };
+  if (reset) states['input_number.consumed'] = { state: '0',
+    last_changed: new Date(now() - counterAgeDays * 86400000).toISOString() };
   if (sync)  states['input_datetime.sync']   =
     { state: '2026-08-12 10:00:00', attributes: { timestamp: T0 / 1000 } };
 
@@ -77,8 +78,13 @@ check('historique plus récent que le démarrage pompe → ancrage sur l\'histor
 // Without sync_entity, _syncFromHistory bails out and the counter is never
 // written. That must be visible, not silent.
 
-contains('sync_entity absente → avertissement',
-  makeCard({ sync: false }), 'Sync helper missing');
+contains('sync_entity absente et compteur figé → avertissement',
+  makeCard({ sync: false }), 'the card does not write the counter itself');
+
+// Many installs still run the automation the pre-0.2 README suggested. Their
+// counter IS being written, so claiming otherwise is a false alarm.
+check('sync_entity absente mais compteur alimenté → pas d\'avertissement',
+  /class="warn missing"/.test(makeCard({ sync: false, counterAgeDays: 1 })), false);
 
 contains('reset_entity absente → avertissement',
   makeCard({ reset: false }), 'Counter not found');
@@ -277,5 +283,41 @@ check('éditeur en mode direct : ni débit ni volume',
   /id="flow"|id="volume"/.test(markup(edDirect)), false);
 check('éditeur en mode direct : pas de bouton de création de helpers',
   /id="create-btn"/.test(markup(edDirect)), false);
+
+// ── Éditeur : ne pas perdre une entité configurée ────────────────────────────
+// HA calls setConfig again after every config-changed the editor emits. If the
+// form is rebuilt each time, the entity pickers are recreated, and a recreated
+// picker can emit an empty value-changed that gets saved over the entity.
+
+const edKeep = new Editor();
+edKeep.setConfig({ pump_entity: 'switch.pump', reset_entity: 'input_number.c' });
+edKeep.shadowRoot.innerHTML = 'SENTINELLE';       // survives only if not rebuilt
+edKeep.setConfig({ pump_entity: 'switch.pump', reset_entity: 'input_number.c',
+                   name: 'Chlore' });
+check('un second setConfig ne reconstruit pas le formulaire',
+  markup(edKeep), 'SENTINELLE');
+
+const edPick = new Editor();
+edPick.setConfig({ pump_entity: 'switch.pump', reset_entity: 'input_number.c' });
+check('un picker qui s\'initialise ne peut pas vider une entité configurée',
+  edPick._acceptsPick('reset_entity', ''), false);
+check('un écho de la valeur courante n\'écrit rien',
+  edPick._acceptsPick('reset_entity', 'input_number.c'), false);
+check('un vrai changement passe',
+  edPick._acceptsPick('reset_entity', 'input_number.autre'), true);
+edPick._touched = true;
+check('après interaction, effacer le champ est honoré',
+  edPick._acceptsPick('reset_entity', ''), true);
+check('renseigner une entité vide au départ passe toujours',
+  edPick._acceptsPick('sync_entity', 'input_datetime.s'), true);
+
+// Changing mode is a structural change, so a rebuild is expected there.
+const edMode = new Editor();
+edMode.setConfig({ pump_entity: 'switch.pump' });
+edMode.shadowRoot.innerHTML = 'SENTINELLE';
+edMode._mode = 'direct';
+edMode.setConfig({ level_entity: 'sensor.s' });
+check('changer de mode reconstruit bien le formulaire',
+  markup(edMode) !== 'SENTINELLE', true);
 
 report();
