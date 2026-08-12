@@ -75,10 +75,20 @@ export function markup(el) {
 // ── Frozen clock ─────────────────────────────────────────────────────────────
 
 let _now = null;
-/** Pins Date.now() so time-dependent rendering is reproducible. */
+/**
+ * Pins the clock so time-dependent rendering is reproducible.
+ * Patches both Date.now() AND argument-less `new Date()` — V8 reads the system
+ * clock for the latter, so anything bucketing by calendar day would otherwise
+ * drift with wall-clock time and fail at midnight.
+ */
 export function freezeClock(iso) {
-  _now = new Date(iso).getTime();
-  Date.now = () => _now;
+  const Real = Date;
+  _now = new Real(iso).getTime();
+  globalThis.Date = new Proxy(Real, {
+    construct: (target, args) =>
+      args.length ? new target(...args) : new target(_now),
+  });
+  Real.now = () => _now;
   return _now;
 }
 export function now() { return _now ?? Date.now(); }

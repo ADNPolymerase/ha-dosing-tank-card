@@ -16,7 +16,8 @@ const Card   = registry.get('dosing-tank-card');
 const Editor = registry.get('dosing-tank-card-editor');
 
 const FLOW = 15;                                  // mL/min
-const T0   = freezeClock('2026-08-12T10:00:00Z');
+const T0   = freezeClock('2026-08-12T12:00:00Z'); // midday, so day buckets are
+                                                  // the same in any timezone
 
 /**
  * A card in a chosen state.
@@ -102,5 +103,157 @@ const ev = ed.events.at(-1);
 check('l\'éditeur émet config-changed', ev?.type, 'config-changed');
 check('config-changed porte bien detail.config',
   ev?.detail?.config?.pump_entity, 'switch.other');
+
+// ═══ Mode niveau direct ══════════════════════════════════════════════════════
+
+/**
+ * A direct-mode card. `series` is 8 daily readings, oldest first — the first
+ * one seeds the very first delta, the last one is today.
+ */
+function makeDirect({ series = null, value = null, unit = '%',
+                      full, empty, alert = 20, name = 'Bac à sel',
+                      entity = 'sensor.salt', present = true } = {}) {
+  const cur    = value ?? (series ? series.at(-1) : null);
+  const states = {};
+  if (present && cur !== null)
+    states[entity] = { state: String(cur),
+                       attributes: { unit_of_measurement: unit,
+                                     friendly_name: 'Niveau de sel' },
+                       last_changed: new Date(now() - 3600000).toISOString() };
+  else if (present)
+    states[entity] = { state: 'unavailable', attributes: {},
+                       last_changed: new Date(now()).toISOString() };
+
+  const c = new Card();
+  c.setConfig({ level_entity: entity, level_full: full, level_empty: empty,
+                alert_threshold_percent: alert, name });
+  c._hass = { states, locale: { language: 'en' } };
+  if (series) {
+    // One reading per day at the same time of day, oldest first.
+    c._levelDays = c._levelDailySeries(series.map((v, i) => ({
+      state: String(v),
+      last_changed: new Date(now() - (series.length - 1 - i) * 86400000).toISOString(),
+    })));
+  }
+  c._render();
+  return { card: c, html: markup(c) };
+}
+const tile = (html, label) => {
+  const m = html.match(
+    new RegExp(`<div class="mv[^"]*">([^<]*)</div>\\s*<div class="ml">${label}</div>`));
+  return m ? m[1].trim() : '(tuile introuvable)';
+};
+
+// ── Échelle ──────────────────────────────────────────────────────────────────
+
+check('capteur en %, pas de plage à configurer',
+  tile(makeDirect({ value: 62 }).html, 'Remaining'), '62 %');
+
+check('capteur en kg mis à l\'échelle sur level_full',
+  tile(makeDirect({ value: 18.4, unit: 'kg', full: 25 }).html, 'Remaining'), '18.4 kg');
+
+check('kg → pourcentage du bidon (18.4/25)',
+  makeDirect({ value: 18.4, unit: 'kg', full: 25 }).card._levelValue().pct, 73.6);
+
+// Ultrasonic probe: it measures the distance down to the surface, so a FULL
+// tank reads small. level_full < level_empty must invert the mapping by itself.
+check('sonde inversée (plein = 5 cm, vide = 30 cm), lecture 12 cm → 72 %',
+  makeDirect({ value: 12, unit: 'cm', full: 5, empty: 30 }).card._levelValue().pct, 72);
+
+contains('la plage inversée est signalée dans les réglages',
+  makeDirect({ value: 12, unit: 'cm', full: 5, empty: 30 }).html, 'inverted');
+
+// ── Autonomie ────────────────────────────────────────────────────────────────
+// 25 kg tank losing 2 kg/day = 8 %/day. Today is excluded from the average
+// (it is still running), so 6 complete days at 8 % → 8 %/day.
+// Current level 11 kg = 44 % → 44/8 = 5.5 → 6 days.
+
+const steady = makeDirect({ series: [25,23,21,19,17,15,13,11], unit: 'kg', full: 25 });
+check('autonomie sur une baisse régulière', tile(steady.html, 'Autonomy'), '6 d');
+check('consommation 7 jours = 7 × 2 kg', tile(steady.html, '7 days'), '14 kg');
+
+// Same slope, but refilled on day 4 (21 → 25). That day hides whatever was
+// consumed alongside the refill, so it must leave BOTH sides of the average.
+// Counting it as a zero-consumption day would give 40/6 = 6.7 %/day → 10 days,
+// i.e. an autonomy 40 % too optimistic on a tank that is about to run out.
+const refilled = makeDirect({ series: [25,23,21,25,23,21,19,17], unit: 'kg', full: 25 });
+check('un remplissage ne gonfle pas l\'autonomie',
+  tile(refilled.html, 'Autonomy'), '9 d');
+contains('le jour de remplissage est marqué dans le graphe',
+  refilled.html, 'class="bi refill"');
+
+check('bidon fraîchement rempli, aucune baisse → pas d\'autonomie inventée',
+  tile(makeDirect({ series: [25,25,25,25,25,25,25,25], unit: 'kg', full: 25 }).html,
+       'Autonomy'), '—');
+
+// A flat day is real information (the softener simply did not regenerate),
+// unlike a refill day. 6 complete days, 3 of them at 0 → 12/6 = 2 %/day, and
+// 76 % left → 38 days. Dropping the flat days would give 12/3 = 4 %/day → 19
+// days, halving the autonomy of a tank that is in fact barely used.
+check('les journées à consommation nulle comptent dans la moyenne',
+  tile(makeDirect({ series: [25,24,24,23,23,22,22,19], unit: 'kg', full: 25 }).html,
+       'Autonomy'), '38 d');
+
+// ── Dégradations ─────────────────────────────────────────────────────────────
+
+contains('unité non-% sans level_full → on demande la plage, on ne devine pas',
+  makeDirect({ value: 18, unit: 'kg' }).html, 'Set the full-tank value');
+
+contains('capteur indisponible',
+  makeDirect({ value: null, unit: 'kg', full: 25 }).html, 'Level sensor unavailable');
+
+contains('capteur absent des états',
+  makeDirect({ value: 62, present: false }).html, 'Level sensor not found');
+
+check('plage inconnue → pas de pourcentage inventé dans le bidon',
+  /<div class="tpct">—<\/div>/.test(makeDirect({ value: 18, unit: 'kg' }).html), true);
+
+// ── Ce que le mode direct ne doit PAS afficher ───────────────────────────────
+
+const plain = makeDirect({ value: 62 }).html;
+check('pas de panneau d\'ajustement mL',   /dtc-adj-toggle/.test(plain), false);
+check('pas d\'avertissement compteur/sync', /warn missing/.test(plain), false);
+// Match the element, not the .badge-on/.badge-off rules in the stylesheet.
+check('pas de badge pompe',                 /<div class="badge /.test(plain), false);
+check('alerte niveau bas fonctionnelle',
+  /class="warn alert"/.test(makeDirect({ value: 12 }).html), true);
+
+// ── Rétrocompatibilité ───────────────────────────────────────────────────────
+
+check('getCardSize : 4 en direct, 5 en mode pompe',
+  makeDirect({ value: 62 }).card.getCardSize(), 4);
+
+let threw = null;
+try { new Card().setConfig({ name: 'x' }); } catch (e) { threw = e.message; }
+contains('ni pump_entity ni level_entity → erreur explicite',
+  threw, 'pump_entity or level_entity is required');
+
+// A config carrying both keys must not run the counter chain as well.
+const both = new Card();
+both.setConfig({ pump_entity: 'switch.pump', level_entity: 'sensor.salt' });
+both._hass = { states: { 'sensor.salt': { state: '62',
+                 attributes: { unit_of_measurement: '%' } } },
+               locale: { language: 'en' } };
+both._render();
+check('level_entity l\'emporte sur pump_entity',
+  /dtc-adj-toggle/.test(markup(both)), false);
+
+// ── Éditeur : bascule de mode ────────────────────────────────────────────────
+
+const edPump = new Editor();
+edPump.setConfig({ pump_entity: 'switch.pump' });
+contains('éditeur en mode pompe : champ débit', markup(edPump), 'Flow rate (mL/min)');
+check('éditeur en mode pompe : pas de champ de plage',
+  /id="lfull"/.test(markup(edPump)), false);
+
+const edDirect = new Editor();
+edDirect.setConfig({ level_entity: 'sensor.salt' });
+contains('éditeur : le mode se déduit de level_entity',
+  markup(edDirect), 'value="direct" selected');
+contains('éditeur en mode direct : champs de plage', markup(edDirect), 'id="lfull"');
+check('éditeur en mode direct : ni débit ni volume',
+  /id="flow"|id="volume"/.test(markup(edDirect)), false);
+check('éditeur en mode direct : pas de bouton de création de helpers',
+  /id="create-btn"/.test(markup(edDirect)), false);
 
 report();
