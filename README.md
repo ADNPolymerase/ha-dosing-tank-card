@@ -90,7 +90,7 @@ liquid_color: "#3b82f6"
 |---|---|---|---|---|
 | `pump_entity` | `string` | ✅ ¹ | — | Switch entity controlling the dosing pump |
 | `reset_entity` | `string` | ✅ ¹ | — | `input_number` (or `number`) entity that stores consumed mL |
-| `sync_entity` | `string` | ✅ ¹ | — | `input_datetime` (date + time) holding the catch-up watermark — **without it nothing is ever saved** |
+| `sync_entity` | `string` | ✅ ¹ | — | `input_datetime` (date + time) holding the catch-up watermark — **without it the card never writes the counter itself**, so the level only moves if something else does it |
 | `flow_entity` | `string` | ¹ | — | `input_number` holding the live flow rate in mL/min; takes over from `flow_rate_ml_per_min` when > 0 |
 | `flow_rate_ml_per_min` | `number` | ¹ | `15` | Pump flow rate in mL/min |
 | `tank_volume_liters` | `number` | ¹ | `5` | Tank capacity in litres |

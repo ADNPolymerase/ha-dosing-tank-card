@@ -90,7 +90,7 @@ liquid_color: "#3b82f6"
 |---|---|---|---|---|
 | `pump_entity` | `string` | ✅ ¹ | — | Entité switch pilotant la pompe doseuse |
 | `reset_entity` | `string` | ✅ ¹ | — | Entité `input_number` (ou `number`) qui stocke les mL consommés |
-| `sync_entity` | `string` | ✅ ¹ | — | Entité `input_datetime` (date + heure) portant le repère de rattrapage — **sans elle, rien n'est jamais enregistré** |
+| `sync_entity` | `string` | ✅ ¹ | — | Entité `input_datetime` (date + heure) portant le repère de rattrapage — **sans elle, la carte n'écrit jamais le compteur elle-même**, le niveau ne bouge donc que si autre chose s'en charge |
 | `flow_entity` | `string` | ¹ | — | Entité `input_number` portant le débit en direct (mL/min) ; prend le pas sur `flow_rate_ml_per_min` si > 0 |
 | `flow_rate_ml_per_min` | `number` | ¹ | `15` | Débit de la pompe en mL/min |
 | `tank_volume_liters` | `number` | ¹ | `5` | Capacité du bidon en litres |
