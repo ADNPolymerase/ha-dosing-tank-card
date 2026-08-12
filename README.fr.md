@@ -131,7 +131,7 @@ level_full: 5           # cm entre le capteur et la surface, cuve pleine
 level_empty: 30         # cm, cuve vide
 ```
 
-Les trois tuiles changent de sens dans ce mode : niveau actuel, consommation des 7 derniers jours, et **autonomie** — combien de temps la cuve tient au rythme moyen récent.
+Les trois tuiles changent de sens dans ce mode. Deux sont fixes : la consommation des 7 derniers jours, et l'**autonomie**, combien de temps la cuve tient au rythme moyen récent. La première s'adapte au capteur : sur un capteur en `%` elle affiche la consommation moyenne par jour, puisque le niveau est déjà inscrit sur le bidon ; sur toute autre unité elle affiche ce qu'il reste en unités de cuve, ce qui sur une sonde inversée est la hauteur de liquide et non la distance brute.
 
 Cette moyenne ignore délibérément les journées où le niveau est **monté** : un remplissage masque ce qui a été consommé en parallèle, et le compter comme une journée à consommation nulle gonflerait l'autonomie d'une cuve qui est en réalité en train de se vider. Les jours de remplissage apparaissent en `+` vert dans le graphe. Les journées où le niveau n'a réellement pas bougé sont conservées — un adoucisseur qui n'a pas régénéré, c'est une vraie information. L'autonomie affiche `—` tant qu'il n'y a pas au moins deux journées complètes de baisse.
 

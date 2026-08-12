@@ -131,7 +131,7 @@ level_full: 5           # cm from the sensor to the surface, tank full
 level_empty: 30         # cm, tank empty
 ```
 
-The three tiles change meaning in this mode: current level, consumption over the last 7 days, and **autonomy** — how long the tank lasts at the recent average rate.
+The three tiles change meaning in this mode. Two are fixed: consumption over the last 7 days, and **autonomy**, how long the tank lasts at the recent average rate. The first one adapts to the sensor: on a `%` sensor it shows the average daily consumption, since the level itself is already printed on the tank; on any other unit it shows what is left in tank units, which on an inverted probe is the liquid height and not the raw distance reading.
 
 That average deliberately ignores days when the level went **up**: a refill hides whatever was consumed alongside it, and counting it as a zero-consumption day would inflate the autonomy of a tank that is in fact running out. Refill days appear as a green `+` in the chart. Days where the level genuinely did not move are kept — a softener that did not regenerate is real information. Autonomy shows `—` until there are at least two complete days of decline.
 
