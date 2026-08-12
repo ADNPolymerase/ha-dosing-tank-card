@@ -160,8 +160,30 @@ check('kg → pourcentage du bidon (18.4/25)',
 check('sonde inversée (plein = 5 cm, vide = 30 cm), lecture 12 cm → 72 %',
   makeDirect({ value: 12, unit: 'cm', full: 5, empty: 30 }).card._levelValue().pct, 72);
 
+// The raw reading of an inverted probe is a measure of EMPTINESS: 12 cm down
+// to the surface on a 5–30 cm range means 18 cm of liquid left. Printing the
+// raw 12 under a "Remaining" label would say the opposite of the truth.
+check('sonde inversée : la tuile Restant montre le liquide, pas la distance',
+  tile(makeDirect({ value: 12, unit: 'cm', full: 5, empty: 30 }).html, 'Remaining'),
+  '18 cm');
+
 contains('la plage inversée est signalée dans les réglages',
   makeDirect({ value: 12, unit: 'cm', full: 5, empty: 30 }).html, 'inverted');
+
+// Displayed low → high whichever way round the config is written.
+contains('la plage se lit comme une échelle croissante',
+  makeDirect({ value: 12, unit: 'cm', full: 5, empty: 30 }).html, '5 → 30 cm');
+
+// On a % sensor the level is already on the tank, so the first tile carries
+// the daily rate instead of repeating it.
+const pctSeries = makeDirect({ series: [92,86,80,74,68,62,56,50], unit: '%' });
+check('capteur en % : la 1re tuile passe en moyenne journalière',
+  tile(pctSeries.html, 'Daily avg'), '6 %/d');
+check('capteur en % : plus de tuile Restant redondante',
+  /<div class="ml">Remaining<\/div>/.test(pctSeries.html), false);
+check('capteur en kg : la tuile Restant est conservée',
+  tile(makeDirect({ series: [25,23,21,19,17,15,13,11], unit: 'kg', full: 25 }).html,
+       'Remaining'), '11 kg');
 
 // ── Autonomie ────────────────────────────────────────────────────────────────
 // 25 kg tank losing 2 kg/day = 8 %/day. Today is excluded from the average

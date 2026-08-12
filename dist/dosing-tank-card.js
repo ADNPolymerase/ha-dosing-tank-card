@@ -48,6 +48,7 @@ const DTL = {
     sensorMissing:'Level sensor not found', sensorUnavailable:'Level sensor unavailable',
     rangeMissing:'Set the full-tank value', refill:'Refill',
     dailyChartU: u=>`Daily consumption (${u})`,
+    avgDaily:'Daily avg', perDay: v=>`${v}/d`,
     // editor
     edEntities:'Entities', edPump:'Pump entity',
     edCounter:'Counter (mL)', edFlowEnt:'Flow-rate entity (mL/min)',
@@ -77,6 +78,7 @@ const DTL = {
     sensorMissing:'Capteur de niveau introuvable', sensorUnavailable:'Capteur de niveau indisponible',
     rangeMissing:'Renseignez la valeur bidon plein', refill:'Remplissage',
     dailyChartU: u=>`Consommation journalière (${u})`,
+    avgDaily:'Moyenne/j', perDay: v=>`${v}/j`,
     // editor
     edEntities:'Entités', edPump:'Entité pompe',
     edCounter:'Compteur (mL)', edFlowEnt:'Entité débit (mL/min)',
@@ -106,6 +108,7 @@ const DTL = {
     sensorMissing:'Sensor de nivel no encontrado', sensorUnavailable:'Sensor de nivel no disponible',
     rangeMissing:'Indique el valor de depósito lleno', refill:'Rellenado',
     dailyChartU: u=>`Consumo diario (${u})`,
+    avgDaily:'Media diaria', perDay: v=>`${v}/d`,
     // editor
     edEntities:'Entidades', edPump:'Entidad bomba',
     edCounter:'Contador (mL)', edFlowEnt:'Entidad caudal (mL/min)',
@@ -135,6 +138,7 @@ const DTL = {
     sensorMissing:'Датчик уровня не найден', sensorUnavailable:'Датчик уровня недоступен',
     rangeMissing:'Укажите значение полного бака', refill:'Пополнение',
     dailyChartU: u=>`Суточный расход (${u})`,
+    avgDaily:'В среднем/д', perDay: v=>`${v}/д`,
     // editor
     edEntities:'Сущности', edPump:'Сущность насоса',
     edCounter:'Счётчик (мл)', edFlowEnt:'Сущность расхода (мл/мин)',
@@ -164,6 +168,7 @@ const DTL = {
     sensorMissing:'Füllstandsensor nicht gefunden', sensorUnavailable:'Füllstandsensor nicht verfügbar',
     rangeMissing:'Wert für vollen Tank angeben', refill:'Nachfüllung',
     dailyChartU: u=>`Tagesverbrauch (${u})`,
+    avgDaily:'Ø pro Tag', perDay: v=>`${v}/T`,
     // editor
     edEntities:'Entitäten', edPump:'Pumpen-Entität',
     edCounter:'Zähler (mL)', edFlowEnt:'Durchfluss-Entität (mL/min)',
@@ -193,6 +198,7 @@ const DTL = {
     sensorMissing:'Sensore di livello non trovato', sensorUnavailable:'Sensore di livello non disponibile',
     rangeMissing:'Imposta il valore a serbatoio pieno', refill:'Riempimento',
     dailyChartU: u=>`Consumo giornaliero (${u})`,
+    avgDaily:'Media/g', perDay: v=>`${v}/g`,
     // editor
     edEntities:'Entità', edPump:'Entità pompa',
     edCounter:'Contatore (mL)', edFlowEnt:'Entità portata (mL/min)',
@@ -222,6 +228,7 @@ const DTL = {
     sensorMissing:'Niveausensor niet gevonden', sensorUnavailable:'Niveausensor niet beschikbaar',
     rangeMissing:'Stel de waarde bij volle tank in', refill:'Bijvullen',
     dailyChartU: u=>`Dagelijks verbruik (${u})`,
+    avgDaily:'Gem. per dag', perDay: v=>`${v}/d`,
     // editor
     edEntities:'Entiteiten', edPump:'Pomp entiteit',
     edCounter:'Teller (mL)', edFlowEnt:'Doorstroom entiteit (mL/min)',
@@ -251,6 +258,7 @@ const DTL = {
     sensorMissing:'Nivågivare hittades inte', sensorUnavailable:'Nivågivare otillgänglig',
     rangeMissing:'Ange värdet för full tank', refill:'Påfyllning',
     dailyChartU: u=>`Daglig förbrukning (${u})`,
+    avgDaily:'Snitt/dag', perDay: v=>`${v}/d`,
     // editor
     edEntities:'Entiteter', edPump:'Pumpenhet',
     edCounter:'Räknare (mL)', edFlowEnt:'Flödesenhet (mL/min)',
@@ -280,6 +288,7 @@ const DTL = {
     sensorMissing:'Nivåsensor ikke funnet', sensorUnavailable:'Nivåsensor utilgjengelig',
     rangeMissing:'Angi verdien for full tank', refill:'Påfylling',
     dailyChartU: u=>`Daglig forbruk (${u})`,
+    avgDaily:'Snitt/dag', perDay: v=>`${v}/d`,
     // editor
     edEntities:'Entiteter', edPump:'Pumpenhet',
     edCounter:'Teller (mL)', edFlowEnt:'Strømenhet (mL/min)',
@@ -309,6 +318,7 @@ const DTL = {
     sensorMissing:'Niveausensor ikke fundet', sensorUnavailable:'Niveausensor utilgængelig',
     rangeMissing:'Angiv værdien for fuld tank', refill:'Påfyldning',
     dailyChartU: u=>`Dagligt forbrug (${u})`,
+    avgDaily:'Gns./dag', perDay: v=>`${v}/d`,
     // editor
     edEntities:'Entiteter', edPump:'Pumpeenhed',
     edCounter:'Tæller (mL)', edFlowEnt:'Flow entitet (mL/min)',
@@ -338,6 +348,7 @@ const DTL = {
     sensorMissing:'Nie znaleziono czujnika poziomu', sensorUnavailable:'Czujnik poziomu niedostępny',
     rangeMissing:'Podaj wartość dla pełnego zbiornika', refill:'Napełnienie',
     dailyChartU: u=>`Dzienne zużycie (${u})`,
+    avgDaily:'Śr./dzień', perDay: v=>`${v}/d`,
     // editor
     edEntities:'Encje', edPump:'Encja pompy',
     edCounter:'Licznik (mL)', edFlowEnt:'Encja przepływu (mL/min)',
@@ -998,15 +1009,29 @@ class DosingTankCard extends HTMLElement {
     return h < 24 ? `${h} h` : this._t().fmtDays(Math.floor(h / 24));
   }
 
-  _directMetrics(T, lvl, stats, unit, isAlert) {
-    const cur  = lvl ? this._fmtLevel(lvl.v, unit) : '—';
+  _directMetrics(T, lvl, stats, unit, isAlert, range) {
+    const span = range && range.empty !== null
+      ? Math.abs(range.full - range.empty) : null;
+    // What is LEFT, in tank units. The raw reading cannot be used as-is: an
+    // inverted probe measures the distance down to the surface, so it grows as
+    // the tank empties and would sit under a "remaining" label while meaning
+    // the exact opposite. On a plain 0-to-max sensor this equals the reading.
+    const remain = (lvl?.pct != null && span !== null)
+      ? this._fmtLevel(lvl.pct / 100 * span, unit) : '—';
+    // On a % sensor "remaining" would only repeat the figure already printed
+    // on the tank, so the slot shows the daily rate instead — the one number
+    // the card works out and displays nowhere else.
+    const pace  = unit === '%' && stats?.avgPctDay;
+    const first = pace
+      ? { v: T.perDay(this._fmtLevel(stats.avgPctDay, unit)), l: T.avgDaily }
+      : { v: remain, l: T.remaining };
     const used = stats ? this._fmtLevel(stats.used7dVal, unit) : '—';
     const auto = (stats?.avgPctDay && lvl?.pct != null)
       ? this._fmtAutonomy(T, lvl.pct / stats.avgPctDay) : '—';
     return `<div class="metrics">
     <div class="metric">
-      <div class="mv${isAlert?' alert':''}">${_esc(cur)}</div>
-      <div class="ml">${T.remaining}</div>
+      <div class="mv${isAlert&&!pace?' alert':''}">${_esc(first.v)}</div>
+      <div class="ml">${first.l}</div>
     </div>
     <div class="metric">
       <div class="mv">${_esc(used)}</div>
@@ -1041,8 +1066,11 @@ class DosingTankCard extends HTMLElement {
 
   _directSettings(T, st, range, unit) {
     const name = st?.attributes?.friendly_name || this._config.level_entity || '—';
+    // Always low → high so it reads as a scale; "(inverted)" is what tells you
+    // which end means full, rather than a range printed backwards.
     const rng  = range && range.empty !== null
-      ? `${range.empty} → ${range.full}${unit ? ' ' + unit : ''}` +
+      ? `${Math.min(range.full, range.empty)} → ${Math.max(range.full, range.empty)}` +
+        `${unit ? ' ' + unit : ''}` +
         (range.full < range.empty ? ` (${T.inverted})` : '')
       : '—';
     const upd  = st?.last_changed ? this._fmtAgo(st.last_changed) : '—';
@@ -1402,7 +1430,7 @@ ${[25,50,75].map(lv=>{const ly=BY+BH-(lv/100)*BH;return `<line x1="${BX}" y1="${
   </div>`:''}
   ${showAlert?`<div class="warn alert">${T.lowLevel(pct.toFixed(0))}</div>`:''}
 
-  ${direct?this._directMetrics(T,lvl,lvlStats,lvlUnit,isAlert):`<div class="metrics">
+  ${direct?this._directMetrics(T,lvl,lvlStats,lvlUnit,isAlert,lvlRange):`<div class="metrics">
     <div class="metric">
       <div class="mv${isAlert?' alert':''}">${(remaining/1000).toFixed(2)} L</div>
       <div class="ml">${T.remaining}</div>
