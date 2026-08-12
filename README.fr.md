@@ -110,6 +110,8 @@ liquid_color: "#3b82f6"
 
 Pour une cuve dont le niveau est déjà mesuré — bac à sel d'adoucisseur, sonde ESP32, n'importe quel `sensor.*` contenant un nombre. Renseignez `level_entity` et la carte cesse totalement de compter le temps de pompe : plus de compteur, plus de repère, plus de panneau d'ajustement.
 
+![Mode niveau direct](https://raw.githubusercontent.com/ADNPolymerase/ha-dosing-tank-card/main/docs/screenshot-direct.fr.png)
+
 ```yaml
 type: custom:dosing-tank-card
 level_entity: sensor.adoucisseur_niveau_sel

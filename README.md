@@ -110,6 +110,8 @@ liquid_color: "#3b82f6"
 
 For a tank whose level is already measured — a softener salt tank, an ESP32 probe, any `sensor.*` holding a number. Set `level_entity` and the card stops counting pump runtime entirely: no counter, no watermark, no adjustment panel.
 
+![Direct level mode](https://raw.githubusercontent.com/ADNPolymerase/ha-dosing-tank-card/main/docs/screenshot-direct.png)
+
 ```yaml
 type: custom:dosing-tank-card
 level_entity: sensor.softener_salt_level

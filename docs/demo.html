@@ -1,0 +1,101 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>dosing-tank-card — render harness</title>
+<!--
+  Regenerates the README screenshots with no Home Assistant instance.
+  ES modules need a real origin, so serve the repo root over HTTP:
+
+    python3 -m http.server 8731
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless \
+      --screenshot=docs/screenshot-direct.png --window-size=760,470 \
+      --force-device-scale-factor=2 --hide-scrollbars --virtual-time-budget=4000 \
+      "http://localhost:8731/docs/demo.html?lang=en&mode=direct"
+
+  Query params: lang=en|fr|…  mode=direct|pump|all
+-->
+<style>
+  body { margin:0; padding:20px; background:#111214; font-family:Roboto,system-ui,sans-serif; }
+  #wrap { display:flex; gap:18px; align-items:flex-start; }
+  .col { width:330px; }
+  .cap { color:#9aa0a6; font-size:11px; text-transform:uppercase; letter-spacing:.7px;
+         margin:0 0 8px 2px; }
+</style>
+<div id="wrap"></div>
+
+<script type="module">
+import '../dist/dosing-tank-card.js';
+
+const p    = new URLSearchParams(location.search);
+const lang = p.get('lang') || 'fr';
+const mode = p.get('mode') || 'direct';
+const DAY  = 86400000;
+const now  = Date.now();
+
+const CAP = {
+  fr: { pct:'Capteur en %', inv:'Sonde inversée', pump:'Mode temps de pompe' },
+  en: { pct:'Percentage sensor', inv:'Inverted probe', pump:'Pump-runtime mode' },
+};
+const cap = CAP[lang] || CAP.en;
+
+// Fake history/period payload: one reading per day, oldest first.
+const history = series => [series.map((v, i) => ({
+  state: String(v),
+  last_changed: new Date(now - (series.length - 1 - i) * DAY).toISOString(),
+}))];
+
+function add(caption, config, states, hist) {
+  const col = document.createElement('div');
+  col.className = 'col';
+  col.innerHTML = `<p class="cap">${caption}</p>`;
+  const card = document.createElement('dosing-tank-card');
+  card.setConfig(config);
+  card.hass = { states, locale: { language: lang },
+                callApi: async () => hist, callService: async () => {} };
+  col.appendChild(card);
+  document.getElementById('wrap').appendChild(col);
+}
+
+if (mode === 'direct' || mode === 'all') {
+  // Softener salt tank, refilled four days ago.
+  add(cap.pct,
+    { level_entity: 'sensor.salt_level', name: lang === 'fr' ? 'Sel adoucisseur' : 'Softener salt',
+      liquid_color: '#94a3b8', alert_threshold_percent: 15 },
+    { 'sensor.salt_level': { state: '34',
+        attributes: { unit_of_measurement: '%',
+          friendly_name: lang === 'fr' ? 'Niveau de sel' : 'Salt level' },
+        last_changed: new Date(now - 25 * 60000).toISOString() } },
+    history([58, 52, 46, 92, 78, 62, 48, 34]));
+
+  // pH− drum read by an ultrasonic probe: full = 5 cm, empty = 30 cm.
+  add(cap.inv,
+    { level_entity: 'sensor.ph_minus_distance', name: 'pH−',
+      level_full: 5, level_empty: 30,
+      liquid_color: '#f97316', alert_threshold_percent: 20 },
+    { 'sensor.ph_minus_distance': { state: '23',
+        attributes: { unit_of_measurement: 'cm',
+          friendly_name: lang === 'fr' ? 'pH− distance surface' : 'pH− surface distance' },
+        last_changed: new Date(now - 3 * 3600000).toISOString() } },
+    history([9, 11, 13, 15, 18, 20, 21, 23]));
+}
+
+if (mode === 'pump' || mode === 'all') {
+  const pumpHist = [[
+    { state: 'off', last_changed: new Date(now - 7 * DAY).toISOString() },
+    ...[6,5,4,3,2,1].flatMap(d => ([
+      { state: 'on',  last_changed: new Date(now - d * DAY).toISOString() },
+      { state: 'off', last_changed: new Date(now - d * DAY + 9 * 60000).toISOString() },
+    ])),
+    { state: 'on', last_changed: new Date(now - 20 * 60000).toISOString() },
+  ]];
+  add(cap.pump,
+    { pump_entity: 'switch.chlorine_pump', reset_entity: 'input_number.consumed',
+      sync_entity: 'input_datetime.sync', name: lang === 'fr' ? 'Chlore' : 'Chlorine',
+      flow_rate_ml_per_min: 15, tank_volume_liters: 5 },
+    { 'switch.chlorine_pump': { state: 'on',
+        last_changed: new Date(now - 20 * 60000).toISOString() },
+      'input_number.consumed': { state: '3820' },
+      'input_datetime.sync': {
+        state: 'x', attributes: { timestamp: Math.floor((now - 20 * 60000) / 1000) } } },
+    pumpHist);
+}
+</script>
