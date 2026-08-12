@@ -22,6 +22,7 @@ A Lovelace card to track the level of a **liquid dosing tank** — chlorine, pH�
 
 - **Animated SVG tank** with configurable liquid color, real-time pump badge and low-level alert (card turns red + warning banner).
 - **3 key metrics** — remaining volume (L), today's consumption (mL), 7-day pump runtime — plus a **7-day bar chart** built from HA history, no extra sensors needed.
+- **Counts in the background** — runtime is reconciled from the HA history API, so nothing is lost while no browser tab is open. No automation required.
 - **Collapsible adjustment panel** — Add/Remove/Reset controls, hidden by default.
 - **Multilingual** (11 languages: EN, FR, ES, DE, IT, NL, SV, NO, DA, PL, RU — auto-detected from HA), dark-mode ready, responsive, zero dependencies.
 
@@ -40,7 +41,15 @@ A Lovelace card to track the level of a **liquid dosing tank** — chlorine, pH�
 
 If you dose **by hand** (no pump), use the +/- adjustment panel to track the level manually.
 
-**An `input_number` helper** to persist the consumed volume across restarts — **Settings → Devices & Services → Helpers → Create helper → Number** (min `0`, max `9999999`, step `1`, unit `mL`).
+**Two helpers** (three with the optional one). The quickest way is the **✨ Create counter** button in the card editor — it creates them all and fills them into the config. Manually, from **Settings → Devices & Services → Helpers**:
+
+| Helper | Type | Role |
+|---|---|---|
+| `<name> consumed` | **Number** — min `0`, max `9999999`, step `1`, unit `mL` | consumed volume, persisted across restarts |
+| `<name> sync` | **Date and/or time** — date **and** time | watermark: how far the pump runtime has already been counted |
+| `<name> flow rate` | **Number** — unit `mL/min` | *optional* — live flow rate, overrides `flow_rate_ml_per_min` |
+
+> ⚠️ Without `sync_entity` the card still shows a live level while the pump runs, but **never writes to the counter** — the reading is lost as soon as the pump stops.
 
 ---
 
@@ -58,12 +67,14 @@ Manual alternative: copy `dosing-tank-card.js` from the [latest release](../../r
 ```yaml
 type: custom:dosing-tank-card
 pump_entity: switch.pool_chlorine_pump
+reset_entity: input_number.dosing_tank_consumed
+sync_entity: input_datetime.dosing_tank_sync
 flow_rate_ml_per_min: 15
 tank_volume_liters: 5
 alert_threshold_percent: 20
-reset_entity: input_number.dosing_tank_consumed
 name: "Chlorine"
 liquid_color: "#3b82f6"
+# flow_entity: input_number.dosing_tank_flow_rate  # optional — live flow rate
 # language: "fr"  # optional — auto-detected from HA locale by default
 ```
 
@@ -72,7 +83,9 @@ liquid_color: "#3b82f6"
 | Option | Type | Required | Default | Description |
 |---|---|---|---|---|
 | `pump_entity` | `string` | ✅ | — | Switch entity controlling the dosing pump |
-| `reset_entity` | `string` | ✅ | — | `input_number` entity that stores consumed mL |
+| `reset_entity` | `string` | ✅ | — | `input_number` (or `number`) entity that stores consumed mL |
+| `sync_entity` | `string` | ✅ | — | `input_datetime` (date + time) holding the catch-up watermark — **without it nothing is ever saved** |
+| `flow_entity` | `string` | | — | `input_number` holding the live flow rate in mL/min; takes over from `flow_rate_ml_per_min` when > 0 |
 | `flow_rate_ml_per_min` | `number` | | `15` | Pump flow rate in mL/min |
 | `tank_volume_liters` | `number` | | `5` | Tank capacity in litres |
 | `alert_threshold_percent` | `number` | | `20` | Alert threshold (%) |
@@ -95,40 +108,22 @@ liquid_color: "#3b82f6"
 
 ## How it works
 
-Each time the pump switches **OFF**, the card computes the session duration and increments the consumed-mL counter (`remaining = tank_volume × 1000 − consumed`). The bar chart queries the HA history API. The reset button sets the counter back to `0` when you refill.
+`remaining = tank_volume × 1000 − consumed`, where consumed is pump runtime × flow rate.
 
-> **Note:** the counter is only incremented while a browser tab showing the card is open. For accurate background tracking, use the automation below.
+Runtime is reconciled from the **Home Assistant history API**, not from the open browser tab. `sync_entity` stores a watermark — the instant up to which runtime has already been counted. On each refresh (every 15 min, and immediately when the pump stops) the card adds everything the pump ran since that watermark into `reset_entity`, then moves the watermark forward. So nothing is lost while no tab is open: the catch-up happens the next time the card is displayed, looking back up to 90 days.
+
+The 7-day bar chart is built from the same history. The reset button zeroes the counter and moves the watermark to now, for when you refill the tank.
+
+Any entity whose state is `on` while product is injected works — `switch.*`, `input_boolean.*` and `binary_sensor.*` alike.
 
 ---
 
-## Automation for background accuracy
+## Upgrading from v0.1.x
 
-```yaml
-alias: "Dosing tank — track chlorine consumption"
-trigger:
-  - platform: state
-    entity_id: switch.pool_chlorine_pump
-    from: "on"
-    to: "off"
-action:
-  - variables:
-      duration_min: >
-        {{ (as_timestamp(now()) - as_timestamp(trigger.from_state.last_changed)) / 60 }}
-      flow_ml_per_min: 15
-  - service: input_number.set_value
-    target:
-      entity_id: input_number.dosing_tank_consumed
-    data:
-      value: >
-        {{ [9999999,
-            (states('input_number.dosing_tank_consumed') | float)
-            + (duration_min * flow_ml_per_min) | round(0)
-           ] | min }}
-mode: queued
-max: 5
-```
+Up to v0.1.3 the counter only moved while a browser tab was open, and this README suggested an automation to increment it on each pump stop. Since **v0.2.0** the card does the catch-up itself from history. If you are coming from an older version:
 
-Duplicate and adjust for each additional tank. `switch.*` and `input_boolean.*` are fully supported; with a `binary_sensor.*`, use the automation for counter updates.
+1. Add a `sync_entity` (see [Prerequisites](#prerequisites)) — without it the counter is never written.
+2. **Delete that old automation.** With `sync_entity` set, the automation and the card would each count the same pump cycle, doubling your consumption.
 
 ---
 

@@ -22,6 +22,7 @@ Une carte Lovelace pour suivre le niveau d'un **bidon de dosage liquide** — ch
 
 - **Bidon SVG animé** avec couleur de liquide configurable, badge pompe en temps réel et alerte de niveau bas (carte rouge + bannière).
 - **3 métriques clés** — volume restant (L), consommation du jour (mL), marche pompe sur 7 jours — plus un **graphique en barres 7 jours** construit depuis l'historique HA, aucun capteur supplémentaire.
+- **Comptage en arrière-plan** — le temps de marche est reconstitué depuis l'API d'historique HA : rien n'est perdu quand aucun onglet n'est ouvert. Aucune automatisation nécessaire.
 - **Panneau d'ajustement repliable** — Ajouter/Retirer/Réinitialiser, masqué par défaut.
 - **Multilingue** (11 langues : FR, EN, ES, DE, IT, NL, SV, NO, DA, PL, RU — auto-détectée depuis HA), mode sombre, responsive, zéro dépendance.
 
@@ -40,7 +41,15 @@ Une carte Lovelace pour suivre le niveau d'un **bidon de dosage liquide** — ch
 
 Si vous dosez **à la main** (sans pompe), utilisez le panneau d'ajustement +/- pour suivre le niveau manuellement.
 
-**Un helper `input_number`** pour conserver le volume consommé entre les redémarrages — **Paramètres → Appareils et services → Assistants → Créer un assistant → Nombre** (min `0`, max `9999999`, pas `1`, unité `mL`).
+**Deux helpers** (trois avec l'optionnel). Le plus simple est le bouton **✨ Créer le compteur** dans l'éditeur de carte : il les crée tous et les renseigne dans la config. Manuellement, depuis **Paramètres → Appareils et services → Assistants** :
+
+| Helper | Type | Rôle |
+|---|---|---|
+| `<nom> consumed` | **Nombre** — min `0`, max `9999999`, pas `1`, unité `mL` | volume consommé, conservé entre les redémarrages |
+| `<nom> sync` | **Date et/ou heure** — date **et** heure | repère : jusqu'où le temps de marche a déjà été comptabilisé |
+| `<nom> flow rate` | **Nombre** — unité `mL/min` | *optionnel* — débit en direct, remplace `flow_rate_ml_per_min` |
+
+> ⚠️ Sans `sync_entity`, la carte affiche bien un niveau en direct pendant que la pompe tourne, mais **n'écrit jamais dans le compteur** — la valeur est perdue dès l'arrêt de la pompe.
 
 ---
 
@@ -58,12 +67,14 @@ Alternative manuelle : copiez `dosing-tank-card.js` depuis la [dernière version
 ```yaml
 type: custom:dosing-tank-card
 pump_entity: switch.pool_chlorine_pump
+reset_entity: input_number.dosing_tank_consumed
+sync_entity: input_datetime.dosing_tank_sync
 flow_rate_ml_per_min: 15
 tank_volume_liters: 5
 alert_threshold_percent: 20
-reset_entity: input_number.dosing_tank_consumed
 name: "Chlore"
 liquid_color: "#3b82f6"
+# flow_entity: input_number.dosing_tank_flow_rate  # optionnel — débit en direct
 # language: "fr"  # optionnel — auto-détecté depuis la locale HA par défaut
 ```
 
@@ -72,7 +83,9 @@ liquid_color: "#3b82f6"
 | Option | Type | Requis | Défaut | Description |
 |---|---|---|---|---|
 | `pump_entity` | `string` | ✅ | — | Entité switch pilotant la pompe doseuse |
-| `reset_entity` | `string` | ✅ | — | Entité `input_number` qui stocke les mL consommés |
+| `reset_entity` | `string` | ✅ | — | Entité `input_number` (ou `number`) qui stocke les mL consommés |
+| `sync_entity` | `string` | ✅ | — | Entité `input_datetime` (date + heure) portant le repère de rattrapage — **sans elle, rien n'est jamais enregistré** |
+| `flow_entity` | `string` | | — | Entité `input_number` portant le débit en direct (mL/min) ; prend le pas sur `flow_rate_ml_per_min` si > 0 |
 | `flow_rate_ml_per_min` | `number` | | `15` | Débit de la pompe en mL/min |
 | `tank_volume_liters` | `number` | | `5` | Capacité du bidon en litres |
 | `alert_threshold_percent` | `number` | | `20` | Seuil d'alerte (%) |
@@ -95,40 +108,22 @@ liquid_color: "#3b82f6"
 
 ## Fonctionnement
 
-Chaque fois que la pompe passe sur **OFF**, la carte calcule la durée de la session et incrémente le compteur de mL consommés (`restant = volume_bidon × 1000 − consommé`). Le graphique interroge l'API historique HA. Le bouton de réinitialisation remet le compteur à `0` quand vous remplissez.
+`restant = volume_bidon × 1000 − consommé`, le consommé étant le temps de marche de la pompe × le débit.
 
-> **Remarque :** le compteur n'est incrémenté que lorsqu'un onglet du navigateur affichant la carte est ouvert. Pour un suivi précis en arrière-plan, utilisez l'automatisation ci-dessous.
+Le temps de marche est reconstitué depuis l'**API d'historique de Home Assistant**, pas depuis l'onglet ouvert. `sync_entity` conserve un repère : l'instant jusqu'auquel le temps de marche a déjà été comptabilisé. À chaque rafraîchissement (toutes les 15 min, et immédiatement à l'arrêt de la pompe), la carte ajoute dans `reset_entity` tout ce que la pompe a tourné depuis ce repère, puis avance le repère. Rien n'est donc perdu quand aucun onglet n'est ouvert : le rattrapage se fait au prochain affichage de la carte, jusqu'à 90 jours en arrière.
+
+Le graphique 7 jours est construit depuis le même historique. Le bouton de réinitialisation remet le compteur à `0` et place le repère à maintenant, quand vous remplissez le bidon.
+
+N'importe quelle entité dont l'état est `on` pendant l'injection convient — `switch.*`, `input_boolean.*` comme `binary_sensor.*`.
 
 ---
 
-## Automatisation pour la précision en arrière-plan
+## Migration depuis la v0.1.x
 
-```yaml
-alias: "Bidon de dosage — suivi consommation chlore"
-trigger:
-  - platform: state
-    entity_id: switch.pool_chlorine_pump
-    from: "on"
-    to: "off"
-action:
-  - variables:
-      duration_min: >
-        {{ (as_timestamp(now()) - as_timestamp(trigger.from_state.last_changed)) / 60 }}
-      flow_ml_per_min: 15
-  - service: input_number.set_value
-    target:
-      entity_id: input_number.dosing_tank_consumed
-    data:
-      value: >
-        {{ [9999999,
-            (states('input_number.dosing_tank_consumed') | float)
-            + (duration_min * flow_ml_per_min) | round(0)
-           ] | min }}
-mode: queued
-max: 5
-```
+Jusqu'à la v0.1.3, le compteur n'avançait que lorsqu'un onglet était ouvert, et ce README proposait une automatisation pour l'incrémenter à chaque arrêt de pompe. Depuis la **v0.2.0**, la carte fait le rattrapage elle-même depuis l'historique. Si vous venez d'une version plus ancienne :
 
-Dupliquer et ajuster pour chaque bidon supplémentaire. `switch.*` et `input_boolean.*` sont totalement supportés ; avec un `binary_sensor.*`, utilisez l'automatisation pour les mises à jour du compteur.
+1. Ajoutez une `sync_entity` (voir [Prérequis](#prérequis)) — sans elle, le compteur n'est jamais écrit.
+2. **Supprimez cette ancienne automatisation.** Avec `sync_entity` renseignée, l'automatisation et la carte compteraient chacune le même cycle de pompe, doublant votre consommation.
 
 ---
 
