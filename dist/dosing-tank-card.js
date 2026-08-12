@@ -7,6 +7,9 @@
  *   type: custom:dosing-tank-card
  *   pump_entity: switch.pool_chlorine_pump      (required)
  *   reset_entity: input_number.dosing_consumed  (required)
+ *   sync_entity: input_datetime.dosing_sync     (required — catch-up watermark;
+ *                                                without it nothing is ever saved)
+ *   flow_entity: input_number.dosing_flow_rate  (optional — live flow rate)
  *   flow_rate_ml_per_min: 15
  *   tank_volume_liters: 5
  *   alert_threshold_percent: 20
@@ -26,7 +29,9 @@ const DTL = {
     noData:'No data yet', pctLeft: p=>`${p}% left`,
     lowLevel: p=>`⚠️ Low level — refill soon (${p}% remaining)`,
     helperMissing:'Counter not found', createHelper:'Create counter',
-    creating:'Creating…', helperCreated: id=>`Counter created: ${id}`,
+    creating:'Creating…', helperCreated: id=>`Created: ${id}`,
+    syncMissing:'Sync helper missing — consumption is not being saved',
+    saveInEditor:'Add them in the card editor to keep them after a reload.',
     adjustQty:'Adjust quantity', addToTank:'Add to tank',
     removeFromTank:'Remove from tank', resetFull:'Tank refilled — Reset',
     resetting:'Resetting…', on:'ON', off:'OFF',
@@ -46,7 +51,9 @@ const DTL = {
     noData:'Aucune donnée', pctLeft: p=>`${p}% restant`,
     lowLevel: p=>`⚠️ Niveau bas — rechargez dès que possible (${p}% restant)`,
     helperMissing:'Compteur introuvable', createHelper:'Créer le compteur',
-    creating:'Création…', helperCreated: id=>`Compteur créé : ${id}`,
+    creating:'Création…', helperCreated: id=>`Créé : ${id}`,
+    syncMissing:"Entité sync manquante — la consommation n'est pas enregistrée",
+    saveInEditor:"Renseignez-les dans l'éditeur de carte pour les conserver après rechargement.",
     adjustQty:'Ajuster la quantité', addToTank:'Ajouter au bidon',
     removeFromTank:'Retirer du bidon', resetFull:'Bidon rempli — Réinitialiser',
     resetting:'Réinitialisation…', on:'ACTIF', off:'INACTIF',
@@ -66,7 +73,9 @@ const DTL = {
     noData:'Sin datos', pctLeft: p=>`${p}% restante`,
     lowLevel: p=>`⚠️ Nivel bajo — recargar pronto (${p}% restante)`,
     helperMissing:'Contador no encontrado', createHelper:'Crear contador',
-    creating:'Creando…', helperCreated: id=>`Contador creado: ${id}`,
+    creating:'Creando…', helperCreated: id=>`Creado: ${id}`,
+    syncMissing:'Falta la entidad de sincronización — el consumo no se guarda',
+    saveInEditor:'Añádelos en el editor de la tarjeta para conservarlos tras recargar.',
     adjustQty:'Ajustar cantidad', addToTank:'Añadir al depósito',
     removeFromTank:'Retirar del depósito', resetFull:'Depósito lleno — Reiniciar',
     resetting:'Reiniciando…', on:'ON', off:'OFF',
@@ -86,7 +95,9 @@ const DTL = {
     noData:'Пока нет данных', pctLeft: p=>`${p}% осталось`,
     lowLevel: p=>`⚠️ Низкий уровень — пополните бак (${p}% осталось)`,
     helperMissing:'Счётчик не найден', createHelper:'Создать счётчик',
-    creating:'Создание…', helperCreated: id=>`Счётчик создан: ${id}`,
+    creating:'Создание…', helperCreated: id=>`Создано: ${id}`,
+    syncMissing:'Нет сущности синхронизации — расход не сохраняется',
+    saveInEditor:'Добавьте их в редакторе карточки, чтобы сохранить после перезагрузки.',
     adjustQty:'Изменить количество', addToTank:'Добавить в бак',
     removeFromTank:'Убрать из бака', resetFull:'Бак заполнен — Сбросить',
     resetting:'Сброс…', on:'ВКЛ', off:'ВЫКЛ',
@@ -106,7 +117,9 @@ const DTL = {
     noData:'Keine Daten', pctLeft: p=>`${p}% verbleibend`,
     lowLevel: p=>`⚠️ Niedriger Stand — bald nachfüllen (${p}% verbleibend)`,
     helperMissing:'Zähler nicht gefunden', createHelper:'Zähler erstellen',
-    creating:'Erstelle…', helperCreated: id=>`Zähler erstellt: ${id}`,
+    creating:'Erstelle…', helperCreated: id=>`Erstellt: ${id}`,
+    syncMissing:'Sync-Entität fehlt — Verbrauch wird nicht gespeichert',
+    saveInEditor:'Trage sie im Karten-Editor ein, damit sie nach dem Neuladen erhalten bleiben.',
     adjustQty:'Menge anpassen', addToTank:'Zum Tank hinzufügen',
     removeFromTank:'Aus Tank entnehmen', resetFull:'Tank voll — Zurücksetzen',
     resetting:'Zurücksetzen…', on:'AN', off:'AUS',
@@ -126,7 +139,9 @@ const DTL = {
     noData:'Nessun dato', pctLeft: p=>`${p}% rimanente`,
     lowLevel: p=>`⚠️ Livello basso — ricaricare presto (${p}% rimanente)`,
     helperMissing:'Contatore non trovato', createHelper:'Crea contatore',
-    creating:'Creazione…', helperCreated: id=>`Contatore creato: ${id}`,
+    creating:'Creazione…', helperCreated: id=>`Creato: ${id}`,
+    syncMissing:'Entità sync mancante — il consumo non viene salvato',
+    saveInEditor:"Inseriscili nell'editor della scheda per conservarli dopo il ricaricamento.",
     adjustQty:'Regola quantità', addToTank:'Aggiungi al serbatoio',
     removeFromTank:'Rimuovi dal serbatoio', resetFull:'Serbatoio pieno — Azzera',
     resetting:'Azzerando…', on:'ON', off:'OFF',
@@ -146,7 +161,9 @@ const DTL = {
     noData:'Geen gegevens', pctLeft: p=>`${p}% resterend`,
     lowLevel: p=>`⚠️ Laag niveau — spoedig bijvullen (${p}% resterend)`,
     helperMissing:'Teller niet gevonden', createHelper:'Teller aanmaken',
-    creating:'Aanmaken…', helperCreated: id=>`Teller aangemaakt: ${id}`,
+    creating:'Aanmaken…', helperCreated: id=>`Aangemaakt: ${id}`,
+    syncMissing:'Sync-entiteit ontbreekt — verbruik wordt niet opgeslagen',
+    saveInEditor:'Voeg ze toe in de kaarteditor om ze na herladen te behouden.',
     adjustQty:'Hoeveelheid aanpassen', addToTank:'Toevoegen aan tank',
     removeFromTank:'Verwijderen uit tank', resetFull:'Tank gevuld — Resetten',
     resetting:'Resetten…', on:'AAN', off:'UIT',
@@ -166,7 +183,9 @@ const DTL = {
     noData:'Ingen data än', pctLeft: p=>`${p}% kvar`,
     lowLevel: p=>`⚠️ Låg nivå — fyll på snart (${p}% kvar)`,
     helperMissing:'Räknare hittades inte', createHelper:'Skapa räknare',
-    creating:'Skapar…', helperCreated: id=>`Räknare skapad: ${id}`,
+    creating:'Skapar…', helperCreated: id=>`Skapad: ${id}`,
+    syncMissing:'Synkroniseringsenhet saknas — förbrukningen sparas inte',
+    saveInEditor:'Lägg till dem i kortredigeraren för att behålla dem efter omladdning.',
     adjustQty:'Justera mängd', addToTank:'Lägg till i tank',
     removeFromTank:'Ta bort från tank', resetFull:'Tank påfylld — Återställ',
     resetting:'Återställer…', on:'PÅ', off:'AV',
@@ -186,7 +205,9 @@ const DTL = {
     noData:'Ingen data ennå', pctLeft: p=>`${p}% igjen`,
     lowLevel: p=>`⚠️ Lavt nivå — fyll på snart (${p}% igjen)`,
     helperMissing:'Teller ikke funnet', createHelper:'Opprett teller',
-    creating:'Oppretter…', helperCreated: id=>`Teller opprettet: ${id}`,
+    creating:'Oppretter…', helperCreated: id=>`Opprettet: ${id}`,
+    syncMissing:'Synkenhet mangler — forbruket lagres ikke',
+    saveInEditor:'Legg dem til i kortredigeringen for å beholde dem etter omlasting.',
     adjustQty:'Juster mengde', addToTank:'Legg til i tank',
     removeFromTank:'Fjern fra tank', resetFull:'Tank fylt — Tilbakestill',
     resetting:'Tilbakestiller…', on:'PÅ', off:'AV',
@@ -206,7 +227,9 @@ const DTL = {
     noData:'Ingen data endnu', pctLeft: p=>`${p}% tilbage`,
     lowLevel: p=>`⚠️ Lavt niveau — genopfyld snart (${p}% tilbage)`,
     helperMissing:'Tæller ikke fundet', createHelper:'Opret tæller',
-    creating:'Opretter…', helperCreated: id=>`Tæller oprettet: ${id}`,
+    creating:'Opretter…', helperCreated: id=>`Oprettet: ${id}`,
+    syncMissing:'Synkroniseringsenhed mangler — forbruget gemmes ikke',
+    saveInEditor:'Tilføj dem i kortredigeringen for at bevare dem efter genindlæsning.',
     adjustQty:'Juster mængde', addToTank:'Tilføj til tank',
     removeFromTank:'Fjern fra tank', resetFull:'Tank fyldt — Nulstil',
     resetting:'Nulstiller…', on:'TIL', off:'FRA',
@@ -226,7 +249,9 @@ const DTL = {
     noData:'Brak danych', pctLeft: p=>`${p}% pozostało`,
     lowLevel: p=>`⚠️ Niski poziom — uzupełnij wkrótce (${p}% pozostało)`,
     helperMissing:'Licznik nie znaleziony', createHelper:'Utwórz licznik',
-    creating:'Tworzenie…', helperCreated: id=>`Licznik utworzony: ${id}`,
+    creating:'Tworzenie…', helperCreated: id=>`Utworzono: ${id}`,
+    syncMissing:'Brak encji sync — zużycie nie jest zapisywane',
+    saveInEditor:'Dodaj je w edytorze karty, aby zachować je po przeładowaniu.',
     adjustQty:'Dostosuj ilość', addToTank:'Dodaj do zbiornika',
     removeFromTank:'Usuń ze zbiornika', resetFull:'Zbiornik napełniony — Reset',
     resetting:'Resetowanie…', on:'WŁ.', off:'WYŁ.',
@@ -246,6 +271,55 @@ function _slugify(s) {
     .normalize('NFD').replace(/[̀-ͯ]/g, '')
     .replace(/[^a-z0-9]+/g, '_')
     .replace(/^_+|_+$/g, '');
+}
+
+// User-provided config values (name, colors, entity ids) end up inside template
+// literals — escape them so a quote in a title cannot break the markup.
+const _ESC = { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' };
+function _esc(v) {
+  return String(v ?? '').replace(/[&<>"']/g, c => _ESC[c]);
+}
+
+// Creates whichever of the three helpers the card needs is still missing:
+// consumed counter (mL), flow-rate helper (mL/min) and the sync watermark.
+// Shared by the card and the editor so both stay in step.
+async function _ensureHelpers(hass, config) {
+  const cardName = config.name || 'Dosing Tank';
+  const cfg      = { ...config };
+  const created  = [];
+
+  if (!cfg.reset_entity || !hass?.states[cfg.reset_entity]) {
+    const n = `${cardName} consumed`;
+    await hass.callWS({
+      type: 'input_number/create', name: n,
+      min: 0, max: 9999999, step: 1,
+      unit_of_measurement: 'mL', mode: 'box', icon: 'mdi:cup-water',
+    });
+    cfg.reset_entity = `input_number.${_slugify(n)}`;
+    created.push(cfg.reset_entity);
+  }
+  // Flow-rate helper (mL/min) — seeded with the current config flow rate
+  if (!cfg.flow_entity || !hass?.states[cfg.flow_entity]) {
+    const n = `${cardName} flow rate`;
+    await hass.callWS({
+      type: 'input_number/create', name: n,
+      min: 0, max: 100000, step: 1, initial: cfg.flow_rate_ml_per_min || 50,
+      unit_of_measurement: 'mL/min', mode: 'box', icon: 'mdi:pump',
+    });
+    cfg.flow_entity = `input_number.${_slugify(n)}`;
+    created.push(cfg.flow_entity);
+  }
+  // Sync watermark (input_datetime, date + time)
+  if (!cfg.sync_entity || !hass?.states[cfg.sync_entity]) {
+    const n = `${cardName} sync`;
+    await hass.callWS({
+      type: 'input_datetime/create', name: n,
+      has_date: true, has_time: true, icon: 'mdi:clock-check',
+    });
+    cfg.sync_entity = `input_datetime.${_slugify(n)}`;
+    created.push(cfg.sync_entity);
+  }
+  return { config: cfg, created };
 }
 
 // ── Visual editor ─────────────────────────────────────────────────────────────
@@ -289,7 +363,7 @@ class DosingTankCardEditor extends HTMLElement {
     const LANG_LABELS = {
       auto:'Auto (HA locale)', en:'English', fr:'Français',
       es:'Español', de:'Deutsch', it:'Italiano', nl:'Nederlands',
-      sv:'Svenska', no:'Norsk', da:'Dansk', pl:'Polski',
+      sv:'Svenska', no:'Norsk', da:'Dansk', pl:'Polski', ru:'Русский',
     };
     const langOptions = Object.entries(LANG_LABELS)
       .map(([k,v]) => `<option value="${k}"${(c.language||'auto')===k?' selected':''}>${v}</option>`)
@@ -361,13 +435,13 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
   <div class="sec">${T.edAppearance}</div>
   <div class="field">
     <label>${T.edTitle}</label>
-    <input type="text" id="name" value="${c.name??'Dosing Tank'}">
+    <input type="text" id="name" value="${_esc(c.name??'Dosing Tank')}">
   </div>
   <div class="field">
     <label>${T.edColor}</label>
     <div class="color-row">
-      <input type="color" id="cpick" value="${c.liquid_color??'#3b82f6'}">
-      <input type="text"  id="ctext" value="${c.liquid_color??'#3b82f6'}" placeholder="#3b82f6" maxlength="7">
+      <input type="color" id="cpick" value="${_esc(c.liquid_color??'#3b82f6')}">
+      <input type="text"  id="ctext" value="${_esc(c.liquid_color??'#3b82f6')}" placeholder="#3b82f6" maxlength="7">
     </div>
   </div>
 </div>`;
@@ -452,41 +526,10 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
     const status = this.shadowRoot.getElementById('create-status');
     if (btn) { btn.disabled = true; btn.textContent = this._t().creating; }
 
-    const cardName = this._config.name || 'Dosing Tank';
-    const cfg      = { ...this._config };
-
     try {
-      // Consumed counter (mL)
-      if (!cfg.reset_entity || !this._hass?.states[cfg.reset_entity]) {
-        const n = `${cardName} consumed`;
-        await this._hass.callWS({
-          type: 'input_number/create', name: n,
-          min: 0, max: 9999999, step: 1,
-          unit_of_measurement: 'mL', mode: 'box', icon: 'mdi:cup-water',
-        });
-        cfg.reset_entity = `input_number.${_slugify(n)}`;
-      }
-      // Flow-rate helper (mL/min) — seeded with the current config flow rate
-      if (!cfg.flow_entity || !this._hass?.states[cfg.flow_entity]) {
-        const n = `${cardName} flow rate`;
-        await this._hass.callWS({
-          type: 'input_number/create', name: n,
-          min: 0, max: 100000, step: 1, initial: cfg.flow_rate_ml_per_min || 50,
-          unit_of_measurement: 'mL/min', mode: 'box', icon: 'mdi:pump',
-        });
-        cfg.flow_entity = `input_number.${_slugify(n)}`;
-      }
-      // Sync watermark (input_datetime, date + time)
-      if (!cfg.sync_entity || !this._hass?.states[cfg.sync_entity]) {
-        const n = `${cardName} sync`;
-        await this._hass.callWS({
-          type: 'input_datetime/create', name: n,
-          has_date: true, has_time: true, icon: 'mdi:clock-check',
-        });
-        cfg.sync_entity = `input_datetime.${_slugify(n)}`;
-      }
-      this._config = cfg;
-      this._fire(this._config);
+      const { config } = await _ensureHelpers(this._hass, this._config);
+      this._config = config;
+      this._fire(this._config);   // persists the new entity ids in the card config
       this._render();
     } catch(e) {
       if (status) status.textContent = '❌ ' + (e.message || 'Error');
@@ -515,11 +558,13 @@ class DosingTankCard extends HTMLElement {
     this._ticker          = null;
     this._showAdjust      = false;
     this._adjustAmount    = 500;
+    this._helperNotice    = null;
     this._uid             = Math.random().toString(36).slice(2, 7);
   }
 
   setConfig(config) {
     if (!config.pump_entity) throw new Error('dosing-tank-card: pump_entity is required');
+    this._helperNotice = null;   // a fresh config supersedes any "created" notice
     this._config = {
       pump_entity:             config.pump_entity,
       flow_rate_ml_per_min:    Number(config.flow_rate_ml_per_min) || 15,
@@ -823,6 +868,10 @@ ${[25,50,75].map(lv=>{const ly=BY+BH-(lv/100)*BH;return `<line x1="${BX}" y1="${
     const T          = this._t();
     const pump       = this._hass.states[this._config.pump_entity];
     const resetState = this._hass.states[this._config.reset_entity];
+    // Without the sync watermark nothing is ever written to the counter
+    // (_syncFromHistory bails out), so it deserves the same warning.
+    const syncState  = this._config.sync_entity
+      ? this._hass.states[this._config.sync_entity] : null;
     const isPumpOn   = pump?.state === 'on';
     const consumedMl = this._getConsumedMl();
     const tankMl     = this._config.tank_volume_liters * 1000;
@@ -830,15 +879,19 @@ ${[25,50,75].map(lv=>{const ly=BY+BH-(lv/100)*BH;return `<line x1="${BX}" y1="${
     const pct        = Math.max(0, Math.min(100, (remaining / tankMl) * 100));
     const isAlert    = pct <= this._config.alert_threshold_percent;
 
-    const base  = isAlert ? '#ef4444' : this._config.liquid_color;
-    const light = isAlert ? '#fca5a5' : this._lighten(
-      this._config.liquid_color?.startsWith('#') ? this._config.liquid_color : '#3b82f6');
+    const base  = _esc(isAlert ? '#ef4444' : this._config.liquid_color);
+    const light = _esc(isAlert ? '#fca5a5' : this._lighten(
+      this._config.liquid_color?.startsWith('#') ? this._config.liquid_color : '#3b82f6'));
 
     const days    = this._dailyStats || [];
     const maxMin  = Math.max(1, ...days.map(d => d.minutes));
     const hasDays = days.some(d => d.minutes > 0);
-    const liveToday = isPumpOn && this._pumpOnSince
-      ? (Date.now()-this._pumpOnSince.getTime())/60000*this._currentFlow() : 0;
+    // Live tail for today: only the runtime the last history fetch did not already
+    // fold into _todayConsumedMl, otherwise that stretch would be counted twice.
+    const todayFrom = isPumpOn && this._pumpOnSince
+      ? Math.max(this._pumpOnSince.getTime(), this._lastHistoryFetch) : 0;
+    const liveToday = todayFrom
+      ? Math.max(0, Date.now() - todayFrom) / 60000 * this._currentFlow() : 0;
     const todayMl = this._todayConsumedMl + liveToday;
 
     this.shadowRoot.innerHTML = `
@@ -859,6 +912,8 @@ ${[25,50,75].map(lv=>{const ly=BY+BH-(lv/100)*BH;return `<line x1="${BX}" y1="${
 .warn{border-radius:8px;padding:8px 12px;font-size:12px;display:flex;align-items:center;gap:7px;margin-bottom:12px}
 .warn.alert  {background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);color:#ef4444}
 .warn.missing{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);color:#f59e0b;flex-wrap:wrap;gap:6px}
+.warn.created{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.3);color:#22c55e;
+  flex-direction:column;align-items:flex-start;gap:3px;word-break:break-all}
 .warn-create{padding:5px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;
   border:1px solid #f59e0b;background:rgba(245,158,11,.15);color:#f59e0b;white-space:nowrap;
   transition:background .15s}
@@ -933,16 +988,22 @@ ${[25,50,75].map(lv=>{const ly=BY+BH-(lv/100)*BH;return `<line x1="${BX}" y1="${
         <path d="M12 22a9 9 0 0 0 9-9H3a9 9 0 0 0 9 9z"/>
         <path d="M12 13V3"/><path d="M9 6l3-3 3 3"/>
       </svg>
-      ${this._config.name}
+      ${_esc(this._config.name)}
     </div>
     <div class="badge ${isPumpOn?'badge-on':'badge-off'}">
       ${isPumpOn?`● ${T.on}`:`○ ${T.off}`}
     </div>
   </div>
 
-  ${!resetState?`<div class="warn missing">
-    <span>⚠️ ${T.helperMissing}${this._config.reset_entity ? ': <strong>'+this._config.reset_entity+'</strong>' : ''}</span>
+  ${(!resetState||!syncState)?`<div class="warn missing">
+    <span>⚠️ ${!resetState
+      ? T.helperMissing + (this._config.reset_entity ? ': <strong>'+_esc(this._config.reset_entity)+'</strong>' : '')
+      : T.syncMissing}</span>
     <button class="warn-create" id="dtc-create-helper">✨ ${T.createHelper}</button>
+  </div>`:''}
+  ${this._helperNotice?.length?`<div class="warn created">
+    <span>✅ ${T.helperCreated(_esc(this._helperNotice.join(', ')))}</span>
+    <span>${T.saveInEditor}</span>
   </div>`:''}
   ${isAlert&&resetState?`<div class="warn alert">${T.lowLevel(pct.toFixed(0))}</div>`:''}
 
@@ -1058,42 +1119,18 @@ ${[25,50,75].map(lv=>{const ly=BY+BH-(lv/100)*BH;return `<line x1="${BX}" y1="${
     }
   }
 
+  // A card cannot persist its own Lovelace config, so the created ids are only
+  // applied for this session and shown to the user, who has to paste them into
+  // the card editor to keep them. The editor's own button does persist them.
   async _createHelper() {
-    const T      = this._t();
-    const btn    = this.shadowRoot.getElementById('dtc-create-helper');
+    const T   = this._t();
+    const btn = this.shadowRoot.getElementById('dtc-create-helper');
     if (btn) { btn.disabled = true; btn.textContent = T.creating; }
 
-    const cardName = this._config.name || 'Dosing Tank';
-    const cfg      = { ...this._config };
-
     try {
-      if (!cfg.reset_entity || !this._hass?.states[cfg.reset_entity]) {
-        const n = `${cardName} consumed`;
-        await this._hass.callWS({
-          type: 'input_number/create', name: n,
-          min: 0, max: 9999999, step: 1,
-          unit_of_measurement: 'mL', mode: 'box', icon: 'mdi:cup-water',
-        });
-        cfg.reset_entity = `input_number.${_slugify(n)}`;
-      }
-      if (!cfg.flow_entity || !this._hass?.states[cfg.flow_entity]) {
-        const n = `${cardName} flow rate`;
-        await this._hass.callWS({
-          type: 'input_number/create', name: n,
-          min: 0, max: 100000, step: 1, initial: cfg.flow_rate_ml_per_min || 50,
-          unit_of_measurement: 'mL/min', mode: 'box', icon: 'mdi:pump',
-        });
-        cfg.flow_entity = `input_number.${_slugify(n)}`;
-      }
-      if (!cfg.sync_entity || !this._hass?.states[cfg.sync_entity]) {
-        const n = `${cardName} sync`;
-        await this._hass.callWS({
-          type: 'input_datetime/create', name: n,
-          has_date: true, has_time: true, icon: 'mdi:clock-check',
-        });
-        cfg.sync_entity = `input_datetime.${_slugify(n)}`;
-      }
-      this._config = cfg;
+      const { config, created } = await _ensureHelpers(this._hass, this._config);
+      this._config       = config;
+      this._helperNotice = created;
       this._render();
     } catch(e) {
       console.error('[dosing-tank-card] Create helper error:', e);
@@ -1111,6 +1148,7 @@ ${[25,50,75].map(lv=>{const ly=BY+BH-(lv/100)*BH;return `<line x1="${BX}" y1="${
     return {
       pump_entity:             'switch.my_dosing_pump',
       reset_entity:            'input_number.dosing_tank_consumed',
+      sync_entity:             'input_datetime.dosing_tank_sync',
       flow_rate_ml_per_min:    15,
       tank_volume_liters:      5,
       alert_threshold_percent: 20,
