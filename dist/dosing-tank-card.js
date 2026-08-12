@@ -1,9 +1,9 @@
 /**
  * dosing-tank-card — Home Assistant Lovelace custom card
- * Tracks the liquid level of a dosing tank (chlorine, pH-, pH+, flocculant…)
- * based on pump runtime and a configurable flow rate.
+ * Tracks the level of a tank, either from pump runtime × flow rate, or read
+ * straight off a level sensor (softener salt tank, ESP32 probe…).
  *
- * Config:
+ * Config — pump-runtime mode:
  *   type: custom:dosing-tank-card
  *   pump_entity: switch.pool_chlorine_pump      (required)
  *   reset_entity: input_number.dosing_consumed  (required)
@@ -16,6 +16,14 @@
  *   name: "Chlorine"
  *   liquid_color: "#3b82f6"
  *   language: "fr"    # optional override (auto-detected from HA locale)
+ *
+ * Config — direct-level mode (level_entity replaces the whole pump chain):
+ *   level_entity: sensor.softener_salt_level   (required in this mode)
+ *   level_full: 25      # sensor value for a full tank  (default 100 if unit is %)
+ *   level_empty: 0      # sensor value for an empty tank
+ *   # level_full MAY be lower than level_empty: an ultrasonic probe reads the
+ *   # distance down to the surface, so a full tank reads small. The mapping
+ *   # inverts itself, no extra option needed.
  */
 
 // ── i18n ─────────────────────────────────────────────────────────────────────
@@ -35,6 +43,11 @@ const DTL = {
     adjustQty:'Adjust quantity', addToTank:'Add to tank',
     removeFromTank:'Remove from tank', resetFull:'Tank refilled — Reset',
     resetting:'Resetting…', on:'ON', off:'OFF',
+    autonomy:'Autonomy', days7:'7 days', levelSource:'Source', levelRange:'Range',
+    lastUpdate:'Last update', inverted:'inverted', fmtDays: d=>`${d} d`,
+    sensorMissing:'Level sensor not found', sensorUnavailable:'Level sensor unavailable',
+    rangeMissing:'Set the full-tank value', refill:'Refill',
+    dailyChartU: u=>`Daily consumption (${u})`,
     // editor
     edEntities:'Entities', edPump:'Pump entity',
     edCounter:'Counter (mL)', edFlowEnt:'Flow-rate entity (mL/min)',
@@ -42,6 +55,8 @@ const DTL = {
     edFlowRate:'Flow rate (mL/min)', edTankVol:'Tank volume (L)',
     edAlert:'Alert threshold (%)', edLang:'Language',
     edAppearance:'Appearance', edTitle:'Card title', edColor:'Liquid color',
+    edMode:'Mode', edModePump:'Pump runtime', edModeDirect:'Direct level',
+    edLevelEnt:'Level entity', edFull:'Value when full', edEmpty:'Value when empty',
   },
   fr: {
     remaining:'Restant', today:"Aujourd'hui", pump7d:'Pompe 7j',
@@ -57,6 +72,11 @@ const DTL = {
     adjustQty:'Ajuster la quantité', addToTank:'Ajouter au bidon',
     removeFromTank:'Retirer du bidon', resetFull:'Bidon rempli — Réinitialiser',
     resetting:'Réinitialisation…', on:'ACTIF', off:'INACTIF',
+    autonomy:'Autonomie', days7:'7 jours', levelSource:'Source', levelRange:'Plage',
+    lastUpdate:'Dernière MAJ', inverted:'inversée', fmtDays: d=>`${d} j`,
+    sensorMissing:'Capteur de niveau introuvable', sensorUnavailable:'Capteur de niveau indisponible',
+    rangeMissing:'Renseignez la valeur bidon plein', refill:'Remplissage',
+    dailyChartU: u=>`Consommation journalière (${u})`,
     // editor
     edEntities:'Entités', edPump:'Entité pompe',
     edCounter:'Compteur (mL)', edFlowEnt:'Entité débit (mL/min)',
@@ -64,6 +84,8 @@ const DTL = {
     edFlowRate:'Débit (mL/min)', edTankVol:'Volume du bidon (L)',
     edAlert:'Seuil d\'alerte (%)', edLang:'Langue',
     edAppearance:'Apparence', edTitle:'Titre de la carte', edColor:'Couleur du liquide',
+    edMode:'Mode', edModePump:'Temps de pompe', edModeDirect:'Niveau direct',
+    edLevelEnt:'Entité niveau', edFull:'Valeur plein', edEmpty:'Valeur vide',
   },
   es: {
     remaining:'Restante', today:'Hoy', pump7d:'Bomba 7d',
@@ -79,6 +101,11 @@ const DTL = {
     adjustQty:'Ajustar cantidad', addToTank:'Añadir al depósito',
     removeFromTank:'Retirar del depósito', resetFull:'Depósito lleno — Reiniciar',
     resetting:'Reiniciando…', on:'ON', off:'OFF',
+    autonomy:'Autonomía', days7:'7 días', levelSource:'Fuente', levelRange:'Rango',
+    lastUpdate:'Última act.', inverted:'invertido', fmtDays: d=>`${d} d`,
+    sensorMissing:'Sensor de nivel no encontrado', sensorUnavailable:'Sensor de nivel no disponible',
+    rangeMissing:'Indique el valor de depósito lleno', refill:'Rellenado',
+    dailyChartU: u=>`Consumo diario (${u})`,
     // editor
     edEntities:'Entidades', edPump:'Entidad bomba',
     edCounter:'Contador (mL)', edFlowEnt:'Entidad caudal (mL/min)',
@@ -86,6 +113,8 @@ const DTL = {
     edFlowRate:'Caudal (mL/min)', edTankVol:'Volumen (L)',
     edAlert:'Umbral de alerta (%)', edLang:'Idioma',
     edAppearance:'Apariencia', edTitle:'Título de la tarjeta', edColor:'Color del líquido',
+    edMode:'Modo', edModePump:'Tiempo de bomba', edModeDirect:'Nivel directo',
+    edLevelEnt:'Entidad de nivel', edFull:'Valor lleno', edEmpty:'Valor vacío',
   },
   ru: {
     remaining:'Осталось', today:'Сегодня', pump7d:'Насос 7д',
@@ -101,6 +130,11 @@ const DTL = {
     adjustQty:'Изменить количество', addToTank:'Добавить в бак',
     removeFromTank:'Убрать из бака', resetFull:'Бак заполнен — Сбросить',
     resetting:'Сброс…', on:'ВКЛ', off:'ВЫКЛ',
+    autonomy:'Автономность', days7:'7 дней', levelSource:'Источник', levelRange:'Диапазон',
+    lastUpdate:'Обновлено', inverted:'инвертирован', fmtDays: d=>`${d} д`,
+    sensorMissing:'Датчик уровня не найден', sensorUnavailable:'Датчик уровня недоступен',
+    rangeMissing:'Укажите значение полного бака', refill:'Пополнение',
+    dailyChartU: u=>`Суточный расход (${u})`,
     // editor
     edEntities:'Сущности', edPump:'Сущность насоса',
     edCounter:'Счётчик (мл)', edFlowEnt:'Сущность расхода (мл/мин)',
@@ -108,6 +142,8 @@ const DTL = {
     edFlowRate:'Расход (мл/мин)', edTankVol:'Объём бака (л)',
     edAlert:'Порог оповещения (%)', edLang:'Язык',
     edAppearance:'Внешний вид', edTitle:'Заголовок карточки', edColor:'Цвет жидкости',
+    edMode:'Режим', edModePump:'Время работы насоса', edModeDirect:'Прямой уровень',
+    edLevelEnt:'Сущность уровня', edFull:'Значение при полном', edEmpty:'Значение при пустом',
   },
   de: {
     remaining:'Verbleibend', today:'Heute', pump7d:'Pumpe 7T',
@@ -123,6 +159,11 @@ const DTL = {
     adjustQty:'Menge anpassen', addToTank:'Zum Tank hinzufügen',
     removeFromTank:'Aus Tank entnehmen', resetFull:'Tank voll — Zurücksetzen',
     resetting:'Zurücksetzen…', on:'AN', off:'AUS',
+    autonomy:'Reichweite', days7:'7 Tage', levelSource:'Quelle', levelRange:'Bereich',
+    lastUpdate:'Zuletzt akt.', inverted:'invertiert', fmtDays: d=>`${d} T`,
+    sensorMissing:'Füllstandsensor nicht gefunden', sensorUnavailable:'Füllstandsensor nicht verfügbar',
+    rangeMissing:'Wert für vollen Tank angeben', refill:'Nachfüllung',
+    dailyChartU: u=>`Tagesverbrauch (${u})`,
     // editor
     edEntities:'Entitäten', edPump:'Pumpen-Entität',
     edCounter:'Zähler (mL)', edFlowEnt:'Durchfluss-Entität (mL/min)',
@@ -130,6 +171,8 @@ const DTL = {
     edFlowRate:'Durchfluss (mL/min)', edTankVol:'Tankvolumen (L)',
     edAlert:'Alarmschwelle (%)', edLang:'Sprache',
     edAppearance:'Darstellung', edTitle:'Kartentitel', edColor:'Flüssigkeitsfarbe',
+    edMode:'Modus', edModePump:'Pumpenlaufzeit', edModeDirect:'Direkter Füllstand',
+    edLevelEnt:'Füllstand-Entität', edFull:'Wert bei voll', edEmpty:'Wert bei leer',
   },
   it: {
     remaining:'Rimanente', today:'Oggi', pump7d:'Pompa 7g',
@@ -145,6 +188,11 @@ const DTL = {
     adjustQty:'Regola quantità', addToTank:'Aggiungi al serbatoio',
     removeFromTank:'Rimuovi dal serbatoio', resetFull:'Serbatoio pieno — Azzera',
     resetting:'Azzerando…', on:'ON', off:'OFF',
+    autonomy:'Autonomia', days7:'7 giorni', levelSource:'Sorgente', levelRange:'Intervallo',
+    lastUpdate:'Ultimo agg.', inverted:'invertito', fmtDays: d=>`${d} g`,
+    sensorMissing:'Sensore di livello non trovato', sensorUnavailable:'Sensore di livello non disponibile',
+    rangeMissing:'Imposta il valore a serbatoio pieno', refill:'Riempimento',
+    dailyChartU: u=>`Consumo giornaliero (${u})`,
     // editor
     edEntities:'Entità', edPump:'Entità pompa',
     edCounter:'Contatore (mL)', edFlowEnt:'Entità portata (mL/min)',
@@ -152,6 +200,8 @@ const DTL = {
     edFlowRate:'Portata (mL/min)', edTankVol:'Volume serbatoio (L)',
     edAlert:'Soglia allarme (%)', edLang:'Lingua',
     edAppearance:'Aspetto', edTitle:'Titolo scheda', edColor:'Colore liquido',
+    edMode:'Modalità', edModePump:'Tempo di pompa', edModeDirect:'Livello diretto',
+    edLevelEnt:'Entità livello', edFull:'Valore pieno', edEmpty:'Valore vuoto',
   },
   nl: {
     remaining:'Resterend', today:'Vandaag', pump7d:'Pomp 7d',
@@ -167,6 +217,11 @@ const DTL = {
     adjustQty:'Hoeveelheid aanpassen', addToTank:'Toevoegen aan tank',
     removeFromTank:'Verwijderen uit tank', resetFull:'Tank gevuld — Resetten',
     resetting:'Resetten…', on:'AAN', off:'UIT',
+    autonomy:'Autonomie', days7:'7 dagen', levelSource:'Bron', levelRange:'Bereik',
+    lastUpdate:'Laatste update', inverted:'omgekeerd', fmtDays: d=>`${d} d`,
+    sensorMissing:'Niveausensor niet gevonden', sensorUnavailable:'Niveausensor niet beschikbaar',
+    rangeMissing:'Stel de waarde bij volle tank in', refill:'Bijvullen',
+    dailyChartU: u=>`Dagelijks verbruik (${u})`,
     // editor
     edEntities:'Entiteiten', edPump:'Pomp entiteit',
     edCounter:'Teller (mL)', edFlowEnt:'Doorstroom entiteit (mL/min)',
@@ -174,6 +229,8 @@ const DTL = {
     edFlowRate:'Doorstroomsnelheid (mL/min)', edTankVol:'Tankinhoud (L)',
     edAlert:'Alarmdrempel (%)', edLang:'Taal',
     edAppearance:'Weergave', edTitle:'Kaarttitel', edColor:'Vloeistofkleur',
+    edMode:'Modus', edModePump:'Pomplooptijd', edModeDirect:'Direct niveau',
+    edLevelEnt:'Niveau-entiteit', edFull:'Waarde bij vol', edEmpty:'Waarde bij leeg',
   },
   sv: {
     remaining:'Återstår', today:'Idag', pump7d:'Pump 7d',
@@ -189,6 +246,11 @@ const DTL = {
     adjustQty:'Justera mängd', addToTank:'Lägg till i tank',
     removeFromTank:'Ta bort från tank', resetFull:'Tank påfylld — Återställ',
     resetting:'Återställer…', on:'PÅ', off:'AV',
+    autonomy:'Räckvidd', days7:'7 dagar', levelSource:'Källa', levelRange:'Intervall',
+    lastUpdate:'Senast uppdaterad', inverted:'inverterad', fmtDays: d=>`${d} d`,
+    sensorMissing:'Nivågivare hittades inte', sensorUnavailable:'Nivågivare otillgänglig',
+    rangeMissing:'Ange värdet för full tank', refill:'Påfyllning',
+    dailyChartU: u=>`Daglig förbrukning (${u})`,
     // editor
     edEntities:'Entiteter', edPump:'Pumpenhet',
     edCounter:'Räknare (mL)', edFlowEnt:'Flödesenhet (mL/min)',
@@ -196,6 +258,8 @@ const DTL = {
     edFlowRate:'Flöde (mL/min)', edTankVol:'Tankvolym (L)',
     edAlert:'Larmnivå (%)', edLang:'Språk',
     edAppearance:'Utseende', edTitle:'Korttitel', edColor:'Vätskefärg',
+    edMode:'Läge', edModePump:'Pumptid', edModeDirect:'Direkt nivå',
+    edLevelEnt:'Nivåenhet', edFull:'Värde vid full', edEmpty:'Värde vid tom',
   },
   no: {
     remaining:'Gjenstår', today:'I dag', pump7d:'Pumpe 7d',
@@ -211,6 +275,11 @@ const DTL = {
     adjustQty:'Juster mengde', addToTank:'Legg til i tank',
     removeFromTank:'Fjern fra tank', resetFull:'Tank fylt — Tilbakestill',
     resetting:'Tilbakestiller…', on:'PÅ', off:'AV',
+    autonomy:'Rekkevidde', days7:'7 dager', levelSource:'Kilde', levelRange:'Område',
+    lastUpdate:'Sist oppdatert', inverted:'invertert', fmtDays: d=>`${d} d`,
+    sensorMissing:'Nivåsensor ikke funnet', sensorUnavailable:'Nivåsensor utilgjengelig',
+    rangeMissing:'Angi verdien for full tank', refill:'Påfylling',
+    dailyChartU: u=>`Daglig forbruk (${u})`,
     // editor
     edEntities:'Entiteter', edPump:'Pumpenhet',
     edCounter:'Teller (mL)', edFlowEnt:'Strømenhet (mL/min)',
@@ -218,6 +287,8 @@ const DTL = {
     edFlowRate:'Strømning (mL/min)', edTankVol:'Tankvolum (L)',
     edAlert:'Varselgrense (%)', edLang:'Språk',
     edAppearance:'Utseende', edTitle:'Korttittel', edColor:'Væskefarge',
+    edMode:'Modus', edModePump:'Pumpetid', edModeDirect:'Direkte nivå',
+    edLevelEnt:'Nivåenhet', edFull:'Verdi ved full', edEmpty:'Verdi ved tom',
   },
   da: {
     remaining:'Tilbage', today:'I dag', pump7d:'Pumpe 7d',
@@ -233,6 +304,11 @@ const DTL = {
     adjustQty:'Juster mængde', addToTank:'Tilføj til tank',
     removeFromTank:'Fjern fra tank', resetFull:'Tank fyldt — Nulstil',
     resetting:'Nulstiller…', on:'TIL', off:'FRA',
+    autonomy:'Rækkevidde', days7:'7 dage', levelSource:'Kilde', levelRange:'Område',
+    lastUpdate:'Sidst opdateret', inverted:'inverteret', fmtDays: d=>`${d} d`,
+    sensorMissing:'Niveausensor ikke fundet', sensorUnavailable:'Niveausensor utilgængelig',
+    rangeMissing:'Angiv værdien for fuld tank', refill:'Påfyldning',
+    dailyChartU: u=>`Dagligt forbrug (${u})`,
     // editor
     edEntities:'Entiteter', edPump:'Pumpeenhed',
     edCounter:'Tæller (mL)', edFlowEnt:'Flow entitet (mL/min)',
@@ -240,6 +316,8 @@ const DTL = {
     edFlowRate:'Flow (mL/min)', edTankVol:'Tankvolumen (L)',
     edAlert:'Alarmgrænse (%)', edLang:'Sprog',
     edAppearance:'Udseende', edTitle:'Korttitel', edColor:'Væskefarve',
+    edMode:'Tilstand', edModePump:'Pumpetid', edModeDirect:'Direkte niveau',
+    edLevelEnt:'Niveauenhed', edFull:'Værdi ved fuld', edEmpty:'Værdi ved tom',
   },
   pl: {
     remaining:'Pozostało', today:'Dziś', pump7d:'Pompa 7d',
@@ -255,6 +333,11 @@ const DTL = {
     adjustQty:'Dostosuj ilość', addToTank:'Dodaj do zbiornika',
     removeFromTank:'Usuń ze zbiornika', resetFull:'Zbiornik napełniony — Reset',
     resetting:'Resetowanie…', on:'WŁ.', off:'WYŁ.',
+    autonomy:'Autonomia', days7:'7 dni', levelSource:'Źródło', levelRange:'Zakres',
+    lastUpdate:'Ostatnia akt.', inverted:'odwrócony', fmtDays: d=>`${d} d`,
+    sensorMissing:'Nie znaleziono czujnika poziomu', sensorUnavailable:'Czujnik poziomu niedostępny',
+    rangeMissing:'Podaj wartość dla pełnego zbiornika', refill:'Napełnienie',
+    dailyChartU: u=>`Dzienne zużycie (${u})`,
     // editor
     edEntities:'Encje', edPump:'Encja pompy',
     edCounter:'Licznik (mL)', edFlowEnt:'Encja przepływu (mL/min)',
@@ -262,6 +345,8 @@ const DTL = {
     edFlowRate:'Przepływ (mL/min)', edTankVol:'Pojemność (L)',
     edAlert:'Próg alarmu (%)', edLang:'Język',
     edAppearance:'Wygląd', edTitle:'Tytuł karty', edColor:'Kolor cieczy',
+    edMode:'Tryb', edModePump:'Czas pracy pompy', edModeDirect:'Poziom bezpośredni',
+    edLevelEnt:'Encja poziomu', edFull:'Wartość przy pełnym', edEmpty:'Wartość przy pustym',
   },
 };
 
@@ -278,6 +363,14 @@ function _slugify(s) {
 const _ESC = { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' };
 function _esc(v) {
   return String(v ?? '').replace(/[&<>"']/g, c => _ESC[c]);
+}
+
+// Finite number or null. Guards against Number('') === 0 and the 'unavailable'
+// / 'unknown' states a sensor can hold, both of which would read as a level.
+function _num(v) {
+  if (v === null || v === undefined || v === '') return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
 }
 
 // Creates whichever of the three helpers the card needs is still missing:
@@ -341,6 +434,11 @@ class DosingTankCardEditor extends HTMLElement {
 
   setConfig(config) {
     this._config = { ...config };
+    // Which field group to show. Kept on the editor rather than in the config
+    // so that picking "Direct level" reveals the entity picker before any
+    // level_entity exists to infer the mode from.
+    if (this._mode === undefined)
+      this._mode = config.level_entity ? 'direct' : 'pump';
     this._render();
   }
 
@@ -360,6 +458,7 @@ class DosingTankCardEditor extends HTMLElement {
   _render() {
     const c = this._config;
     const T = this._t();
+    const direct = this._mode === 'direct';
     const LANG_LABELS = {
       auto:'Auto (HA locale)', en:'English', fr:'Français',
       es:'Español', de:'Deutsch', it:'Italiano', nl:'Nederlands',
@@ -400,7 +499,16 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
 .create-status{font-size:11px;color:var(--secondary-text-color,#888);flex:1;word-break:break-all}
 </style>
 <div class="form">
+  <div class="field">
+    <label>${T.edMode}</label>
+    <select id="mode">
+      <option value="pump"${direct?'':' selected'}>${T.edModePump}</option>
+      <option value="direct"${direct?' selected':''}>${T.edModeDirect}</option>
+    </select>
+  </div>
+
   <div class="sec">${T.edEntities}</div>
+  ${direct?`<div class="field" id="level-wrap"></div>`:`
   <div class="field" id="pump-wrap"></div>
   <div class="field" id="reset-wrap"></div>
   <div class="field" id="flow-wrap"></div>
@@ -408,10 +516,19 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
   <div class="create-row" id="create-row" style="display:none">
     <button class="create-btn" id="create-btn">✨ ${T.createHelper}</button>
     <span class="create-status" id="create-status"></span>
-  </div>
+  </div>`}
 
   <div class="sec">${T.edTank}</div>
-  <div class="grid2">
+  ${direct?`<div class="grid2">
+    <div class="field">
+      <label>${T.edFull}</label>
+      <input type="number" id="lfull" step="any" value="${c.level_full??''}">
+    </div>
+    <div class="field">
+      <label>${T.edEmpty}</label>
+      <input type="number" id="lempty" step="any" value="${c.level_empty??''}">
+    </div>
+  </div>`:`<div class="grid2">
     <div class="field">
       <label>${T.edFlowRate}</label>
       <input type="number" id="flow" min="0.1" step="0.1" value="${c.flow_rate_ml_per_min??15}">
@@ -420,7 +537,7 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
       <label>${T.edTankVol}</label>
       <input type="number" id="volume" min="0.1" step="0.1" value="${c.tank_volume_liters??5}">
     </div>
-  </div>
+  </div>`}
   <div class="grid2">
     <div class="field">
       <label>${T.edAlert}</label>
@@ -447,9 +564,10 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
 </div>`;
 
     // Entity pickers — label comes from ha-entity-picker itself (no duplicate <label>)
-    const makePicker = (wrapId, key, label) => {
+    const makePicker = (wrapId, key, label, onPick) => {
       const wrap = this.shadowRoot.getElementById(wrapId);
       if (!wrap) return;
+      const pick = v => this._fire(onPick ? onPick(v) : { ...this._config, [key]: v });
       const hasPicker = !!customElements.get('ha-entity-picker');
       if (hasPicker) {
         const p = document.createElement('ha-entity-picker');
@@ -457,8 +575,7 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
         p.value = this._config[key] || '';
         p.allowCustomEntity = true;
         if (this._hass) p.hass = this._hass;
-        p.addEventListener('value-changed', e =>
-          this._fire({ ...this._config, [key]: e.detail.value }));
+        p.addEventListener('value-changed', e => pick(e.detail.value));
         wrap.appendChild(p);
       } else {
         const lbl = document.createElement('label');
@@ -466,28 +583,65 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
         const inp = document.createElement('input');
         inp.type = 'text';
         inp.value = this._config[key] || '';
-        inp.addEventListener('change', e =>
-          this._fire({ ...this._config, [key]: e.target.value }));
+        inp.addEventListener('change', e => pick(e.target.value));
         wrap.appendChild(lbl);
         wrap.appendChild(inp);
       }
     };
-    makePicker('pump-wrap',  'pump_entity',  T.edPump);
-    makePicker('reset-wrap', 'reset_entity', T.edCounter);
-    makePicker('flow-wrap',  'flow_entity',  T.edFlowEnt);
-    makePicker('sync-wrap',  'sync_entity',  T.edSync);
 
-    // Show create button when the counter or the sync watermark is missing
-    const missing = !this._config.reset_entity
-      || !this._hass?.states[this._config.reset_entity]
-      || !this._config.sync_entity
-      || !this._hass?.states[this._config.sync_entity];
-    const createRow = this.shadowRoot.getElementById('create-row');
-    if (createRow && missing) {
-      createRow.style.display = 'flex';
-      this.shadowRoot.getElementById('create-btn')
-        ?.addEventListener('click', () => this._createHelper());
+    if (direct) {
+      // Picking the sensor prefills the range from its own min/max when it has
+      // them (number/input_number do), so a non-% sensor is one click away
+      // from being usable instead of showing "set the full-tank value".
+      makePicker('level-wrap', 'level_entity', T.edLevelEnt, v => {
+        const next = { ...this._config, level_entity: v };
+        const at   = this._hass?.states[v]?.attributes || {};
+        if (next.level_full == null && at.unit_of_measurement !== '%') {
+          const max = _num(at.max), min = _num(at.min);
+          if (max !== null) { next.level_full = max; next.level_empty = min ?? 0; }
+        }
+        return next;
+      });
+    } else {
+      makePicker('pump-wrap',  'pump_entity',  T.edPump);
+      makePicker('reset-wrap', 'reset_entity', T.edCounter);
+      makePicker('flow-wrap',  'flow_entity',  T.edFlowEnt);
+      makePicker('sync-wrap',  'sync_entity',  T.edSync);
+
+      // Show create button when the counter or the sync watermark is missing
+      const missing = !this._config.reset_entity
+        || !this._hass?.states[this._config.reset_entity]
+        || !this._config.sync_entity
+        || !this._hass?.states[this._config.sync_entity];
+      const createRow = this.shadowRoot.getElementById('create-row');
+      if (createRow && missing) {
+        createRow.style.display = 'flex';
+        this.shadowRoot.getElementById('create-btn')
+          ?.addEventListener('click', () => this._createHelper());
+      }
     }
+
+    // Mode switch. Leaving direct mode clears the level keys, otherwise the
+    // card would keep reading the sensor whatever the editor shows.
+    this.shadowRoot.getElementById('mode')?.addEventListener('change', e => {
+      this._mode = e.target.value;
+      if (this._mode === 'pump' && this._config.level_entity)
+        this._fire({ ...this._config, level_entity: undefined,
+                     level_full: undefined, level_empty: undefined });
+      else this._render();
+    });
+
+    // Range inputs: an emptied field must clear the key, not be ignored.
+    const bindNum = (id, key) => {
+      this.shadowRoot.getElementById(id)?.addEventListener('change', e => {
+        const raw = e.target.value.trim();
+        const v   = raw === '' ? undefined : Number(raw);
+        if (v === undefined || Number.isFinite(v))
+          this._fire({ ...this._config, [key]: v });
+      });
+    };
+    bindNum('lfull',  'level_full');
+    bindNum('lempty', 'level_empty');
 
     // Simple inputs
     const bind = (id, key, toVal) => {
@@ -563,20 +717,59 @@ class DosingTankCard extends HTMLElement {
   }
 
   setConfig(config) {
-    if (!config.pump_entity) throw new Error('dosing-tank-card: pump_entity is required');
+    if (!config.pump_entity && !config.level_entity)
+      throw new Error('dosing-tank-card: pump_entity or level_entity is required');
     this._helperNotice = null;   // a fresh config supersedes any "created" notice
+    this._levelDays    = null;
     this._config = {
-      pump_entity:             config.pump_entity,
+      pump_entity:             config.pump_entity || null,
       flow_rate_ml_per_min:    Number(config.flow_rate_ml_per_min) || 15,
       tank_volume_liters:      Number(config.tank_volume_liters) || 5,
       alert_threshold_percent: Number(config.alert_threshold_percent) || 20,
       reset_entity:            config.reset_entity || null,
       flow_entity:             config.flow_entity || null,
       sync_entity:             config.sync_entity || null,
+      // Direct-level mode: the level comes from a sensor instead of being
+      // derived from pump runtime. Setting level_entity switches modes.
+      level_entity:            config.level_entity || null,
+      level_full:              _num(config.level_full),
+      level_empty:             _num(config.level_empty),
       name:                    config.name || 'Dosing Tank',
       liquid_color:            config.liquid_color || '#3b82f6',
       language:                config.language || null,
     };
+  }
+
+  get _isDirect() { return !!this._config.level_entity; }
+
+  _levelState() {
+    return this._config.level_entity
+      ? this._hass?.states[this._config.level_entity] : null;
+  }
+
+  _levelUnit() { return this._levelState()?.attributes?.unit_of_measurement || ''; }
+
+  // Values the sensor reads when the tank is empty / full. level_full may be
+  // LOWER than level_empty: an ultrasonic probe measures the distance down to
+  // the surface, so a full tank reads small. The mapping below handles both
+  // directions with the same formula — no "invert" switch needed.
+  // Returns nulls when the range cannot be known, rather than guessing.
+  _levelRange() {
+    const c = this._config;
+    if (c.level_full !== null)
+      return { empty: c.level_empty !== null ? c.level_empty : 0, full: c.level_full };
+    if (this._levelUnit() === '%') return { empty: 0, full: 100 };
+    return { empty: null, full: null };
+  }
+
+  // { v, pct } for the current reading; pct is null when the range is unknown.
+  // null overall when the sensor is missing, unavailable or not numeric.
+  _levelValue() {
+    const v = _num(this._levelState()?.state);
+    if (v === null) return null;
+    const { empty, full } = this._levelRange();
+    if (empty === null || full === empty) return { v, pct: null };
+    return { v, pct: Math.max(0, Math.min(100, (v - empty) / (full - empty) * 100)) };
   }
 
   // Flow rate (mL/min): live helper value if configured & valid, else config value.
@@ -620,6 +813,15 @@ class DosingTankCard extends HTMLElement {
     const prev = this._hass;
     this._hass = hass;
     if (!this._config) return;
+
+    if (this._isDirect) {
+      const lvl     = hass.states[this._config.level_entity];
+      const prevLvl = prev?.states[this._config.level_entity];
+      if (!this._historyLoading && Date.now() - this._lastHistoryFetch > 900000)
+        this._loadLevelHistory();
+      if (!prev || lvl?.state !== prevLvl?.state) this._render();
+      return;
+    }
 
     const pump      = hass.states[this._config.pump_entity];
     const prevPump  = prev?.states[this._config.pump_entity];
@@ -683,6 +885,172 @@ class DosingTankCard extends HTMLElement {
       this._dailyStats = this._emptyDays();
     } finally { this._historyLoading = false; }
     this._render();
+  }
+
+  // ── Direct level mode ─────────────────────────────────────────────────────
+
+  async _loadLevelHistory() {
+    if (!this._hass || this._historyLoading) return;
+    this._historyLoading   = true;
+    this._lastHistoryFetch = Date.now();
+    try {
+      const end = new Date();
+      // Midnight 7 days back: that extra day seeds the first daily delta.
+      const start = new Date(end.getFullYear(), end.getMonth(), end.getDate() - 7);
+      // A level sensor reports far more often than a pump switch, so unlike
+      // _loadHistory this asks for significant changes only and the compact
+      // payload — a week of a 30 s sensor is otherwise tens of thousands of
+      // points for the seven numbers we actually need.
+      const url = `history/period/${start.toISOString()}` +
+        `?filter_entity_id=${this._config.level_entity}` +
+        `&end_time=${end.toISOString()}&significant_changes_only=1` +
+        `&minimal_response&no_attributes`;
+      const history = await this._hass.callApi('GET', url);
+      this._levelDays = this._levelDailySeries(history?.[0] || []);
+    } catch (e) {
+      console.error('[dosing-tank-card] Level history error:', e);
+      this._levelDays = null;
+    } finally { this._historyLoading = false; }
+    this._render();
+  }
+
+  // 8 day buckets: [0] seeds the first delta, [1..7] are the days displayed.
+  _levelDailySeries(states) {
+    const now = new Date();
+    const T   = this._t();
+    const loc = Object.keys(DTL).find(k => DTL[k] === T) || 'en';
+    const days = Array.from({ length: 8 }, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (7 - i));
+      return { date: d, endDate: new Date(d.getTime() + 86400000), last: null,
+               label: d.toLocaleDateString(loc, { weekday: 'short' }) };
+    });
+    for (const s of states) {
+      const v = _num(s.state);
+      if (v === null) continue;                       // unavailable / unknown
+      const t = new Date(s.last_changed || s.last_updated).getTime();
+      for (const d of days)
+        if (t >= d.date.getTime() && t < d.endDate.getTime()) { d.last = v; break; }
+    }
+    // A day with no reading keeps the previous one: a sensor that simply did
+    // not move is flat, not a gap.
+    for (let i = 1; i < days.length; i++)
+      if (days[i].last === null) days[i].last = days[i - 1].last;
+    return days;
+  }
+
+  // Daily consumption derived from the level series. Everything is computed in
+  // percent of the tank, never in raw sensor units: with an inverted probe
+  // (full = small reading) consumption makes the raw value go UP, so "only
+  // count decreases" is only true once mapped through the range.
+  _levelStats() {
+    const days = this._levelDays;
+    const { empty, full } = this._levelRange();
+    if (!days || empty === null || full === empty) return null;
+
+    const span  = Math.abs(full - empty);
+    const toPct = v => v === null ? null
+      : Math.max(0, Math.min(100, (v - empty) / (full - empty) * 100));
+
+    const bars = [];
+    let used7dPct = 0, completeTotal = 0, completeDays = 0;
+    for (let i = 1; i < days.length; i++) {
+      const prev = toPct(days[i - 1].last), cur = toPct(days[i].last);
+      const known   = prev !== null && cur !== null;
+      const delta   = known ? prev - cur : 0;
+      const refill  = known && delta < 0;             // level went up
+      const used    = refill ? 0 : Math.max(0, delta);
+      const isToday = i === days.length - 1;
+      bars.push({ label: days[i].label, usedPct: used, usedVal: used / 100 * span,
+                  refill, known });
+      used7dPct += used;
+      // Today is still running and would drag the average down. A refill day
+      // hides whatever was consumed alongside it, so it says nothing about the
+      // daily rate either. Both are left out of the average — but a genuine
+      // zero-consumption day is kept, that one IS information.
+      if (known && !isToday && !refill) { completeTotal += used; completeDays++; }
+    }
+
+    const avgPctDay = completeDays >= 2 && completeTotal > 0
+      ? completeTotal / completeDays : null;
+    return { bars, span, unit: this._levelUnit(), used7dPct,
+             used7dVal: used7dPct / 100 * span, avgPctDay, completeDays };
+  }
+
+  // Level readings keep one decimal below 100 (18.4 kg), integer above.
+  _fmtLevel(v, unit) {
+    if (!Number.isFinite(v)) return '—';
+    const n = Math.abs(v) >= 100 ? Math.round(v) : Math.round(v * 10) / 10;
+    return unit ? `${n} ${unit}` : String(n);
+  }
+
+  _fmtAutonomy(T, days) {
+    if (!Number.isFinite(days) || days <= 0) return '—';
+    return days > 99 ? `> ${T.fmtDays(99)}` : T.fmtDays(Math.round(days));
+  }
+
+  _fmtAgo(iso) {
+    const ms = Date.now() - new Date(iso).getTime();
+    if (!Number.isFinite(ms) || ms < 0) return '—';
+    const min = Math.floor(ms / 60000);
+    if (min < 1)  return '< 1 min';
+    if (min < 60) return `${min} min`;
+    const h = Math.floor(min / 60);
+    return h < 24 ? `${h} h` : this._t().fmtDays(Math.floor(h / 24));
+  }
+
+  _directMetrics(T, lvl, stats, unit, isAlert) {
+    const cur  = lvl ? this._fmtLevel(lvl.v, unit) : '—';
+    const used = stats ? this._fmtLevel(stats.used7dVal, unit) : '—';
+    const auto = (stats?.avgPctDay && lvl?.pct != null)
+      ? this._fmtAutonomy(T, lvl.pct / stats.avgPctDay) : '—';
+    return `<div class="metrics">
+    <div class="metric">
+      <div class="mv${isAlert?' alert':''}">${_esc(cur)}</div>
+      <div class="ml">${T.remaining}</div>
+    </div>
+    <div class="metric">
+      <div class="mv">${_esc(used)}</div>
+      <div class="ml">${T.days7}</div>
+    </div>
+    <div class="metric">
+      <div class="mv">${_esc(auto)}</div>
+      <div class="ml">${T.autonomy}</div>
+    </div>
+  </div>`;
+  }
+
+  _directBars(T, stats, base) {
+    if (this._historyLoading || !stats) return `<div class="nodata">${T.loading}</div>`;
+    const bars = stats.bars;
+    if (!bars.some(b => b.usedPct > 0 || b.refill))
+      return `<div class="nodata">${T.noData}</div>`;
+    const max = Math.max(...bars.map(b => b.usedPct), 0.0001);
+    return bars.map((b, i) => {
+      // A refill day has no consumption to show; an empty bar would read as
+      // "nothing happened", so it gets a marker instead.
+      if (b.refill) return `<div class="bw"><div class="bi refill" title="${_esc(b.label+': '+T.refill)}">+</div>
+        <div class="bl">${b.label}</div></div>`;
+      const h   = Math.max(3, (b.usedPct / max) * 100);
+      const col = i === bars.length - 1 ? base : base + '55';
+      const tip = `${b.label}: ${this._fmtLevel(b.usedVal, stats.unit)}`;
+      return `<div class="bw"><div class="bi">
+        <div class="be" style="height:${h}%;background:${col}" title="${_esc(tip)}"></div>
+      </div><div class="bl">${b.label}</div></div>`;
+    }).join('');
+  }
+
+  _directSettings(T, st, range, unit) {
+    const name = st?.attributes?.friendly_name || this._config.level_entity || '—';
+    const rng  = range && range.empty !== null
+      ? `${range.empty} → ${range.full}${unit ? ' ' + unit : ''}` +
+        (range.full < range.empty ? ` (${T.inverted})` : '')
+      : '—';
+    const upd  = st?.last_changed ? this._fmtAgo(st.last_changed) : '—';
+    return `
+          <div class="cfgr"><span class="l">${T.levelSource}</span><span class="v">${_esc(name)}</span></div>
+          <div class="cfgr"><span class="l">${T.levelRange}</span><span class="v">${_esc(rng)}</span></div>
+          <div class="cfgr"><span class="l">${T.alertAt}</span><span class="v">${this._config.alert_threshold_percent}%</span></div>
+          <div class="cfgr"><span class="l">${T.lastUpdate}</span><span class="v">${_esc(upd)}</span></div>`;
   }
 
   // Add the pump runtime accumulated since the watermark into the consumed
@@ -817,7 +1185,7 @@ class DosingTankCard extends HTMLElement {
 
   // ── SVG tank ─────────────────────────────────────────────────────────────
 
-  _svgTank(pct, base, light) {
+  _svgTank(pct, base, light, label) {
     const W=86,H=140,BX=3,BY=22,BW=80,BH=105,BR=10,NX=28,NY=3,NW=30,NH=18,NR=6;
     const s = Math.max(0, Math.min(1, pct / 100));
     const u = this._uid;
@@ -849,7 +1217,7 @@ ${[25,50,75].map(lv=>{const ly=BY+BH-(lv/100)*BH;return `<line x1="${BX}" y1="${
 <text x="${BX+13}" y="${ly+4}" font-size="7" fill="var(--secondary-text-color,#888)">${lv}%</text>`;}).join('')}
 <text x="${W/2}" y="${BY+BH/2+7}" text-anchor="middle" font-size="19" font-weight="700"
   fill="${pct<35?'#fff':'var(--primary-text-color,#fff)'}"
-  style="text-shadow:0 1px 3px rgba(0,0,0,.5)">${pct.toFixed(0)}%</text>
+  style="text-shadow:0 1px 3px rgba(0,0,0,.5)">${label ?? `${pct.toFixed(0)}%`}</text>
 <rect x="${BX+8}" y="${BY+BH-2}" width="${BW-16}" height="8" rx="4"
   fill="var(--secondary-background-color,#2a2a2a)"
   stroke="var(--divider-color,rgba(255,255,255,.12))" stroke-width="1.5"/>
@@ -865,19 +1233,41 @@ ${[25,50,75].map(lv=>{const ly=BY+BH-(lv/100)*BH;return `<line x1="${BX}" y1="${
     const adjInput = this.shadowRoot.getElementById('dtc-adj-input');
     if (adjInput) this._adjustAmount = Math.max(1, Number(adjInput.value) || this._adjustAmount);
 
-    const T          = this._t();
-    const pump       = this._hass.states[this._config.pump_entity];
-    const resetState = this._hass.states[this._config.reset_entity];
+    const T      = this._t();
+    const direct = this._isDirect;
+
+    // Direct-level mode reads everything off one sensor; pump mode keeps its
+    // counter/watermark chain. Only pct / isAlert / base / light are shared.
+    const lvlState = direct ? this._levelState() : null;
+    const lvl      = direct ? this._levelValue() : null;
+    const lvlRange = direct ? this._levelRange() : null;
+    const lvlStats = direct ? this._levelStats() : null;
+    const lvlUnit  = direct ? this._levelUnit()  : '';
+
+    const pump       = direct ? null : this._hass.states[this._config.pump_entity];
+    const resetState = direct ? null : this._hass.states[this._config.reset_entity];
     // Without the sync watermark nothing is ever written to the counter
     // (_syncFromHistory bails out), so it deserves the same warning.
-    const syncState  = this._config.sync_entity
+    const syncState  = (!direct && this._config.sync_entity)
       ? this._hass.states[this._config.sync_entity] : null;
     const isPumpOn   = pump?.state === 'on';
-    const consumedMl = this._getConsumedMl();
+    const consumedMl = direct ? 0 : this._getConsumedMl();
     const tankMl     = this._config.tank_volume_liters * 1000;
     const remaining  = Math.max(0, tankMl - consumedMl);
-    const pct        = Math.max(0, Math.min(100, (remaining / tankMl) * 100));
-    const isAlert    = pct <= this._config.alert_threshold_percent;
+
+    const hasPct  = direct ? lvl?.pct != null : true;
+    const pct     = direct ? (lvl?.pct ?? 0)
+                           : Math.max(0, Math.min(100, (remaining / tankMl) * 100));
+    const isAlert = hasPct && pct <= this._config.alert_threshold_percent;
+
+    // What is wrong in direct mode, if anything — checked in order of severity.
+    const directWarn = !direct ? null
+      : !lvlState        ? T.sensorMissing
+      : lvl === null     ? T.sensorUnavailable
+      : lvl.pct === null ? T.rangeMissing
+      : null;
+    const showHelperWarn = !direct && (!resetState || !syncState);
+    const showAlert      = isAlert && (direct ? !!lvl : !!resetState);
 
     const base  = _esc(isAlert ? '#ef4444' : this._config.liquid_color);
     const light = _esc(isAlert ? '#fca5a5' : this._lighten(
@@ -935,6 +1325,7 @@ ${[25,50,75].map(lv=>{const ly=BY+BH-(lv/100)*BH;return `<line x1="${BX}" y1="${
 .bi{flex:1;width:100%;display:flex;align-items:flex-end;min-height:0}
 .be{width:100%;border-radius:3px 3px 0 0;min-height:3px;transition:height .4s}
 .bl{font-size:9px;color:var(--secondary-text-color,#888);text-transform:capitalize}
+.bi.refill{align-items:center;justify-content:center;color:#22c55e;font-size:14px;font-weight:700}
 .nodata{font-size:11px;color:var(--secondary-text-color,#888);align-self:center;font-style:italic}
 .cfg{display:flex;flex-direction:column;gap:4px}
 .cfgr{display:flex;justify-content:space-between;font-size:11px;gap:6px}
@@ -990,24 +1381,28 @@ ${[25,50,75].map(lv=>{const ly=BY+BH-(lv/100)*BH;return `<line x1="${BX}" y1="${
       </svg>
       ${_esc(this._config.name)}
     </div>
-    <div class="badge ${isPumpOn?'badge-on':'badge-off'}">
+    ${direct?'':`<div class="badge ${isPumpOn?'badge-on':'badge-off'}">
       ${isPumpOn?`● ${T.on}`:`○ ${T.off}`}
-    </div>
+    </div>`}
   </div>
 
-  ${(!resetState||!syncState)?`<div class="warn missing">
+  ${showHelperWarn?`<div class="warn missing">
     <span>⚠️ ${!resetState
       ? T.helperMissing + (this._config.reset_entity ? ': <strong>'+_esc(this._config.reset_entity)+'</strong>' : '')
       : T.syncMissing}</span>
     <button class="warn-create" id="dtc-create-helper">✨ ${T.createHelper}</button>
   </div>`:''}
+  ${directWarn?`<div class="warn missing">
+    <span>⚠️ ${directWarn}${this._config.level_entity && !lvlState
+      ? ': <strong>'+_esc(this._config.level_entity)+'</strong>' : ''}</span>
+  </div>`:''}
   ${this._helperNotice?.length?`<div class="warn created">
     <span>✅ ${T.helperCreated(_esc(this._helperNotice.join(', ')))}</span>
     <span>${T.saveInEditor}</span>
   </div>`:''}
-  ${isAlert&&resetState?`<div class="warn alert">${T.lowLevel(pct.toFixed(0))}</div>`:''}
+  ${showAlert?`<div class="warn alert">${T.lowLevel(pct.toFixed(0))}</div>`:''}
 
-  <div class="metrics">
+  ${direct?this._directMetrics(T,lvl,lvlStats,lvlUnit,isAlert):`<div class="metrics">
     <div class="metric">
       <div class="mv${isAlert?' alert':''}">${(remaining/1000).toFixed(2)} L</div>
       <div class="ml">${T.remaining}</div>
@@ -1020,18 +1415,19 @@ ${[25,50,75].map(lv=>{const ly=BY+BH-(lv/100)*BH;return `<line x1="${BX}" y1="${
       <div class="mv">${this._fmtDuration(this._week7dMinutes)}</div>
       <div class="ml">${T.pump7d}</div>
     </div>
-  </div>
+  </div>`}
 
   <div class="body">
     <div class="tcol">
-      ${this._svgTank(pct, base, light)}
-      <div class="tpct">${T.pctLeft(pct.toFixed(1))}</div>
+      ${this._svgTank(pct, base, light, hasPct ? `${pct.toFixed(0)}%` : '—')}
+      <div class="tpct">${hasPct?T.pctLeft(pct.toFixed(1)):'—'}</div>
     </div>
     <div class="rcol">
       <div>
-        <div class="stitle">${T.dailyChart}</div>
+        <div class="stitle">${direct?T.dailyChartU(lvlUnit||'%'):T.dailyChart}</div>
         <div class="bars">
-          ${this._historyLoading||!days.length
+          ${direct?this._directBars(T,lvlStats,base):
+            this._historyLoading||!days.length
             ?`<div class="nodata">${T.loading}</div>`
             :!hasDays
               ?`<div class="nodata">${T.noData}</div>`
@@ -1048,16 +1444,17 @@ ${[25,50,75].map(lv=>{const ly=BY+BH-(lv/100)*BH;return `<line x1="${BX}" y1="${
       <div>
         <div class="stitle">${T.settings}</div>
         <div class="cfg">
+          ${direct?this._directSettings(T,lvlState,lvlRange,lvlUnit):`
           <div class="cfgr"><span class="l">${T.flowRate}</span><span class="v">${this._currentFlow()} mL/min</span></div>
           <div class="cfgr"><span class="l">${T.tankSize}</span><span class="v">${this._config.tank_volume_liters} L</span></div>
           <div class="cfgr"><span class="l">${T.alertAt}</span><span class="v">${this._config.alert_threshold_percent}%</span></div>
-          <div class="cfgr"><span class="l">${T.totalUsed}</span><span class="v">${this._fmtVol(consumedMl)}</span></div>
+          <div class="cfgr"><span class="l">${T.totalUsed}</span><span class="v">${this._fmtVol(consumedMl)}</span></div>`}
         </div>
       </div>
     </div>
   </div>
 
-  <div class="footer">
+  ${direct?'':`<div class="footer">
     <button class="btn${this._showAdjust?' open':''}" id="dtc-adj-toggle">
       ✏️ ${T.adjust} ${this._showAdjust?'▲':'▼'}
     </button>
@@ -1080,7 +1477,7 @@ ${[25,50,75].map(lv=>{const ly=BY+BH-(lv/100)*BH;return `<line x1="${BX}" y1="${
       <div class="sep"></div>
       <button class="btn" id="dtc-reset-btn">🔄 ${T.resetFull}</button>
     </div>`:''}
-  </div>
+  </div>`}
 </div>`;
 
     // Events
@@ -1142,7 +1539,8 @@ ${[25,50,75].map(lv=>{const ly=BY+BH-(lv/100)*BH;return `<line x1="${BX}" y1="${
     if (this._ticker) { clearInterval(this._ticker); this._ticker = null; }
   }
 
-  getCardSize() { return 5; }
+  // Direct mode has no adjustment footer, so the card is shorter.
+  getCardSize() { return this._isDirect ? 4 : 5; }
 
   static getStubConfig() {
     return {
