@@ -6,31 +6,64 @@
   ES modules need a real origin, so serve the repo root over HTTP:
 
     python3 -m http.server 8731
-    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless \
-      --screenshot=docs/screenshot-direct.png --window-size=760,470 \
-      --force-device-scale-factor=2 --hide-scrollbars --virtual-time-budget=4000 \
-      "http://localhost:8731/docs/demo.html?lang=en&mode=direct"
 
-  Query params: lang=en|fr|…  mode=direct|pump|all  colors=fixed|level
+  Then, with CH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+  and SHOT="--headless --disable-gpu --force-device-scale-factor=2
+            --hide-scrollbars --virtual-time-budget=4000", the four images are:
+
+    $CH $SHOT --screenshot=docs/screenshot.png --window-size=460,532 \
+      ".../demo.html?lang=en&mode=pump&theme=light&adjust=1&caption=0&width=420"
+    $CH $SHOT --screenshot=docs/screenshot.fr.png --window-size=460,580 \
+      ".../demo.html?lang=fr&mode=pump&theme=light&adjust=1&caption=0&width=420"
+    $CH $SHOT --screenshot=docs/screenshot-direct.png --window-size=740,356 \
+      ".../demo.html?lang=en&mode=direct&theme=light"
+    $CH $SHOT --screenshot=docs/screenshot-direct.fr.png --window-size=740,380 \
+      ".../demo.html?lang=fr&mode=direct&theme=light"
+
+  Heights differ per language because French labels are longer; check the
+  bottom of the image is not clipped after changing anything.
+
+  Query params:
+    lang=en|fr|…        card language
+    mode=direct|pump|all
+    theme=light|dark    Home Assistant's two default palettes
+    colors=fixed|level  color_mode on every card
+    adjust=1            open the adjustment panel (pump mode)
+    caption=0           drop the labels above the cards
+    width=<px>          card column width, default 330
 -->
 <style>
-  body { margin:0; padding:20px; background:#111214; font-family:Roboto,system-ui,sans-serif; }
+  body { margin:0; padding:20px; font-family:Roboto,system-ui,sans-serif; }
   #wrap { display:flex; gap:18px; align-items:flex-start; }
-  .col { width:330px; }
-  .cap { color:#9aa0a6; font-size:11px; text-transform:uppercase; letter-spacing:.7px;
+  .cap { font-size:11px; text-transform:uppercase; letter-spacing:.7px;
          margin:0 0 8px 2px; }
+  /* Home Assistant's defaults, so the card can be checked in both. */
+  body.dark  { background:#111214; }
+  body.dark  .cap { color:#9aa0a6; }
+  body.light { background:#f2f3f5;
+    --ha-card-background:#fff; --card-background-color:#fff;
+    --primary-text-color:#212121; --secondary-text-color:#727272;
+    --divider-color:rgba(0,0,0,.12); --secondary-background-color:#f0f1f3;
+    --primary-color:#03a9f4; }
+  body.light .cap { color:#727272; }
 </style>
 <div id="wrap"></div>
 
 <script type="module">
 import '../dist/dosing-tank-card.js';
 
-const p    = new URLSearchParams(location.search);
+const p      = new URLSearchParams(location.search);
 const lang   = p.get('lang') || 'fr';
 const mode   = p.get('mode') || 'direct';
 const colors = p.get('colors') || 'fixed';
+const theme  = p.get('theme') || 'dark';
+const adjust = p.get('adjust') === '1';
+const shown  = p.get('caption') !== '0';
+const width  = p.get('width') || '330';
 const DAY  = 86400000;
 const now  = Date.now();
+
+document.body.className = theme === 'light' ? 'light' : 'dark';
 
 const CAP = {
   fr: { pct:'Capteur en %', inv:'Sonde inversée', pump:'Mode temps de pompe' },
@@ -46,10 +79,11 @@ const history = series => [series.map((v, i) => ({
 
 function add(caption, config, states, hist) {
   const col = document.createElement('div');
-  col.className = 'col';
-  col.innerHTML = `<p class="cap">${caption}</p>`;
+  col.style.width = width + 'px';
+  if (shown) col.innerHTML = `<p class="cap">${caption}</p>`;
   const card = document.createElement('dosing-tank-card');
   card.setConfig({ ...config, color_mode: colors });
+  if (adjust) card._showAdjust = true;
   card.hass = { states, locale: { language: lang },
                 callApi: async () => hist, callService: async () => {} };
   col.appendChild(card);
@@ -82,23 +116,31 @@ if (mode === 'direct' || mode === 'all') {
 }
 
 if (mode === 'pump' || mode === 'all') {
+  // One dosing session per day, of a different length each day, so the chart
+  // has some relief. Today's 14 min at 3 mL/min is the 42 mL in the tile.
+  const MINUTES = [30, 12, 4, 10, 22, 8, 14];   // oldest first, last = today
   const pumpHist = [[
-    { state: 'off', last_changed: new Date(now - 7 * DAY).toISOString() },
-    ...[6,5,4,3,2,1].flatMap(d => ([
-      { state: 'on',  last_changed: new Date(now - d * DAY).toISOString() },
-      { state: 'off', last_changed: new Date(now - d * DAY + 9 * 60000).toISOString() },
-    ])),
-    { state: 'on', last_changed: new Date(now - 20 * 60000).toISOString() },
+    { state: 'off', last_changed: new Date(now - 8 * DAY).toISOString() },
+    ...MINUTES.flatMap((min, i) => {
+      const start = now - (6 - i) * DAY - 6 * 3600000;
+      return [
+        { state: 'on',  last_changed: new Date(start).toISOString() },
+        { state: 'off', last_changed: new Date(start + min * 60000).toISOString() },
+      ];
+    }),
   ]];
   add(cap.pump,
     { pump_entity: 'switch.chlorine_pump', reset_entity: 'input_number.consumed',
-      sync_entity: 'input_datetime.sync', name: lang === 'fr' ? 'Chlore' : 'Chlorine',
-      flow_rate_ml_per_min: 15, tank_volume_liters: 5 },
-    { 'switch.chlorine_pump': { state: 'on',
-        last_changed: new Date(now - 20 * 60000).toISOString() },
-      'input_number.consumed': { state: '3820' },
+      sync_entity: 'input_datetime.sync',
+      name: lang === 'fr' ? 'Chlore liquide' : 'Liquid chlorine',
+      flow_rate_ml_per_min: 3, tank_volume_liters: 20,
+      alert_threshold_percent: 10 },
+    { 'switch.chlorine_pump': { state: 'off',
+        last_changed: new Date(now - 6 * 3600000).toISOString() },
+      'input_number.consumed': { state: '1750',
+        last_changed: new Date(now - 6 * 3600000).toISOString() },
       'input_datetime.sync': {
-        state: 'x', attributes: { timestamp: Math.floor((now - 20 * 60000) / 1000) } } },
+        state: 'x', attributes: { timestamp: Math.floor(now / 1000) } } },
     pumpHist);
 }
 </script>
