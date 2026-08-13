@@ -1135,28 +1135,27 @@ class DosingTankCard extends HTMLElement {
       : Math.max(0, Math.min(100, (v - empty) / (full - empty) * 100));
 
     const bars = [];
-    let used7dPct = 0, completeTotal = 0, completeDays = 0;
+    let used7dPct = 0;
     for (let i = 1; i < days.length; i++) {
       const prev = toPct(days[i - 1].last), cur = toPct(days[i].last);
-      const known   = prev !== null && cur !== null;
-      const delta   = known ? prev - cur : 0;
-      const refill  = known && delta < 0;             // level went up
-      const used    = refill ? 0 : Math.max(0, delta);
-      const isToday = i === days.length - 1;
+      const known  = prev !== null && cur !== null;
+      const delta  = known ? prev - cur : 0;
+      const refill = known && delta < 0;              // level went up
+      const used   = refill ? 0 : Math.max(0, delta);
       bars.push({ label: days[i].label, usedPct: used,
                   usedVal: used / 100 * scale.factor, refill, known });
       used7dPct += used;
-      // Today is still running and would drag the average down. A refill day
-      // hides whatever was consumed alongside it, so it says nothing about the
-      // daily rate either. Both are left out of the average — but a genuine
-      // zero-consumption day is kept, that one IS information.
-      if (known && !isToday && !refill) { completeTotal += used; completeDays++; }
     }
 
-    const avgPctDay = completeDays >= 2 && completeTotal > 0
-      ? completeTotal / completeDays : null;
+    // Plainly the 7-day consumption over 7 days, so the autonomy can be
+    // checked by hand against the tile printed right above it. Earlier this
+    // divided by "complete non-refill days" instead, which was defensible in
+    // isolation but disagreed with that tile whenever the history was short:
+    // a card three days old read 2.5 kg over 7 days and 30 days of autonomy
+    // at the same time, and nothing on screen explained the gap.
+    const avgPctDay = used7dPct > 0 ? used7dPct / 7 : null;
     return { bars, span: scale.factor, unit: scale.unit, used7dPct,
-             used7dVal: used7dPct / 100 * scale.factor, avgPctDay, completeDays };
+             used7dVal: used7dPct / 100 * scale.factor, avgPctDay };
   }
 
   // Level readings keep one decimal below 100 (18.4 kg), integer above.
@@ -1429,7 +1428,11 @@ ${/* Always white, never --primary-text-color: this figure is drawn on top of
       keeps them crisp where a CSS text-shadow blurred. */''}
 <text x="${W/2}" y="${BY+BH/2+7}" text-anchor="middle" font-size="19" font-weight="700"
   fill="#fff"
-  paint-order="stroke" stroke="rgba(0,0,0,.7)" stroke-width="3.5"
+  ${/* 1.8 and not more: paint-order draws the stroke behind the glyphs, and
+        half of its width falls inside the outline. On a 19 px bold figure a
+        3.5 px stroke closed the counters of the zeros, which read as filled
+        blobs. */''}
+  paint-order="stroke" stroke="rgba(0,0,0,.75)" stroke-width="1.8"
   stroke-linejoin="round">${label ?? `${pct.toFixed(0)}%`}</text>
 <rect x="${BX+8}" y="${BY+BH-2}" width="${BW-16}" height="8" rx="4"
   fill="var(--secondary-background-color,#2a2a2a)"

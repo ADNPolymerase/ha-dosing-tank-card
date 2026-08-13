@@ -203,13 +203,14 @@ const steady = makeDirect({ series: [25,23,21,19,17,15,13,11], unit: 'kg', full:
 check('autonomie sur une baisse régulière', tile(steady.html, 'Autonomy'), '6 d');
 check('consommation 7 jours = 7 × 2 kg', tile(steady.html, '7 days'), '14 kg');
 
-// Same slope, but refilled on day 4 (21 → 25). That day hides whatever was
-// consumed alongside the refill, so it must leave BOTH sides of the average.
-// Counting it as a zero-consumption day would give 40/6 = 6.7 %/day → 10 days,
-// i.e. an autonomy 40 % too optimistic on a tank that is about to run out.
+// Same slope, refilled on day 4 (21 → 25). The refill day adds nothing to the
+// 7-day total while still counting as one of the seven, so the rate comes out
+// a little low and the autonomy a little generous. That is the accepted price
+// of a figure the user can check by hand: 68 % left, 48 % over 7 days,
+// 68 ÷ (48/7) ≈ 10.
 const refilled = makeDirect({ series: [25,23,21,25,23,21,19,17], unit: 'kg', full: 25 });
-check('un remplissage ne gonfle pas l\'autonomie',
-  tile(refilled.html, 'Autonomy'), '9 d');
+check('un remplissage est absorbé sans autonomie aberrante',
+  tile(refilled.html, 'Autonomy'), '10 d');
 contains('le jour de remplissage est marqué dans le graphe',
   refilled.html, 'class="bi refill"');
 
@@ -217,13 +218,19 @@ check('bidon fraîchement rempli, aucune baisse → pas d\'autonomie inventée',
   tile(makeDirect({ series: [25,25,25,25,25,25,25,25], unit: 'kg', full: 25 }).html,
        'Autonomy'), '—');
 
-// A flat day is real information (the softener simply did not regenerate),
-// unlike a refill day. 6 complete days, 3 of them at 0 → 12/6 = 2 %/day, and
-// 76 % left → 38 days. Dropping the flat days would give 12/3 = 4 %/day → 19
-// days, halving the autonomy of a tank that is in fact barely used.
-check('les journées à consommation nulle comptent dans la moyenne',
+// Flat days are days like any other: 3 days at 4 %, 3 flat and a 12 % drop
+// today make 24 % over the window, so 76 ÷ (24/7) ≈ 22.
+check('les journées plates comptent comme des journées',
   tile(makeDirect({ series: [25,24,24,23,23,22,22,19], unit: 'kg', full: 25 }).html,
-       'Autonomy'), '38 d');
+       'Autonomy'), '22 d');
+
+// The contract itself, checked rather than hard-coded: what the tile shows is
+// exactly the remaining level divided by the 7-day consumption over 7.
+const rel      = makeDirect({ series: [92,86,80,74,68,62,56,50], unit: '%' });
+const relStats = rel.card._levelStats();
+check('l\'autonomie est exactement restant ÷ (conso 7 jours ÷ 7)',
+  tile(rel.html, 'Autonomy'),
+  `${Math.round(rel.card._levelValue().pct / (relStats.used7dPct / 7))} d`);
 
 // ── Capacité physique ────────────────────────────────────────────────────────
 // A softener reports a percentage, but the useful figure is kilos of salt.
