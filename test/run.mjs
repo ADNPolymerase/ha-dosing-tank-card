@@ -118,6 +118,7 @@ check('config-changed porte bien detail.config',
  */
 function makeDirect({ series = null, value = null, unit = '%',
                       full, empty, alert = 20, name = 'Bac à sel',
+                      capacity, capacity_unit, color_mode, warn,
                       entity = 'sensor.salt', present = true } = {}) {
   const cur    = value ?? (series ? series.at(-1) : null);
   const states = {};
@@ -132,7 +133,9 @@ function makeDirect({ series = null, value = null, unit = '%',
 
   const c = new Card();
   c.setConfig({ level_entity: entity, level_full: full, level_empty: empty,
-                alert_threshold_percent: alert, name });
+                alert_threshold_percent: alert, name,
+                capacity, capacity_unit, color_mode,
+                warn_threshold_percent: warn });
   c._hass = { states, locale: { language: 'en' } };
   if (series) {
     // One reading per day at the same time of day, oldest first.
@@ -221,6 +224,38 @@ check('bidon fraîchement rempli, aucune baisse → pas d\'autonomie inventée',
 check('les journées à consommation nulle comptent dans la moyenne',
   tile(makeDirect({ series: [25,24,24,23,23,22,22,19], unit: 'kg', full: 25 }).html,
        'Autonomy'), '38 d');
+
+// ── Capacité physique ────────────────────────────────────────────────────────
+// A softener reports a percentage, but the useful figure is kilos of salt.
+// capacity converts the percentage without touching how the level is measured.
+
+const salt = makeDirect({ series: [92,86,80,74,68,62,56,50], unit: '%',
+                          capacity: 35, capacity_unit: 'kg' });
+check('capacité : 50 % d\'un bac de 35 kg', tile(salt.html, 'Remaining'), '17.5 kg');
+check('capacité : la conso 7 jours passe en kg', tile(salt.html, '7 days'), '14.7 kg');
+contains('capacité : le graphe est titré dans l\'unité physique',
+  salt.html, 'Daily consumption (kg)');
+check('capacité : la tuile Restant reprend sa place sur un capteur en %',
+  /<div class="ml">Daily avg<\/div>/.test(salt.html), false);
+// The Range row describes the sensor, so it stays in the sensor's own unit
+// even when quantities elsewhere are shown in kilos.
+contains('capacité : la plage reste en unités capteur', salt.html, '0 → 100 %');
+check('sans capacité, rien ne change sur un capteur en %',
+  tile(makeDirect({ series: [92,86,80,74,68,62,56,50], unit: '%' }).html,
+       'Daily avg'), '6 %/d');
+
+// ── Couleurs par palier ──────────────────────────────────────────────────────
+// Opt-in: liquid_color is how a chlorine tank is told from a pH− one.
+
+const tier = v => {
+  const h = makeDirect({ value: v, color_mode: 'level', alert: 20, warn: 50 }).html;
+  return h.match(/stop-color="(#[0-9a-f]{6})"/i)?.[1];
+};
+check('palier : 80 % vert',   tier(80), '#22c55e');
+check('palier : 35 % orange', tier(35), '#f59e0b');
+check('palier : 12 % rouge',  tier(12), '#ef4444');
+check('sans color_mode, la couleur configurée est conservée',
+  makeDirect({ value: 35 }).html.match(/stop-color="(#[0-9a-f]{6})"/i)?.[1], '#3b82f6');
 
 // ── Dégradations ─────────────────────────────────────────────────────────────
 

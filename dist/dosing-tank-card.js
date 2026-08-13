@@ -8,7 +8,8 @@
  *   pump_entity: switch.pool_chlorine_pump      (required)
  *   reset_entity: input_number.dosing_consumed  (required)
  *   sync_entity: input_datetime.dosing_sync     (required — catch-up watermark;
- *                                                without it nothing is ever saved)
+ *                                                without it the card never
+ *                                                writes the counter itself)
  *   flow_entity: input_number.dosing_flow_rate  (optional — live flow rate)
  *   flow_rate_ml_per_min: 15
  *   tank_volume_liters: 5
@@ -24,6 +25,13 @@
  *   # level_full MAY be lower than level_empty: an ultrasonic probe reads the
  *   # distance down to the surface, so a full tank reads small. The mapping
  *   # inverts itself, no extra option needed.
+ *   capacity: 35        # what a full tank physically holds, so quantities can
+ *   capacity_unit: "kg" # be read in kg or L behind a percentage-only sensor
+ *
+ * Config — both modes:
+ *   color_mode: "level"        # green / amber / red by fill instead of
+ *   warn_threshold_percent: 50 # liquid_color. Amber below this, red below
+ *                              # alert_threshold_percent. Default is "fixed".
  */
 
 // ── i18n ─────────────────────────────────────────────────────────────────────
@@ -58,6 +66,9 @@ const DTL = {
     edAppearance:'Appearance', edTitle:'Card title', edColor:'Liquid color',
     edMode:'Mode', edModePump:'Pump runtime', edModeDirect:'Direct level',
     edLevelEnt:'Level entity', edFull:'Value when full', edEmpty:'Value when empty',
+    edCapacity:'Full-tank quantity', edCapacityUnit:'Unit',
+    edColorMode:'Color mode', edColorFixed:'Fixed color', edColorLevel:'By level',
+    edWarn:'Warning threshold (%)',
   },
   fr: {
     remaining:'Restant', today:"Aujourd'hui", pump7d:'Pompe 7j',
@@ -88,6 +99,9 @@ const DTL = {
     edAppearance:'Apparence', edTitle:'Titre de la carte', edColor:'Couleur du liquide',
     edMode:'Mode', edModePump:'Temps de pompe', edModeDirect:'Niveau direct',
     edLevelEnt:'Entité niveau', edFull:'Valeur plein', edEmpty:'Valeur vide',
+    edCapacity:'Quantité bidon plein', edCapacityUnit:'Unité',
+    edColorMode:'Mode couleur', edColorFixed:'Couleur fixe', edColorLevel:'Par palier',
+    edWarn:"Seuil d'avertissement (%)",
   },
   es: {
     remaining:'Restante', today:'Hoy', pump7d:'Bomba 7d',
@@ -118,6 +132,9 @@ const DTL = {
     edAppearance:'Apariencia', edTitle:'Título de la tarjeta', edColor:'Color del líquido',
     edMode:'Modo', edModePump:'Tiempo de bomba', edModeDirect:'Nivel directo',
     edLevelEnt:'Entidad de nivel', edFull:'Valor lleno', edEmpty:'Valor vacío',
+    edCapacity:'Cantidad depósito lleno', edCapacityUnit:'Unidad',
+    edColorMode:'Modo de color', edColorFixed:'Color fijo', edColorLevel:'Por nivel',
+    edWarn:'Umbral de aviso (%)',
   },
   ru: {
     remaining:'Осталось', today:'Сегодня', pump7d:'Насос 7д',
@@ -148,6 +165,9 @@ const DTL = {
     edAppearance:'Внешний вид', edTitle:'Заголовок карточки', edColor:'Цвет жидкости',
     edMode:'Режим', edModePump:'Время работы насоса', edModeDirect:'Прямой уровень',
     edLevelEnt:'Сущность уровня', edFull:'Значение при полном', edEmpty:'Значение при пустом',
+    edCapacity:'Объём полного бака', edCapacityUnit:'Единица',
+    edColorMode:'Режим цвета', edColorFixed:'Фиксированный цвет', edColorLevel:'По уровню',
+    edWarn:'Порог предупреждения (%)',
   },
   de: {
     remaining:'Verbleibend', today:'Heute', pump7d:'Pumpe 7T',
@@ -178,6 +198,9 @@ const DTL = {
     edAppearance:'Darstellung', edTitle:'Kartentitel', edColor:'Flüssigkeitsfarbe',
     edMode:'Modus', edModePump:'Pumpenlaufzeit', edModeDirect:'Direkter Füllstand',
     edLevelEnt:'Füllstand-Entität', edFull:'Wert bei voll', edEmpty:'Wert bei leer',
+    edCapacity:'Menge bei vollem Tank', edCapacityUnit:'Einheit',
+    edColorMode:'Farbmodus', edColorFixed:'Feste Farbe', edColorLevel:'Nach Füllstand',
+    edWarn:'Warnschwelle (%)',
   },
   it: {
     remaining:'Rimanente', today:'Oggi', pump7d:'Pompa 7g',
@@ -208,6 +231,9 @@ const DTL = {
     edAppearance:'Aspetto', edTitle:'Titolo scheda', edColor:'Colore liquido',
     edMode:'Modalità', edModePump:'Tempo di pompa', edModeDirect:'Livello diretto',
     edLevelEnt:'Entità livello', edFull:'Valore pieno', edEmpty:'Valore vuoto',
+    edCapacity:'Quantità serbatoio pieno', edCapacityUnit:'Unità',
+    edColorMode:'Modalità colore', edColorFixed:'Colore fisso', edColorLevel:'Per livello',
+    edWarn:'Soglia di avviso (%)',
   },
   nl: {
     remaining:'Resterend', today:'Vandaag', pump7d:'Pomp 7d',
@@ -238,6 +264,9 @@ const DTL = {
     edAppearance:'Weergave', edTitle:'Kaarttitel', edColor:'Vloeistofkleur',
     edMode:'Modus', edModePump:'Pomplooptijd', edModeDirect:'Direct niveau',
     edLevelEnt:'Niveau-entiteit', edFull:'Waarde bij vol', edEmpty:'Waarde bij leeg',
+    edCapacity:'Hoeveelheid volle tank', edCapacityUnit:'Eenheid',
+    edColorMode:'Kleurmodus', edColorFixed:'Vaste kleur', edColorLevel:'Per niveau',
+    edWarn:'Waarschuwingsdrempel (%)',
   },
   sv: {
     remaining:'Återstår', today:'Idag', pump7d:'Pump 7d',
@@ -268,6 +297,9 @@ const DTL = {
     edAppearance:'Utseende', edTitle:'Korttitel', edColor:'Vätskefärg',
     edMode:'Läge', edModePump:'Pumptid', edModeDirect:'Direkt nivå',
     edLevelEnt:'Nivåenhet', edFull:'Värde vid full', edEmpty:'Värde vid tom',
+    edCapacity:'Mängd full tank', edCapacityUnit:'Enhet',
+    edColorMode:'Färgläge', edColorFixed:'Fast färg', edColorLevel:'Efter nivå',
+    edWarn:'Varningströskel (%)',
   },
   no: {
     remaining:'Gjenstår', today:'I dag', pump7d:'Pumpe 7d',
@@ -298,6 +330,9 @@ const DTL = {
     edAppearance:'Utseende', edTitle:'Korttittel', edColor:'Væskefarge',
     edMode:'Modus', edModePump:'Pumpetid', edModeDirect:'Direkte nivå',
     edLevelEnt:'Nivåenhet', edFull:'Verdi ved full', edEmpty:'Verdi ved tom',
+    edCapacity:'Mengde full tank', edCapacityUnit:'Enhet',
+    edColorMode:'Fargemodus', edColorFixed:'Fast farge', edColorLevel:'Etter nivå',
+    edWarn:'Varselgrense (%)',
   },
   da: {
     remaining:'Tilbage', today:'I dag', pump7d:'Pumpe 7d',
@@ -328,6 +363,9 @@ const DTL = {
     edAppearance:'Udseende', edTitle:'Korttitel', edColor:'Væskefarve',
     edMode:'Tilstand', edModePump:'Pumpetid', edModeDirect:'Direkte niveau',
     edLevelEnt:'Niveauenhed', edFull:'Værdi ved fuld', edEmpty:'Værdi ved tom',
+    edCapacity:'Mængde fuld tank', edCapacityUnit:'Enhed',
+    edColorMode:'Farvetilstand', edColorFixed:'Fast farve', edColorLevel:'Efter niveau',
+    edWarn:'Advarselsgrænse (%)',
   },
   pl: {
     remaining:'Pozostało', today:'Dziś', pump7d:'Pompa 7d',
@@ -358,6 +396,9 @@ const DTL = {
     edAppearance:'Wygląd', edTitle:'Tytuł karty', edColor:'Kolor cieczy',
     edMode:'Tryb', edModePump:'Czas pracy pompy', edModeDirect:'Poziom bezpośredni',
     edLevelEnt:'Encja poziomu', edFull:'Wartość przy pełnym', edEmpty:'Wartość przy pustym',
+    edCapacity:'Ilość przy pełnym', edCapacityUnit:'Jednostka',
+    edColorMode:'Tryb koloru', edColorFixed:'Stały kolor', edColorLevel:'Wg poziomu',
+    edWarn:'Próg ostrzeżenia (%)',
   },
 };
 
@@ -494,6 +535,10 @@ class DosingTankCardEditor extends HTMLElement {
     set('lang',   c.language                 ?? 'auto');
     set('lfull',  c.level_full               ?? '');
     set('lempty', c.level_empty              ?? '');
+    set('cap',    c.capacity                 ?? '');
+    set('capunit',c.capacity_unit            ?? '');
+    set('warn',   c.warn_threshold_percent   ?? 50);
+    set('cmode',  c.color_mode               ?? 'fixed');
 
     const keys = this._mode === 'direct'
       ? { 'level-wrap': 'level_entity' }
@@ -535,6 +580,7 @@ class DosingTankCardEditor extends HTMLElement {
     const c = this._config;
     const T = this._t();
     const direct = this._mode === 'direct';
+    const tiered = c.color_mode === 'level';
     const LANG_LABELS = {
       auto:'Auto (HA locale)', en:'English', fr:'Français',
       es:'Español', de:'Deutsch', it:'Italiano', nl:'Nederlands',
@@ -604,6 +650,17 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
       <label>${T.edEmpty}</label>
       <input type="number" id="lempty" step="any" value="${c.level_empty??''}">
     </div>
+  </div>
+  <div class="grid2">
+    <div class="field">
+      <label>${T.edCapacity}</label>
+      <input type="number" id="cap" min="0" step="any" value="${c.capacity??''}">
+    </div>
+    <div class="field">
+      <label>${T.edCapacityUnit}</label>
+      <input type="text" id="capunit" maxlength="8" placeholder="kg"
+        value="${_esc(c.capacity_unit??'')}">
+    </div>
   </div>`:`<div class="grid2">
     <div class="field">
       <label>${T.edFlowRate}</label>
@@ -629,6 +686,20 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
   <div class="field">
     <label>${T.edTitle}</label>
     <input type="text" id="name" value="${_esc(c.name??'Dosing Tank')}">
+  </div>
+  <div class="grid2">
+    <div class="field">
+      <label>${T.edColorMode}</label>
+      <select id="cmode">
+        <option value="fixed"${tiered?'':' selected'}>${T.edColorFixed}</option>
+        <option value="level"${tiered?' selected':''}>${T.edColorLevel}</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>${T.edWarn}</label>
+      <input type="number" id="warn" min="0" max="100" step="1"
+        value="${c.warn_threshold_percent??50}">
+    </div>
   </div>
   <div class="field">
     <label>${T.edColor}</label>
@@ -715,6 +786,7 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
     };
     bindNum('lfull',  'level_full');
     bindNum('lempty', 'level_empty');
+    bindNum('cap',    'capacity');
 
     // Simple inputs
     const bind = (id, key, toVal) => {
@@ -731,6 +803,9 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
     bind('alert',  'alert_threshold_percent', Number);
     bind('name',   'name',                    null);
     bind('lang',   'language',                v => v === 'auto' ? undefined : v);
+    bind('capunit','capacity_unit',           v => v.trim() || undefined);
+    bind('warn',   'warn_threshold_percent',  Number);
+    bind('cmode',  'color_mode',              v => v);
 
     // Color sync
     const cp = this.shadowRoot.getElementById('cpick');
@@ -815,6 +890,15 @@ class DosingTankCard extends HTMLElement {
       level_entity:            config.level_entity || null,
       level_full:              _num(config.level_full),
       level_empty:             _num(config.level_empty),
+      // What a full tank physically holds, so quantities can be shown in kg or
+      // litres even when the sensor only reports a percentage.
+      capacity:                _num(config.capacity),
+      capacity_unit:           config.capacity_unit || null,
+      // 'level' colours the tank green / amber / red by fill level instead of
+      // using liquid_color. Off by default: liquid_color is how a chlorine tank
+      // is told apart from a pH− one at a glance.
+      color_mode:              config.color_mode === 'level' ? 'level' : 'fixed',
+      warn_threshold_percent:  Number(config.warn_threshold_percent) || 50,
       name:                    config.name || 'Dosing Tank',
       liquid_color:            config.liquid_color || '#3b82f6',
       language:                config.language || null,
@@ -851,6 +935,22 @@ class DosingTankCard extends HTMLElement {
     const { empty, full } = this._levelRange();
     if (empty === null || full === empty) return { v, pct: null };
     return { v, pct: Math.max(0, Math.min(100, (v - empty) / (full - empty) * 100)) };
+  }
+
+  /**
+   * How a percentage of the tank is turned into a figure on screen.
+   * `capacity` lets a tank be read in what it physically holds — 35 kg of salt
+   * behind a sensor that only reports a percentage — instead of in whatever
+   * unit the sensor happens to use. Without it, the sensor's own span is used,
+   * which is the previous behaviour.
+   * Returns null when neither is known, so nothing is invented.
+   */
+  _displayScale() {
+    const c = this._config;
+    if (c.capacity !== null) return { factor: c.capacity, unit: c.capacity_unit || '' };
+    const { empty, full } = this._levelRange();
+    if (empty === null || full === empty) return null;
+    return { factor: Math.abs(full - empty), unit: this._levelUnit() };
   }
 
   // Flow rate (mL/min): live helper value if configured & valid, else config value.
@@ -1028,7 +1128,9 @@ class DosingTankCard extends HTMLElement {
     const { empty, full } = this._levelRange();
     if (!days || empty === null || full === empty) return null;
 
-    const span  = Math.abs(full - empty);
+    // Percentages are what the maths runs on; the scale only decides how they
+    // are written out (sensor units, or kg/L when capacity is configured).
+    const scale = this._displayScale() || { factor: Math.abs(full - empty), unit: '' };
     const toPct = v => v === null ? null
       : Math.max(0, Math.min(100, (v - empty) / (full - empty) * 100));
 
@@ -1041,8 +1143,8 @@ class DosingTankCard extends HTMLElement {
       const refill  = known && delta < 0;             // level went up
       const used    = refill ? 0 : Math.max(0, delta);
       const isToday = i === days.length - 1;
-      bars.push({ label: days[i].label, usedPct: used, usedVal: used / 100 * span,
-                  refill, known });
+      bars.push({ label: days[i].label, usedPct: used,
+                  usedVal: used / 100 * scale.factor, refill, known });
       used7dPct += used;
       // Today is still running and would drag the average down. A refill day
       // hides whatever was consumed alongside it, so it says nothing about the
@@ -1053,8 +1155,8 @@ class DosingTankCard extends HTMLElement {
 
     const avgPctDay = completeDays >= 2 && completeTotal > 0
       ? completeTotal / completeDays : null;
-    return { bars, span, unit: this._levelUnit(), used7dPct,
-             used7dVal: used7dPct / 100 * span, avgPctDay, completeDays };
+    return { bars, span: scale.factor, unit: scale.unit, used7dPct,
+             used7dVal: used7dPct / 100 * scale.factor, avgPctDay, completeDays };
   }
 
   // Level readings keep one decimal below 100 (18.4 kg), integer above.
@@ -1079,18 +1181,19 @@ class DosingTankCard extends HTMLElement {
     return h < 24 ? `${h} h` : this._t().fmtDays(Math.floor(h / 24));
   }
 
-  _directMetrics(T, lvl, stats, unit, isAlert, range) {
-    const span = range && range.empty !== null
-      ? Math.abs(range.full - range.empty) : null;
+  _directMetrics(T, lvl, stats, isAlert, scale) {
+    const unit = scale?.unit ?? '';
     // What is LEFT, in tank units. The raw reading cannot be used as-is: an
     // inverted probe measures the distance down to the surface, so it grows as
     // the tank empties and would sit under a "remaining" label while meaning
-    // the exact opposite. On a plain 0-to-max sensor this equals the reading.
-    const remain = (lvl?.pct != null && span !== null)
-      ? this._fmtLevel(lvl.pct / 100 * span, unit) : '—';
-    // On a % sensor "remaining" would only repeat the figure already printed
-    // on the tank, so the slot shows the daily rate instead — the one number
-    // the card works out and displays nowhere else.
+    // the exact opposite. On a plain 0-to-max sensor this equals the reading,
+    // and with capacity configured it is the physical quantity left.
+    const remain = (lvl?.pct != null && scale)
+      ? this._fmtLevel(lvl.pct / 100 * scale.factor, unit) : '—';
+    // When the figure would only repeat the percentage already printed on the
+    // tank, the slot shows the daily rate instead — the one number the card
+    // works out and displays nowhere else. Configuring capacity gives the
+    // quantity a meaning of its own, so "remaining" comes back.
     const pace  = unit === '%' && stats?.avgPctDay;
     const first = pace
       ? { v: T.perDay(this._fmtLevel(stats.avgPctDay, unit)), l: T.avgDaily }
@@ -1134,6 +1237,8 @@ class DosingTankCard extends HTMLElement {
     }).join('');
   }
 
+  // `unit` here is the SENSOR's unit: the range describes what the sensor
+  // reads, never the physical capacity, which may be in another unit entirely.
   _directSettings(T, st, range, unit) {
     const name = st?.attributes?.friendly_name || this._config.level_entity || '—';
     // Always low → high so it reads as a scale; "(inverted)" is what tells you
@@ -1311,11 +1416,17 @@ class DosingTankCard extends HTMLElement {
 </g>
 <rect x="${BX}" y="${BY}" width="${BW}" height="${BH}" rx="${BR}" fill="url(#dtc-sh-${u})" pointer-events="none"/>
 <rect x="${BX+5}" y="${BY+6}" width="5" height="${BH-12}" rx="2.5" fill="rgba(255,255,255,.07)" pointer-events="none"/>
-${[25,50,75].map(lv=>{const ly=BY+BH-(lv/100)*BH;return `<line x1="${BX}" y1="${ly}" x2="${BX+10}" y2="${ly}" stroke="var(--divider-color,rgba(255,255,255,.25))" stroke-width="1"/>
-<text x="${BX+13}" y="${ly+4}" font-size="7" fill="var(--secondary-text-color,#888)">${lv}%</text>`;}).join('')}
+${/* Tick marks only. The 25/50/75 % labels used to sit exactly where the big
+      figure is drawn, hiding one of them behind it; they also duplicated that
+      figure and the "% left" caption underneath. Slightly longer and stronger
+      now that they carry the scale on their own. */''}
+${[25,50,75].map(lv=>{const ly=BY+BH-(lv/100)*BH;return `<line x1="${BX+2}" y1="${ly}" x2="${BX+14}" y2="${ly}" stroke="var(--secondary-text-color,#8a8a8a)" stroke-opacity=".5" stroke-width="1.5" stroke-linecap="round"/>`;}).join('')}
+${/* A CSS text-shadow blurs under bold SVG glyphs. A stroke painted behind
+      them keeps the edges crisp on any liquid color. */''}
 <text x="${W/2}" y="${BY+BH/2+7}" text-anchor="middle" font-size="19" font-weight="700"
   fill="${pct<35?'#fff':'var(--primary-text-color,#fff)'}"
-  style="text-shadow:0 1px 3px rgba(0,0,0,.5)">${label ?? `${pct.toFixed(0)}%`}</text>
+  paint-order="stroke" stroke="rgba(0,0,0,.6)" stroke-width="3.5"
+  stroke-linejoin="round">${label ?? `${pct.toFixed(0)}%`}</text>
 <rect x="${BX+8}" y="${BY+BH-2}" width="${BW-16}" height="8" rx="4"
   fill="var(--secondary-background-color,#2a2a2a)"
   stroke="var(--divider-color,rgba(255,255,255,.12))" stroke-width="1.5"/>
@@ -1340,7 +1451,8 @@ ${[25,50,75].map(lv=>{const ly=BY+BH-(lv/100)*BH;return `<line x1="${BX}" y1="${
     const lvl      = direct ? this._levelValue() : null;
     const lvlRange = direct ? this._levelRange() : null;
     const lvlStats = direct ? this._levelStats() : null;
-    const lvlUnit  = direct ? this._levelUnit()  : '';
+    const lvlScale = direct ? this._displayScale() : null;
+    const lvlUnit  = direct ? (lvlScale?.unit ?? '') : '';
 
     const pump       = direct ? null : this._hass.states[this._config.pump_entity];
     const resetState = direct ? null : this._hass.states[this._config.reset_entity];
@@ -1373,9 +1485,14 @@ ${[25,50,75].map(lv=>{const ly=BY+BH-(lv/100)*BH;return `<line x1="${BX}" y1="${
     const showHelperWarn = !direct && (!resetState || (!syncState && !counterMoved));
     const showAlert      = isAlert && (direct ? !!lvl : !!resetState);
 
-    const base  = _esc(isAlert ? '#ef4444' : this._config.liquid_color);
+    // color_mode 'level' trades liquid_color for a green / amber / red reading
+    // of the fill. Red is already the alert threshold, amber the warn one.
+    const tinted = !isAlert && this._config.color_mode === 'level'
+      ? (pct <= this._config.warn_threshold_percent ? '#f59e0b' : '#22c55e')
+      : this._config.liquid_color;
+    const base  = _esc(isAlert ? '#ef4444' : tinted);
     const light = _esc(isAlert ? '#fca5a5' : this._lighten(
-      this._config.liquid_color?.startsWith('#') ? this._config.liquid_color : '#3b82f6'));
+      tinted?.startsWith('#') ? tinted : '#3b82f6'));
 
     const days    = this._dailyStats || [];
     const maxMin  = Math.max(1, ...days.map(d => d.minutes));
@@ -1506,7 +1623,7 @@ ${[25,50,75].map(lv=>{const ly=BY+BH-(lv/100)*BH;return `<line x1="${BX}" y1="${
   </div>`:''}
   ${showAlert?`<div class="warn alert">${T.lowLevel(pct.toFixed(0))}</div>`:''}
 
-  ${direct?this._directMetrics(T,lvl,lvlStats,lvlUnit,isAlert,lvlRange):`<div class="metrics">
+  ${direct?this._directMetrics(T,lvl,lvlStats,isAlert,lvlScale):`<div class="metrics">
     <div class="metric">
       <div class="mv${isAlert?' alert':''}">${(remaining/1000).toFixed(2)} L</div>
       <div class="ml">${T.remaining}</div>
@@ -1548,7 +1665,7 @@ ${[25,50,75].map(lv=>{const ly=BY+BH-(lv/100)*BH;return `<line x1="${BX}" y1="${
       <div>
         <div class="stitle">${T.settings}</div>
         <div class="cfg">
-          ${direct?this._directSettings(T,lvlState,lvlRange,lvlUnit):`
+          ${direct?this._directSettings(T,lvlState,lvlRange,this._levelUnit()):`
           <div class="cfgr"><span class="l">${T.flowRate}</span><span class="v">${this._currentFlow()} mL/min</span></div>
           <div class="cfgr"><span class="l">${T.tankSize}</span><span class="v">${this._config.tank_volume_liters} L</span></div>
           <div class="cfgr"><span class="l">${T.alertAt}</span><span class="v">${this._config.alert_threshold_percent}%</span></div>
