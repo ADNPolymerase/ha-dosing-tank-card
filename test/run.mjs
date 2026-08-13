@@ -119,7 +119,7 @@ check('config-changed porte bien detail.config',
  */
 function makeDirect({ series = null, value = null, unit = '%',
                       full, empty, alert = 20, name = 'Bac à sel',
-                      capacity, capacity_unit, color_mode, warn, show_settings,
+                      capacity, capacity_unit, color_mode, warn, show_settings, layout,
                       entity = 'sensor.salt', present = true } = {}) {
   const cur    = value ?? (series ? series.at(-1) : null);
   const states = {};
@@ -135,7 +135,7 @@ function makeDirect({ series = null, value = null, unit = '%',
   const c = new Card();
   c.setConfig({ level_entity: entity, level_full: full, level_empty: empty,
                 alert_threshold_percent: alert, name,
-                capacity, capacity_unit, color_mode, show_settings,
+                capacity, capacity_unit, color_mode, show_settings, layout,
                 warn_threshold_percent: warn });
   c._hass = { states, locale: { language: 'en' } };
   if (series) {
@@ -148,6 +148,11 @@ function makeDirect({ series = null, value = null, unit = '%',
   c._render();
   return { card: c, html: markup(c) };
 }
+// Under the tank, in direct mode: the remaining quantity, when it says
+// something the percentage on the tank does not.
+const caption = html =>
+  (html.match(/<div class="tpct">([^<]*)<\/div>/) || [, '(aucun libellé)'])[1];
+
 const tile = (html, label) => {
   const m = html.match(
     new RegExp(`<div class="mv[^"]*">([^<]*)</div>\\s*<div class="ml">${label}</div>`));
@@ -156,11 +161,21 @@ const tile = (html, label) => {
 
 // ── Échelle ──────────────────────────────────────────────────────────────────
 
+// A % sensor needs no range, and gets no caption: the tank already says 62 %.
 check('capteur en %, pas de plage à configurer',
-  tile(makeDirect({ value: 62 }).html, 'Remaining'), '62 %');
+  /stroke-linejoin="round">62%<\/text>/.test(makeDirect({ value: 62 }).html), true);
+check('capteur en % : aucun libellé sous le bidon',
+  caption(makeDirect({ value: 62 }).html), '(aucun libellé)');
 
-check('capteur en kg mis à l\'échelle sur level_full',
+// The quantity is shown in both arrangements, just not in the same place:
+// first tile in rows, under the tank in columns.
+check('rows : la quantité est dans la tuile',
   tile(makeDirect({ value: 18.4, unit: 'kg', full: 25 }).html, 'Remaining'), '18.4 kg');
+check('columns : la quantité est sous le bidon',
+  caption(makeDirect({ value: 18.4, unit: 'kg', full: 25, layout: 'columns' }).html),
+  '18.4 kg left');
+check('rows : aucun libellé sous le bidon',
+  caption(makeDirect({ value: 18.4, unit: 'kg', full: 25 }).html), '(aucun libellé)');
 
 check('kg → pourcentage du bidon (18.4/25)',
   makeDirect({ value: 18.4, unit: 'kg', full: 25 }).card._levelValue().pct, 73.6);
@@ -173,9 +188,12 @@ check('sonde inversée (plein = 5 cm, vide = 30 cm), lecture 12 cm → 72 %',
 // The raw reading of an inverted probe is a measure of EMPTINESS: 12 cm down
 // to the surface on a 5–30 cm range means 18 cm of liquid left. Printing the
 // raw 12 under a "Remaining" label would say the opposite of the truth.
-check('sonde inversée : la tuile Restant montre le liquide, pas la distance',
+check('sonde inversée : la tuile montre le liquide, pas la distance',
   tile(makeDirect({ value: 12, unit: 'cm', full: 5, empty: 30 }).html, 'Remaining'),
   '18 cm');
+check('sonde inversée : idem sous le bidon en columns',
+  caption(makeDirect({ value: 12, unit: 'cm', full: 5, empty: 30,
+                       layout: 'columns' }).html), '18 cm left');
 
 contains('la plage inversée est signalée dans les réglages',
   makeDirect({ value: 12, unit: 'cm', full: 5, empty: 30 }).html, 'inverted');
@@ -191,7 +209,7 @@ check('capteur en % : la 1re tuile passe en moyenne journalière',
   tile(pctSeries.html, 'Daily avg'), '6 %/d');
 check('capteur en % : plus de tuile Restant redondante',
   /<div class="ml">Remaining<\/div>/.test(pctSeries.html), false);
-check('capteur en kg : la tuile Restant est conservée',
+check('capteur en kg : la tuile Restant est conservée en rows',
   tile(makeDirect({ series: [25,23,21,19,17,15,13,11], unit: 'kg', full: 25 }).html,
        'Remaining'), '11 kg');
 
@@ -239,12 +257,18 @@ check('l\'autonomie est exactement restant ÷ (conso 7 jours ÷ 7)',
 
 const salt = makeDirect({ series: [92,86,80,74,68,62,56,50], unit: '%',
                           capacity: 35, capacity_unit: 'kg' });
-check('capacité : 50 % d\'un bac de 35 kg', tile(salt.html, 'Remaining'), '17.5 kg');
+
 check('capacité : la conso 7 jours passe en kg', tile(salt.html, '7 days'), '14.7 kg');
 contains('capacité : le graphe est titré dans l\'unité physique',
   salt.html, 'Daily consumption (kg)');
-check('capacité : la tuile Restant reprend sa place sur un capteur en %',
-  /<div class="ml">Daily avg<\/div>/.test(salt.html), false);
+check('capacité en rows : la quantité tient la 1re tuile',
+  tile(salt.html, 'Remaining'), '17.5 kg');
+const saltCols = makeDirect({ series: [92,86,80,74,68,62,56,50], unit: '%',
+                              capacity: 35, capacity_unit: 'kg', layout: 'columns' });
+check('capacité en columns : la quantité passe sous le bidon',
+  caption(saltCols.html), '17.5 kg left');
+check('capacité en columns : la 1re tuile devient la moyenne journalière',
+  /<div class="ml">Daily avg<\/div>/.test(saltCols.html), true);
 // The Range row describes the sensor, so it stays in the sensor's own unit
 // even when quantities elsewhere are shown in kilos.
 contains('capacité : la plage reste en unités capteur', salt.html, '0 → 100 %');
@@ -318,6 +342,30 @@ check('le graphe reste quand le bloc est masqué',
   /class="bars"/.test(makeDirect({ value: 62, show_settings: false }).html), true);
 check('mode pompe : le bloc se masque aussi',
   /class="stitle">Settings</.test(makeCard({ showSettings: false })), false);
+
+// ── Disposition ──────────────────────────────────────────────────────────────
+// Same blocks, two arrangements. "columns" gives the tank the height of the
+// row and moves the metrics beside it, which is what a dashboard column wants.
+
+const rowsHtml = makeDirect({ value: 62, capacity: 35, capacity_unit: 'kg' }).html;
+const colsHtml = makeDirect({ value: 62, capacity: 35, capacity_unit: 'kg',
+                              layout: 'columns' }).html;
+check('rows par défaut', /class="body"/.test(rowsHtml), true);
+check('columns pose la classe qui déplace les tuiles',
+  /class="body cols"/.test(colsHtml), true);
+// In rows the metrics come before the body, in columns they are inside it.
+check('rows : les tuiles sont au-dessus du corps',
+  rowsHtml.indexOf('class="metrics"') < rowsHtml.indexOf('class="body"'), true);
+check('columns : les tuiles sont dans le corps',
+  colsHtml.indexOf('class="metrics"') > colsHtml.indexOf('class="body cols"'), true);
+check('columns : le bidon prend la hauteur qu\'on lui donne',
+  /<svg width="100%" height="100%"/.test(colsHtml), true);
+check('rows : le bidon garde sa taille naturelle',
+  /<svg width="86" height="140"/.test(rowsHtml), true);
+const edLay = new Editor();
+edLay.setConfig({ pump_entity: 'switch.pump' });
+contains('éditeur : le sélecteur de disposition existe',
+  markup(edLay), 'id="layout"');
 
 // ── Ce que le mode direct ne doit PAS afficher ───────────────────────────────
 

@@ -52,6 +52,7 @@ const DTL = {
     removeFromTank:'Remove from tank', resetFull:'Tank refilled — Reset',
     resetting:'Resetting…', on:'ON', off:'OFF',
     autonomy:'Autonomy', days7:'7 days', levelSource:'Source', levelRange:'Range',
+    qtyLeft: q=>`${q} left`,
     lastUpdate:'Last update', inverted:'inverted', fmtDays: d=>`${d} d`,
     sensorMissing:'Level sensor not found', sensorUnavailable:'Level sensor unavailable',
     rangeMissing:'Set the full-tank value', refill:'Refill',
@@ -70,6 +71,7 @@ const DTL = {
     edColorMode:'Color mode', edColorFixed:'Fixed color', edColorLevel:'By level',
     edWarn:'Warning threshold (%)',
     edShowSettings:'Show the settings block',
+    edLayout:'Layout', edLayoutRows:'Metrics on top', edLayoutCols:'Tank on the side',
   },
   fr: {
     remaining:'Restant', today:"Aujourd'hui", pump7d:'Pompe 7j',
@@ -86,6 +88,7 @@ const DTL = {
     removeFromTank:'Retirer du bidon', resetFull:'Bidon rempli — Réinitialiser',
     resetting:'Réinitialisation…', on:'ACTIF', off:'INACTIF',
     autonomy:'Autonomie', days7:'7 jours', levelSource:'Source', levelRange:'Plage',
+    qtyLeft: q=>`${q} restant`,
     lastUpdate:'Dernière MAJ', inverted:'inversée', fmtDays: d=>`${d} j`,
     sensorMissing:'Capteur de niveau introuvable', sensorUnavailable:'Capteur de niveau indisponible',
     rangeMissing:'Renseignez la valeur bidon plein', refill:'Remplissage',
@@ -104,6 +107,7 @@ const DTL = {
     edColorMode:'Mode couleur', edColorFixed:'Couleur fixe', edColorLevel:'Par palier',
     edWarn:"Seuil d'avertissement (%)",
     edShowSettings:'Afficher le bloc Paramètres',
+    edLayout:'Disposition', edLayoutRows:'Métriques en haut', edLayoutCols:'Bidon sur le côté',
   },
   es: {
     remaining:'Restante', today:'Hoy', pump7d:'Bomba 7d',
@@ -120,6 +124,7 @@ const DTL = {
     removeFromTank:'Retirar del depósito', resetFull:'Depósito lleno — Reiniciar',
     resetting:'Reiniciando…', on:'ON', off:'OFF',
     autonomy:'Autonomía', days7:'7 días', levelSource:'Fuente', levelRange:'Rango',
+    qtyLeft: q=>`${q} restante`,
     lastUpdate:'Última act.', inverted:'invertido', fmtDays: d=>`${d} d`,
     sensorMissing:'Sensor de nivel no encontrado', sensorUnavailable:'Sensor de nivel no disponible',
     rangeMissing:'Indique el valor de depósito lleno', refill:'Rellenado',
@@ -138,6 +143,7 @@ const DTL = {
     edColorMode:'Modo de color', edColorFixed:'Color fijo', edColorLevel:'Por nivel',
     edWarn:'Umbral de aviso (%)',
     edShowSettings:'Mostrar el bloque de ajustes',
+    edLayout:'Disposición', edLayoutRows:'Métricas arriba', edLayoutCols:'Depósito al lado',
   },
   ru: {
     remaining:'Осталось', today:'Сегодня', pump7d:'Насос 7д',
@@ -154,6 +160,7 @@ const DTL = {
     removeFromTank:'Убрать из бака', resetFull:'Бак заполнен — Сбросить',
     resetting:'Сброс…', on:'ВКЛ', off:'ВЫКЛ',
     autonomy:'Автономность', days7:'7 дней', levelSource:'Источник', levelRange:'Диапазон',
+    qtyLeft: q=>`осталось ${q}`,
     lastUpdate:'Обновлено', inverted:'инвертирован', fmtDays: d=>`${d} д`,
     sensorMissing:'Датчик уровня не найден', sensorUnavailable:'Датчик уровня недоступен',
     rangeMissing:'Укажите значение полного бака', refill:'Пополнение',
@@ -172,6 +179,7 @@ const DTL = {
     edColorMode:'Режим цвета', edColorFixed:'Фиксированный цвет', edColorLevel:'По уровню',
     edWarn:'Порог предупреждения (%)',
     edShowSettings:'Показывать блок настроек',
+    edLayout:'Расположение', edLayoutRows:'Метрики сверху', edLayoutCols:'Бак сбоку',
   },
   de: {
     remaining:'Verbleibend', today:'Heute', pump7d:'Pumpe 7T',
@@ -188,6 +196,7 @@ const DTL = {
     removeFromTank:'Aus Tank entnehmen', resetFull:'Tank voll — Zurücksetzen',
     resetting:'Zurücksetzen…', on:'AN', off:'AUS',
     autonomy:'Reichweite', days7:'7 Tage', levelSource:'Quelle', levelRange:'Bereich',
+    qtyLeft: q=>`${q} verbleibend`,
     lastUpdate:'Zuletzt akt.', inverted:'invertiert', fmtDays: d=>`${d} T`,
     sensorMissing:'Füllstandsensor nicht gefunden', sensorUnavailable:'Füllstandsensor nicht verfügbar',
     rangeMissing:'Wert für vollen Tank angeben', refill:'Nachfüllung',
@@ -206,6 +215,7 @@ const DTL = {
     edColorMode:'Farbmodus', edColorFixed:'Feste Farbe', edColorLevel:'Nach Füllstand',
     edWarn:'Warnschwelle (%)',
     edShowSettings:'Einstellungsblock anzeigen',
+    edLayout:'Anordnung', edLayoutRows:'Kennzahlen oben', edLayoutCols:'Tank an der Seite',
   },
   it: {
     remaining:'Rimanente', today:'Oggi', pump7d:'Pompa 7g',
@@ -222,6 +232,7 @@ const DTL = {
     removeFromTank:'Rimuovi dal serbatoio', resetFull:'Serbatoio pieno — Azzera',
     resetting:'Azzerando…', on:'ON', off:'OFF',
     autonomy:'Autonomia', days7:'7 giorni', levelSource:'Sorgente', levelRange:'Intervallo',
+    qtyLeft: q=>`${q} rimanente`,
     lastUpdate:'Ultimo agg.', inverted:'invertito', fmtDays: d=>`${d} g`,
     sensorMissing:'Sensore di livello non trovato', sensorUnavailable:'Sensore di livello non disponibile',
     rangeMissing:'Imposta il valore a serbatoio pieno', refill:'Riempimento',
@@ -240,6 +251,7 @@ const DTL = {
     edColorMode:'Modalità colore', edColorFixed:'Colore fisso', edColorLevel:'Per livello',
     edWarn:'Soglia di avviso (%)',
     edShowSettings:'Mostra il blocco impostazioni',
+    edLayout:'Disposizione', edLayoutRows:'Metriche in alto', edLayoutCols:'Serbatoio di lato',
   },
   nl: {
     remaining:'Resterend', today:'Vandaag', pump7d:'Pomp 7d',
@@ -256,6 +268,7 @@ const DTL = {
     removeFromTank:'Verwijderen uit tank', resetFull:'Tank gevuld — Resetten',
     resetting:'Resetten…', on:'AAN', off:'UIT',
     autonomy:'Autonomie', days7:'7 dagen', levelSource:'Bron', levelRange:'Bereik',
+    qtyLeft: q=>`${q} resterend`,
     lastUpdate:'Laatste update', inverted:'omgekeerd', fmtDays: d=>`${d} d`,
     sensorMissing:'Niveausensor niet gevonden', sensorUnavailable:'Niveausensor niet beschikbaar',
     rangeMissing:'Stel de waarde bij volle tank in', refill:'Bijvullen',
@@ -274,6 +287,7 @@ const DTL = {
     edColorMode:'Kleurmodus', edColorFixed:'Vaste kleur', edColorLevel:'Per niveau',
     edWarn:'Waarschuwingsdrempel (%)',
     edShowSettings:'Instellingenblok tonen',
+    edLayout:'Indeling', edLayoutRows:'Metrieken bovenaan', edLayoutCols:'Tank aan de zijkant',
   },
   sv: {
     remaining:'Återstår', today:'Idag', pump7d:'Pump 7d',
@@ -290,6 +304,7 @@ const DTL = {
     removeFromTank:'Ta bort från tank', resetFull:'Tank påfylld — Återställ',
     resetting:'Återställer…', on:'PÅ', off:'AV',
     autonomy:'Räckvidd', days7:'7 dagar', levelSource:'Källa', levelRange:'Intervall',
+    qtyLeft: q=>`${q} kvar`,
     lastUpdate:'Senast uppdaterad', inverted:'inverterad', fmtDays: d=>`${d} d`,
     sensorMissing:'Nivågivare hittades inte', sensorUnavailable:'Nivågivare otillgänglig',
     rangeMissing:'Ange värdet för full tank', refill:'Påfyllning',
@@ -308,6 +323,7 @@ const DTL = {
     edColorMode:'Färgläge', edColorFixed:'Fast färg', edColorLevel:'Efter nivå',
     edWarn:'Varningströskel (%)',
     edShowSettings:'Visa inställningsblocket',
+    edLayout:'Layout', edLayoutRows:'Mätvärden överst', edLayoutCols:'Tank vid sidan',
   },
   no: {
     remaining:'Gjenstår', today:'I dag', pump7d:'Pumpe 7d',
@@ -324,6 +340,7 @@ const DTL = {
     removeFromTank:'Fjern fra tank', resetFull:'Tank fylt — Tilbakestill',
     resetting:'Tilbakestiller…', on:'PÅ', off:'AV',
     autonomy:'Rekkevidde', days7:'7 dager', levelSource:'Kilde', levelRange:'Område',
+    qtyLeft: q=>`${q} igjen`,
     lastUpdate:'Sist oppdatert', inverted:'invertert', fmtDays: d=>`${d} d`,
     sensorMissing:'Nivåsensor ikke funnet', sensorUnavailable:'Nivåsensor utilgjengelig',
     rangeMissing:'Angi verdien for full tank', refill:'Påfylling',
@@ -342,6 +359,7 @@ const DTL = {
     edColorMode:'Fargemodus', edColorFixed:'Fast farge', edColorLevel:'Etter nivå',
     edWarn:'Varselgrense (%)',
     edShowSettings:'Vis innstillingsblokken',
+    edLayout:'Oppsett', edLayoutRows:'Måltall øverst', edLayoutCols:'Tank på siden',
   },
   da: {
     remaining:'Tilbage', today:'I dag', pump7d:'Pumpe 7d',
@@ -358,6 +376,7 @@ const DTL = {
     removeFromTank:'Fjern fra tank', resetFull:'Tank fyldt — Nulstil',
     resetting:'Nulstiller…', on:'TIL', off:'FRA',
     autonomy:'Rækkevidde', days7:'7 dage', levelSource:'Kilde', levelRange:'Område',
+    qtyLeft: q=>`${q} tilbage`,
     lastUpdate:'Sidst opdateret', inverted:'inverteret', fmtDays: d=>`${d} d`,
     sensorMissing:'Niveausensor ikke fundet', sensorUnavailable:'Niveausensor utilgængelig',
     rangeMissing:'Angiv værdien for fuld tank', refill:'Påfyldning',
@@ -376,6 +395,7 @@ const DTL = {
     edColorMode:'Farvetilstand', edColorFixed:'Fast farve', edColorLevel:'Efter niveau',
     edWarn:'Advarselsgrænse (%)',
     edShowSettings:'Vis indstillingsblokken',
+    edLayout:'Layout', edLayoutRows:'Måltal øverst', edLayoutCols:'Tank i siden',
   },
   pl: {
     remaining:'Pozostało', today:'Dziś', pump7d:'Pompa 7d',
@@ -392,6 +412,7 @@ const DTL = {
     removeFromTank:'Usuń ze zbiornika', resetFull:'Zbiornik napełniony — Reset',
     resetting:'Resetowanie…', on:'WŁ.', off:'WYŁ.',
     autonomy:'Autonomia', days7:'7 dni', levelSource:'Źródło', levelRange:'Zakres',
+    qtyLeft: q=>`pozostało ${q}`,
     lastUpdate:'Ostatnia akt.', inverted:'odwrócony', fmtDays: d=>`${d} d`,
     sensorMissing:'Nie znaleziono czujnika poziomu', sensorUnavailable:'Czujnik poziomu niedostępny',
     rangeMissing:'Podaj wartość dla pełnego zbiornika', refill:'Napełnienie',
@@ -410,6 +431,7 @@ const DTL = {
     edColorMode:'Tryb koloru', edColorFixed:'Stały kolor', edColorLevel:'Wg poziomu',
     edWarn:'Próg ostrzeżenia (%)',
     edShowSettings:'Pokaż blok ustawień',
+    edLayout:'Układ', edLayoutRows:'Metryki u góry', edLayoutCols:'Zbiornik z boku',
   },
 };
 
@@ -550,6 +572,7 @@ class DosingTankCardEditor extends HTMLElement {
     set('capunit',c.capacity_unit            ?? '');
     set('warn',   c.warn_threshold_percent   ?? 50);
     set('cmode',  c.color_mode               ?? 'fixed');
+    set('layout', c.layout                   ?? 'rows');
     const box = this.shadowRoot.getElementById('showset');
     if (box) box.checked = c.show_settings !== false;
 
@@ -724,6 +747,13 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
       <input type="text"  id="ctext" value="${_esc(c.liquid_color??'#3b82f6')}" placeholder="#3b82f6" maxlength="7">
     </div>
   </div>
+  <div class="field">
+    <label>${T.edLayout}</label>
+    <select id="layout">
+      <option value="rows"${c.layout==='columns'?'':' selected'}>${T.edLayoutRows}</option>
+      <option value="columns"${c.layout==='columns'?' selected':''}>${T.edLayoutCols}</option>
+    </select>
+  </div>
   <label class="check">
     <input type="checkbox" id="showset"${c.show_settings===false?'':' checked'}>
     ${T.edShowSettings}
@@ -826,6 +856,7 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
     bind('capunit','capacity_unit',           v => v.trim() || undefined);
     bind('warn',   'warn_threshold_percent',  Number);
     bind('cmode',  'color_mode',              v => v);
+    bind('layout', 'layout',                  v => v);
 
     // A checkbox carries its state in .checked, not .value, so it cannot go
     // through bind(). Ticked is the default, so it writes nothing at all.
@@ -924,6 +955,9 @@ class DosingTankCard extends HTMLElement {
       // is told apart from a pH− one at a glance.
       color_mode:              config.color_mode === 'level' ? 'level' : 'fixed',
       show_settings:           config.show_settings !== false,
+      // 'columns' gives the tank the full height of the card and moves the
+      // three metric tiles beside it. 'rows' is the original arrangement.
+      layout:                  config.layout === 'columns' ? 'columns' : 'rows',
       warn_threshold_percent:  Number(config.warn_threshold_percent) || 50,
       name:                    config.name || 'Dosing Tank',
       liquid_color:            config.liquid_color || '#3b82f6',
@@ -1206,7 +1240,7 @@ class DosingTankCard extends HTMLElement {
     return h < 24 ? `${h} h` : this._t().fmtDays(Math.floor(h / 24));
   }
 
-  _directMetrics(T, lvl, stats, isAlert, scale) {
+  _directMetrics(T, lvl, stats, isAlert, scale, tall) {
     const unit = scale?.unit ?? '';
     // What is LEFT, in tank units. The raw reading cannot be used as-is: an
     // inverted probe measures the distance down to the surface, so it grows as
@@ -1215,14 +1249,17 @@ class DosingTankCard extends HTMLElement {
     // and with capacity configured it is the physical quantity left.
     const remain = (lvl?.pct != null && scale)
       ? this._fmtLevel(lvl.pct / 100 * scale.factor, unit) : '—';
-    // When the figure would only repeat the percentage already printed on the
-    // tank, the slot shows the daily rate instead — the one number the card
-    // works out and displays nowhere else. Configuring capacity gives the
-    // quantity a meaning of its own, so "remaining" comes back.
-    const pace  = unit === '%' && stats?.avgPctDay;
-    const first = pace
-      ? { v: T.perDay(this._fmtLevel(stats.avgPctDay, unit)), l: T.avgDaily }
+    // In the columns arrangement the quantity is printed under the tank, next
+    // to the level it qualifies, which frees this slot for the daily rate: the
+    // one figure the card works out and would otherwise show nowhere once
+    // capacity is configured. In rows nothing moves, so the slot keeps the
+    // quantity unless that would only repeat the percentage on the tank.
+    const rate  = stats?.avgPctDay
+      ? T.perDay(this._fmtLevel(stats.avgPctDay, unit)) : '—';
+    const first = tall || (unit === '%' && stats?.avgPctDay)
+      ? { v: rate, l: T.avgDaily }
       : { v: remain, l: T.remaining };
+    const pace = first.l === T.avgDaily;
     const used = stats ? this._fmtLevel(stats.used7dVal, unit) : '—';
     const auto = (stats?.avgPctDay && lvl?.pct != null)
       ? this._fmtAutonomy(T, lvl.pct / stats.avgPctDay) : '—';
@@ -1240,6 +1277,20 @@ class DosingTankCard extends HTMLElement {
       <div class="ml">${T.autonomy}</div>
     </div>
   </div>`;
+  }
+
+  /**
+   * The line under the tank, in direct mode.
+   * Only in the columns arrangement, and only when it says something the
+   * tank does not already: "23.8 kg left" under a tank showing 68 % adds the
+   * quantity, whereas "68.0 % left" only repeated the figure, which is why the
+   * old percentage caption was dropped in v0.8.1. In rows the quantity stays
+   * in the first tile, so printing it here too would be that duplication again.
+   */
+  _remainingCaption(T, lvl, scale) {
+    if (!scale || lvl?.pct == null || scale.unit === '%' || !scale.unit) return '';
+    const qty = this._fmtLevel(lvl.pct / 100 * scale.factor, scale.unit);
+    return `<div class="tpct">${_esc(T.qtyLeft(qty))}</div>`;
   }
 
   _directBars(T, stats, base) {
@@ -1413,11 +1464,16 @@ class DosingTankCard extends HTMLElement {
 
   // ── SVG tank ─────────────────────────────────────────────────────────────
 
-  _svgTank(pct, base, light, label) {
+  _svgTank(pct, base, light, label, fill) {
     const W=86,H=140,BX=3,BY=22,BW=80,BH=105,BR=10,NX=28,NY=3,NW=30,NH=18,NR=6;
     const s = Math.max(0, Math.min(1, pct / 100));
     const u = this._uid;
-    return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+    // `fill` lets the drawing take the height its column is given instead of
+    // its natural 86×140; the viewBox keeps the proportions either way.
+    const size = fill
+      ? 'width="100%" height="100%" preserveAspectRatio="xMidYMid meet"'
+      : `width="${W}" height="${H}"`;
+    return `<svg ${size} viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
 <defs>
   <clipPath id="dtc-cp-${u}"><rect x="${BX}" y="${BY}" width="${BW}" height="${BH}" rx="${BR}"/></clipPath>
   <linearGradient id="dtc-lg-${u}" x1="0" y1="0" x2="1" y2="0">
@@ -1518,6 +1574,7 @@ ${/* Always white, never --primary-text-color: this figure is drawn on top of
     const showHelperWarn = !direct && (!resetState || (!syncState && !counterMoved));
     const showAlert      = isAlert && (direct ? !!lvl : !!resetState);
 
+
     // color_mode 'level' trades liquid_color for a green / amber / red reading
     // of the fill. Red is already the alert threshold, amber the warn one.
     const tinted = !isAlert && this._config.color_mode === 'level'
@@ -1537,6 +1594,26 @@ ${/* Always white, never --primary-text-color: this figure is drawn on top of
     const liveToday = todayFrom
       ? Math.max(0, Date.now() - todayFrom) / 60000 * this._currentFlow() : 0;
     const todayMl = this._todayConsumedMl + liveToday;
+
+    // The metrics row is placed by the layout, so it is built once here and
+    // dropped into whichever column the arrangement calls for.
+    const tall = this._config.layout === 'columns';
+    const metricsHtml = direct
+      ? this._directMetrics(T, lvl, lvlStats, isAlert, lvlScale, tall)
+      : `<div class="metrics">
+    <div class="metric">
+      <div class="mv${isAlert?' alert':''}">${(remaining/1000).toFixed(2)} L</div>
+      <div class="ml">${T.remaining}</div>
+    </div>
+    <div class="metric">
+      <div class="mv">${this._fmtVol(todayMl)}</div>
+      <div class="ml">${T.today}</div>
+    </div>
+    <div class="metric">
+      <div class="mv">${this._fmtDuration(this._week7dMinutes)}</div>
+      <div class="ml">${T.pump7d}</div>
+    </div>
+  </div>`;
 
     this.shadowRoot.innerHTML = `
 <style>
@@ -1573,7 +1650,17 @@ ${/* Always white, never --primary-text-color: this figure is drawn on top of
 .mv.alert{color:#ef4444}
 .ml{font-size:9px;color:var(--secondary-text-color,#888);text-transform:uppercase;letter-spacing:.6px;margin-top:3px}
 .body{display:grid;grid-template-columns:100px 1fr;gap:14px;align-items:start}
+/* Columns layout: the tank takes the whole height of the row and the metrics
+   sit beside it, tightened so three of them still fit a narrower column. */
+.body.cols{grid-template-columns:100px 1fr;align-items:stretch}
+.body.cols .tcol{height:100%;min-height:150px;justify-content:center}
+.body.cols .tcol svg{width:100%;height:100%}
+.body.cols .metrics{gap:5px;margin-bottom:12px}
+.body.cols .metric{padding:6px 3px}
+.body.cols .mv{font-size:13px}
+.body.cols .ml{font-size:8px;letter-spacing:.3px}
 .tcol{display:flex;flex-direction:column;align-items:center;gap:5px}
+.tpct{font-size:11px;color:var(--secondary-text-color,#888);text-align:center}
 .rcol{display:flex;flex-direction:column;gap:12px;min-width:0}
 .stitle{font-size:10px;font-weight:600;letter-spacing:.7px;text-transform:uppercase;color:var(--secondary-text-color,#888);margin-bottom:6px}
 .bars{display:flex;align-items:flex-end;gap:5px;height:60px}
@@ -1679,31 +1766,24 @@ ${/* Always white, never --primary-text-color: this figure is drawn on top of
   </div>`:''}
   ${showAlert?`<div class="warn alert">${T.lowLevel(pct.toFixed(0))}</div>`:''}
 
-  ${direct?this._directMetrics(T,lvl,lvlStats,isAlert,lvlScale):`<div class="metrics">
-    <div class="metric">
-      <div class="mv${isAlert?' alert':''}">${(remaining/1000).toFixed(2)} L</div>
-      <div class="ml">${T.remaining}</div>
-    </div>
-    <div class="metric">
-      <div class="mv">${this._fmtVol(todayMl)}</div>
-      <div class="ml">${T.today}</div>
-    </div>
-    <div class="metric">
-      <div class="mv">${this._fmtDuration(this._week7dMinutes)}</div>
-      <div class="ml">${T.pump7d}</div>
-    </div>
-  </div>`}
+  ${/* Two arrangements of the same three blocks. "rows" stacks the metrics
+        above a short tank; "columns" gives the tank the full height of the
+        card and moves the metrics beside it, which is denser. Nothing but
+        the arrangement changes. */''}
+  ${tall?'':metricsHtml}
 
-  <div class="body">
+  <div class="body${tall?' cols':''}">
     ${/* No caption under the tank: it repeated the figure drawn on the tank,
-          and rounded to one more decimal, so the two disagreed on screen —
+          and rounded to one more decimal, so the two disagreed on screen,
           "18%" above "17.6% left". The precise quantity is in the first
           metric tile, in litres or kilos, which says more than a decimal
           of a percentage. */''}
     <div class="tcol">
-      ${this._svgTank(pct, base, light, hasPct ? `${pct.toFixed(0)}%` : '—')}
+      ${this._svgTank(pct, base, light, hasPct ? `${pct.toFixed(0)}%` : '—', tall)}
+      ${direct&&tall?this._remainingCaption(T, lvl, lvlScale):''}
     </div>
     <div class="rcol">
+      ${tall?metricsHtml:''}
       <div>
         <div class="stitle">${direct?T.dailyChartU(lvlUnit||'%'):T.dailyChart}</div>
         <div class="bars">
