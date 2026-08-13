@@ -12,8 +12,8 @@
 
 A Lovelace card to track the level of a tank. Two modes:
 
-- **Pump runtime** — chlorine, pH−, pH+, flocculant, algaecide, or any product injected by a pump at a constant flow rate. The card counts the pump and converts it to millilitres.
-- **Direct level** — a water-softener salt tank, an ESP32 probe on a drum, or anything whose level is already reported by a sensor. The card reads it and adds a consumption history and a runs-out-in estimate on top.
+- **Pump runtime**: chlorine, pH−, pH+, flocculant, algaecide, or any product injected by a pump at a constant flow rate. The card counts the pump and converts it to millilitres.
+- **Direct level**: a water-softener salt tank, an ESP32 probe on a drum, or anything whose level is already reported by a sensor. The card reads it and adds a consumption history and a runs-out-in estimate on top.
 
 > 🇫🇷 [Lire en français](README.fr.md)
 
@@ -24,19 +24,19 @@ A Lovelace card to track the level of a tank. Two modes:
 ## Features
 
 - **Animated SVG tank** with configurable liquid color, real-time pump badge and low-level alert (card turns red + warning banner).
-- **3 key metrics** — remaining volume (L), today's consumption (mL), 7-day pump runtime — plus a **7-day bar chart** built from HA history, no extra sensors needed.
-- **Counts in the background** — runtime is reconciled from the HA history API, so nothing is lost while no browser tab is open. No automation required.
-- **Collapsible adjustment panel** — Add/Remove/Reset controls, hidden by default.
-- **Or no pump at all** — point it at a level sensor instead and it shows the level, the 7-day consumption and how long the tank will last.
-- **Multilingual** (11 languages: EN, FR, ES, DE, IT, NL, SV, NO, DA, PL, RU — auto-detected from HA), dark-mode ready, responsive, zero dependencies.
+- **3 key metrics** (remaining volume in L, today's consumption in mL, 7-day pump runtime), plus a **7-day bar chart** built from HA history, no extra sensors needed.
+- **Counts in the background**: runtime is reconciled from the HA history API, so nothing is lost while no browser tab is open. No automation required.
+- **Collapsible adjustment panel** with Add/Remove/Reset controls, hidden by default.
+- **Or no pump at all**: point it at a level sensor instead and it shows the level, the 7-day consumption and how long the tank will last.
+- **Multilingual** (11 languages: EN, FR, ES, DE, IT, NL, SV, NO, DA, PL, RU, auto-detected from HA), dark-mode ready, responsive, zero dependencies.
 
 ---
 
 ## Prerequisites
 
-> Everything in this section is for **pump-runtime mode**. In [direct level mode](#direct-level-mode) the sensor is the only thing you need — no helper, no pump.
+> Everything in this section is for **pump-runtime mode**. In [direct level mode](#direct-level-mode) the sensor is the only thing you need: no helper, no pump.
 
-**A pump entity** — any `switch.*`, `input_boolean.*` or `binary_sensor.*` whose state is `on` while product is being injected. No "smart dosing pump" required:
+**A pump entity**: any `switch.*`, `input_boolean.*` or `binary_sensor.*` whose state is `on` while product is being injected. No "smart dosing pump" required:
 
 | Your setup | Pump entity to use |
 |---|---|
@@ -47,15 +47,15 @@ A Lovelace card to track the level of a tank. Two modes:
 
 If you dose **by hand** (no pump), use the +/- adjustment panel to track the level manually.
 
-**Two helpers** (three with the optional one). The quickest way is the **✨ Create counter** button in the card editor — it creates them all and fills them into the config. Manually, from **Settings → Devices & Services → Helpers**:
+**Two helpers** (three with the optional one). The quickest way is the **✨ Create counter** button in the card editor, which creates them all and fills them into the config. Manually, from **Settings → Devices & Services → Helpers**:
 
 | Helper | Type | Role |
 |---|---|---|
-| `<name> consumed` | **Number** — min `0`, max `9999999`, step `1`, unit `mL` | consumed volume, persisted across restarts |
-| `<name> sync` | **Date and/or time** — date **and** time | watermark: how far the pump runtime has already been counted |
-| `<name> flow rate` | **Number** — unit `mL/min` | *optional* — live flow rate, overrides `flow_rate_ml_per_min` |
+| `<name> consumed` | **Number**, min `0`, max `9999999`, step `1`, unit `mL` | consumed volume, persisted across restarts |
+| `<name> sync` | **Date and/or time**, date **and** time | watermark: how far the pump runtime has already been counted |
+| `<name> flow rate` | **Number**, unit `mL/min` | *optional*, live flow rate, overrides `flow_rate_ml_per_min` |
 
-> ⚠️ Without `sync_entity` the card still shows a live level while the pump runs, but **never writes to the counter** — the reading is lost as soon as the pump stops.
+> ⚠️ Without `sync_entity` the card still shows a live level while the pump runs, but **never writes to the counter**: the reading is lost as soon as the pump stops.
 
 ---
 
@@ -80,25 +80,25 @@ tank_volume_liters: 5
 alert_threshold_percent: 20
 name: "Chlorine"
 liquid_color: "#3b82f6"
-# flow_entity: input_number.dosing_tank_flow_rate  # optional — live flow rate
-# language: "fr"  # optional — auto-detected from HA locale by default
+# flow_entity: input_number.dosing_tank_flow_rate  # optional, live flow rate
+# language: "fr"  # optional, auto-detected from HA locale by default
 ```
 
 ### Options
 
 | Option | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `pump_entity` | `string` | ✅ ¹ | — | Switch entity controlling the dosing pump |
-| `reset_entity` | `string` | ✅ ¹ | — | `input_number` (or `number`) entity that stores consumed mL |
-| `sync_entity` | `string` | ✅ ¹ | — | `input_datetime` (date + time) holding the catch-up watermark — **without it the card never writes the counter itself**, so the level only moves if something else does it |
-| `flow_entity` | `string` | ¹ | — | `input_number` holding the live flow rate in mL/min; takes over from `flow_rate_ml_per_min` when > 0 |
+| `pump_entity` | `string` | ✅ ¹ |  | Switch entity controlling the dosing pump |
+| `reset_entity` | `string` | ✅ ¹ |  | `input_number` (or `number`) entity that stores consumed mL |
+| `sync_entity` | `string` | ✅ ¹ |  | `input_datetime` (date + time) holding the catch-up watermark. **Without it the card never writes the counter itself**, so the level only moves if something else does it |
+| `flow_entity` | `string` | ¹ |  | `input_number` holding the live flow rate in mL/min; takes over from `flow_rate_ml_per_min` when > 0 |
 | `flow_rate_ml_per_min` | `number` | ¹ | `15` | Pump flow rate in mL/min |
 | `tank_volume_liters` | `number` | ¹ | `5` | Tank capacity in litres |
-| `level_entity` | `string` | ✅ ² | — | Sensor reporting the level. **Setting it switches the card to direct-level mode** and the whole pump chain above becomes irrelevant |
+| `level_entity` | `string` | ✅ ² |  | Sensor reporting the level. **Setting it switches the card to direct-level mode** and the whole pump chain above becomes irrelevant |
 | `level_full` | `number` | ² | `100` if unit is `%` | Sensor value for a full tank |
 | `level_empty` | `number` | ² | `0` | Sensor value for an empty tank |
-| `capacity` | `number` | ² | — | What a full tank physically holds, so quantities read in kg or litres even when the sensor only reports a percentage |
-| `capacity_unit` | `string` | ² | — | Unit written next to those quantities (`kg`, `L`…) |
+| `capacity` | `number` | ² |  | What a full tank physically holds, so quantities read in kg or litres even when the sensor only reports a percentage |
+| `capacity_unit` | `string` | ² |  | Unit written next to those quantities (`kg`, `L`…) |
 | `color_mode` | `string` | | `"fixed"` | `"level"` colours the tank by fill instead of using `liquid_color` |
 | `warn_threshold_percent` | `number` | | `50` | Amber below this, red below `alert_threshold_percent`. Only used by `color_mode: level` |
 | `alert_threshold_percent` | `number` | | `20` | Alert threshold (%) |
@@ -112,7 +112,7 @@ liquid_color: "#3b82f6"
 
 ## Direct level mode
 
-For a tank whose level is already measured — a softener salt tank, an ESP32 probe, any `sensor.*` holding a number. Set `level_entity` and the card stops counting pump runtime entirely: no counter, no watermark, no adjustment panel.
+For a tank whose level is already measured, such as a softener salt tank, an ESP32 probe, or any `sensor.*` holding a number. Set `level_entity` and the card stops counting pump runtime entirely: no counter, no watermark, no adjustment panel.
 
 ![Direct level mode](https://raw.githubusercontent.com/ADNPolymerase/ha-dosing-tank-card/main/docs/screenshot-direct.png)
 
@@ -145,7 +145,7 @@ level_empty: 30         # cm, tank empty
 
 The three tiles change meaning in this mode. Two are fixed: consumption over the last 7 days, and **autonomy**, how long the tank lasts at the recent average rate. The first one adapts: on a bare `%` sensor it shows the average daily consumption, since the level itself is already printed on the tank; otherwise it shows what is left, which on an inverted probe is the liquid height and not the raw distance reading. Setting `capacity` gives that figure a meaning of its own, so it goes back to showing what remains.
 
-That average deliberately ignores days when the level went **up**: a refill hides whatever was consumed alongside it, and counting it as a zero-consumption day would inflate the autonomy of a tank that is in fact running out. Refill days appear as a green `+` in the chart. Days where the level genuinely did not move are kept — a softener that did not regenerate is real information. Autonomy shows `—` until there are at least two complete days of decline.
+That average deliberately ignores days when the level went **up**: a refill hides whatever was consumed alongside it, and counting it as a zero-consumption day would inflate the autonomy of a tank that is in fact running out. Refill days appear as a green `+` in the chart. Days where the level genuinely did not move are kept, because a softener that did not regenerate is real information. Autonomy shows `—` until there are at least two complete days of decline.
 
 ---
 
@@ -168,11 +168,11 @@ That average deliberately ignores days when the level went **up**: a refill hide
 
 `remaining = tank_volume × 1000 − consumed`, where consumed is pump runtime × flow rate.
 
-Runtime is reconciled from the **Home Assistant history API**, not from the open browser tab. `sync_entity` stores a watermark — the instant up to which runtime has already been counted. On each refresh (every 15 min, and immediately when the pump stops) the card adds everything the pump ran since that watermark into `reset_entity`, then moves the watermark forward. So nothing is lost while no tab is open: the catch-up happens the next time the card is displayed, looking back up to 90 days.
+Runtime is reconciled from the **Home Assistant history API**, not from the open browser tab. `sync_entity` stores a watermark, the instant up to which runtime has already been counted. On each refresh (every 15 min, and immediately when the pump stops) the card adds everything the pump ran since that watermark into `reset_entity`, then moves the watermark forward. So nothing is lost while no tab is open: the catch-up happens the next time the card is displayed, looking back up to 90 days.
 
 The 7-day bar chart is built from the same history. The reset button zeroes the counter and moves the watermark to now, for when you refill the tank.
 
-Any entity whose state is `on` while product is injected works — `switch.*`, `input_boolean.*` and `binary_sensor.*` alike.
+Any entity whose state is `on` while product is injected works with `switch.*`, `input_boolean.*` and `binary_sensor.*` alike.
 
 ---
 
@@ -180,11 +180,11 @@ Any entity whose state is `on` while product is injected works — `switch.*`, `
 
 Up to v0.1.3 the counter only moved while a browser tab was open, and this README suggested an automation to increment it on each pump stop. Since **v0.2.0** the card does the catch-up itself from history. If you are coming from an older version:
 
-1. Add a `sync_entity` (see [Prerequisites](#prerequisites)) — without it the counter is never written.
+1. Add a `sync_entity` (see [Prerequisites](#prerequisites)). Without it the counter is never written.
 2. **Delete that old automation.** With `sync_entity` set, the automation and the card would each count the same pump cycle, doubling your consumption.
 
 ---
 
 ## License
 
-MIT — see [LICENSE](https://github.com/ADNPolymerase/ha-dosing-tank-card/blob/main/LICENSE)
+MIT, see [LICENSE](https://github.com/ADNPolymerase/ha-dosing-tank-card/blob/main/LICENSE)
