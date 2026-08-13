@@ -102,6 +102,7 @@ liquid_color: "#3b82f6"
 | `color_mode` | `string` | | `"fixed"` | `"level"` colours the tank by fill instead of using `liquid_color` |
 | `warn_threshold_percent` | `number` | | `50` | Amber below this, red below `alert_threshold_percent`. Only used by `color_mode: level` |
 | `alert_threshold_percent` | `number` | | `20` | Alert threshold (%) |
+| `show_settings` | `boolean` | | `true` | `false` drops the Settings block at the bottom of the card. There is a tick box for it in the visual editor |
 | `name` | `string` | | `"Dosing Tank"` | Title shown in the card header |
 | `liquid_color` | `string` | | `"#3b82f6"` | Liquid color (any CSS hex color) |
 | `language` | `string` | | auto | Language override: `en`, `fr`, `es`, `de`, `it`, `nl`, `sv`, `no`, `da`, `pl`, `ru` (default: auto-detected from HA locale) |

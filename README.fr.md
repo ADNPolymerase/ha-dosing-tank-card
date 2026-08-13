@@ -102,6 +102,7 @@ liquid_color: "#3b82f6"
 | `color_mode` | `string` | | `"fixed"` | `"level"` colore le bidon selon le remplissage au lieu d'utiliser `liquid_color` |
 | `warn_threshold_percent` | `number` | | `50` | Orange en dessous, rouge sous `alert_threshold_percent`. Utilisé uniquement par `color_mode: level` |
 | `alert_threshold_percent` | `number` | | `20` | Seuil d'alerte (%) |
+| `show_settings` | `boolean` | | `true` | `false` retire le bloc Paramètres en bas de la carte. Une case à cocher existe pour ça dans l'éditeur visuel |
 | `name` | `string` | | `"Dosing Tank"` | Titre affiché dans l'en-tête de la carte |
 | `liquid_color` | `string` | | `"#3b82f6"` | Couleur du liquide (toute couleur CSS hexadécimale) |
 | `language` | `string` | | auto | Forcer la langue : `en`, `fr`, `es`, `de`, `it`, `nl`, `sv`, `no`, `da`, `pl`, `ru` (défaut : auto-détectée depuis la locale HA) |
