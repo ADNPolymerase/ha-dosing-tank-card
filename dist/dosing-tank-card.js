@@ -42,7 +42,7 @@ const DTL = {
     dailyChart:'Daily consumption (mL)', settings:'Settings',
     flowRate:'Flow rate', tankSize:'Tank size', alertAt:'Alert at',
     totalUsed:'Total used', adjust:'Adjust', loading:'Loading…',
-    noData:'No data yet', pctLeft: p=>`${p}% left`,
+    noData:'No data yet',
     lowLevel: p=>`⚠️ Low level — refill soon (${p}% remaining)`,
     helperMissing:'Counter not found', createHelper:'Create counter',
     creating:'Creating…', helperCreated: id=>`Created: ${id}`,
@@ -75,7 +75,7 @@ const DTL = {
     dailyChart:'Consommation journalière (mL)', settings:'Paramètres',
     flowRate:'Débit', tankSize:'Volume bidon', alertAt:'Alerte à',
     totalUsed:'Total consommé', adjust:'Ajustement', loading:'Chargement…',
-    noData:'Aucune donnée', pctLeft: p=>`${p}% restant`,
+    noData:'Aucune donnée',
     lowLevel: p=>`⚠️ Niveau bas — rechargez dès que possible (${p}% restant)`,
     helperMissing:'Compteur introuvable', createHelper:'Créer le compteur',
     creating:'Création…', helperCreated: id=>`Créé : ${id}`,
@@ -108,7 +108,7 @@ const DTL = {
     dailyChart:'Consumo diario (mL)', settings:'Ajustes',
     flowRate:'Caudal', tankSize:'Volumen depósito', alertAt:'Alerta a',
     totalUsed:'Total usado', adjust:'Ajuste', loading:'Cargando…',
-    noData:'Sin datos', pctLeft: p=>`${p}% restante`,
+    noData:'Sin datos',
     lowLevel: p=>`⚠️ Nivel bajo — recargar pronto (${p}% restante)`,
     helperMissing:'Contador no encontrado', createHelper:'Crear contador',
     creating:'Creando…', helperCreated: id=>`Creado: ${id}`,
@@ -141,7 +141,7 @@ const DTL = {
     dailyChart:'Суточный расход (мл)', settings:'Настройки',
     flowRate:'Расход', tankSize:'Объём бака', alertAt:'Оповещение при',
     totalUsed:'Всего использовано', adjust:'Корректировка', loading:'Загрузка…',
-    noData:'Пока нет данных', pctLeft: p=>`${p}% осталось`,
+    noData:'Пока нет данных',
     lowLevel: p=>`⚠️ Низкий уровень — пополните бак (${p}% осталось)`,
     helperMissing:'Счётчик не найден', createHelper:'Создать счётчик',
     creating:'Создание…', helperCreated: id=>`Создано: ${id}`,
@@ -174,7 +174,7 @@ const DTL = {
     dailyChart:'Tagesverbrauch (mL)', settings:'Einstellungen',
     flowRate:'Durchfluss', tankSize:'Tankvolumen', alertAt:'Alarm bei',
     totalUsed:'Gesamt verbraucht', adjust:'Anpassen', loading:'Lädt…',
-    noData:'Keine Daten', pctLeft: p=>`${p}% verbleibend`,
+    noData:'Keine Daten',
     lowLevel: p=>`⚠️ Niedriger Stand — bald nachfüllen (${p}% verbleibend)`,
     helperMissing:'Zähler nicht gefunden', createHelper:'Zähler erstellen',
     creating:'Erstelle…', helperCreated: id=>`Erstellt: ${id}`,
@@ -207,7 +207,7 @@ const DTL = {
     dailyChart:'Consumo giornaliero (mL)', settings:'Impostazioni',
     flowRate:'Portata', tankSize:'Volume serbatoio', alertAt:'Allarme a',
     totalUsed:'Totale consumato', adjust:'Regolazione', loading:'Caricamento…',
-    noData:'Nessun dato', pctLeft: p=>`${p}% rimanente`,
+    noData:'Nessun dato',
     lowLevel: p=>`⚠️ Livello basso — ricaricare presto (${p}% rimanente)`,
     helperMissing:'Contatore non trovato', createHelper:'Crea contatore',
     creating:'Creazione…', helperCreated: id=>`Creato: ${id}`,
@@ -240,7 +240,7 @@ const DTL = {
     dailyChart:'Dagelijks verbruik (mL)', settings:'Instellingen',
     flowRate:'Doorstroomsnelheid', tankSize:'Tankinhoud', alertAt:'Alarm bij',
     totalUsed:'Totaal verbruikt', adjust:'Aanpassen', loading:'Laden…',
-    noData:'Geen gegevens', pctLeft: p=>`${p}% resterend`,
+    noData:'Geen gegevens',
     lowLevel: p=>`⚠️ Laag niveau — spoedig bijvullen (${p}% resterend)`,
     helperMissing:'Teller niet gevonden', createHelper:'Teller aanmaken',
     creating:'Aanmaken…', helperCreated: id=>`Aangemaakt: ${id}`,
@@ -273,7 +273,7 @@ const DTL = {
     dailyChart:'Daglig förbrukning (mL)', settings:'Inställningar',
     flowRate:'Flöde', tankSize:'Tankstorlek', alertAt:'Larm vid',
     totalUsed:'Totalt använt', adjust:'Justera', loading:'Laddar…',
-    noData:'Ingen data än', pctLeft: p=>`${p}% kvar`,
+    noData:'Ingen data än',
     lowLevel: p=>`⚠️ Låg nivå — fyll på snart (${p}% kvar)`,
     helperMissing:'Räknare hittades inte', createHelper:'Skapa räknare',
     creating:'Skapar…', helperCreated: id=>`Skapad: ${id}`,
@@ -306,7 +306,7 @@ const DTL = {
     dailyChart:'Daglig forbruk (mL)', settings:'Innstillinger',
     flowRate:'Strømning', tankSize:'Tankstørrelse', alertAt:'Varsel ved',
     totalUsed:'Totalt brukt', adjust:'Juster', loading:'Laster…',
-    noData:'Ingen data ennå', pctLeft: p=>`${p}% igjen`,
+    noData:'Ingen data ennå',
     lowLevel: p=>`⚠️ Lavt nivå — fyll på snart (${p}% igjen)`,
     helperMissing:'Teller ikke funnet', createHelper:'Opprett teller',
     creating:'Oppretter…', helperCreated: id=>`Opprettet: ${id}`,
@@ -339,7 +339,7 @@ const DTL = {
     dailyChart:'Dagligt forbrug (mL)', settings:'Indstillinger',
     flowRate:'Flow', tankSize:'Tankstørrelse', alertAt:'Alarm ved',
     totalUsed:'Total brugt', adjust:'Juster', loading:'Indlæser…',
-    noData:'Ingen data endnu', pctLeft: p=>`${p}% tilbage`,
+    noData:'Ingen data endnu',
     lowLevel: p=>`⚠️ Lavt niveau — genopfyld snart (${p}% tilbage)`,
     helperMissing:'Tæller ikke fundet', createHelper:'Opret tæller',
     creating:'Opretter…', helperCreated: id=>`Oprettet: ${id}`,
@@ -372,7 +372,7 @@ const DTL = {
     dailyChart:'Dzienne zużycie (mL)', settings:'Ustawienia',
     flowRate:'Przepływ', tankSize:'Pojemność zbiornika', alertAt:'Alarm przy',
     totalUsed:'Łącznie zużyto', adjust:'Dostosuj', loading:'Ładowanie…',
-    noData:'Brak danych', pctLeft: p=>`${p}% pozostało`,
+    noData:'Brak danych',
     lowLevel: p=>`⚠️ Niski poziom — uzupełnij wkrótce (${p}% pozostało)`,
     helperMissing:'Licznik nie znaleziony', createHelper:'Utwórz licznik',
     creating:'Tworzenie…', helperCreated: id=>`Utworzono: ${id}`,
@@ -1538,7 +1538,6 @@ ${/* A CSS text-shadow blurs under bold SVG glyphs. A stroke painted behind
 .body{display:grid;grid-template-columns:100px 1fr;gap:14px;align-items:start}
 @media(max-width:300px){.body{grid-template-columns:1fr}}
 .tcol{display:flex;flex-direction:column;align-items:center;gap:5px}
-.tpct{font-size:11px;color:var(--secondary-text-color,#888)}
 .rcol{display:flex;flex-direction:column;gap:12px;min-width:0}
 .stitle{font-size:10px;font-weight:600;letter-spacing:.7px;text-transform:uppercase;color:var(--secondary-text-color,#888);margin-bottom:6px}
 .bars{display:flex;align-items:flex-end;gap:5px;height:60px}
@@ -1639,9 +1638,13 @@ ${/* A CSS text-shadow blurs under bold SVG glyphs. A stroke painted behind
   </div>`}
 
   <div class="body">
+    ${/* No caption under the tank: it repeated the figure drawn on the tank,
+          and rounded to one more decimal, so the two disagreed on screen —
+          "18%" above "17.6% left". The precise quantity is in the first
+          metric tile, in litres or kilos, which says more than a decimal
+          of a percentage. */''}
     <div class="tcol">
       ${this._svgTank(pct, base, light, hasPct ? `${pct.toFixed(0)}%` : '—')}
-      <div class="tpct">${hasPct?T.pctLeft(pct.toFixed(1)):'—'}</div>
     </div>
     <div class="rcol">
       <div>

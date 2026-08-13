@@ -269,7 +269,14 @@ contains('capteur absent des états',
   makeDirect({ value: 62, present: false }).html, 'Level sensor not found');
 
 check('plage inconnue → pas de pourcentage inventé dans le bidon',
-  /<div class="tpct">—<\/div>/.test(makeDirect({ value: 18, unit: 'kg' }).html), true);
+  />—<\/text>/.test(makeDirect({ value: 18, unit: 'kg' }).html), true);
+
+// The caption under the tank repeated the figure drawn on it, one decimal
+// further, so the two disagreed on screen: "18%" above "17.6% left".
+check('plus de libellé sous le bidon',
+  /class="tpct"/.test(makeDirect({ value: 62 }).html), false);
+check('le bidon porte le pourcentage une seule fois',
+  (makeDirect({ value: 62 }).html.match(/62%/g) || []).length, 1);
 
 // ── Ce que le mode direct ne doit PAS afficher ───────────────────────────────
 
