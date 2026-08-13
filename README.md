@@ -97,6 +97,10 @@ liquid_color: "#3b82f6"
 | `level_entity` | `string` | ✅ ² | — | Sensor reporting the level. **Setting it switches the card to direct-level mode** and the whole pump chain above becomes irrelevant |
 | `level_full` | `number` | ² | `100` if unit is `%` | Sensor value for a full tank |
 | `level_empty` | `number` | ² | `0` | Sensor value for an empty tank |
+| `capacity` | `number` | ² | — | What a full tank physically holds, so quantities read in kg or litres even when the sensor only reports a percentage |
+| `capacity_unit` | `string` | ² | — | Unit written next to those quantities (`kg`, `L`…) |
+| `color_mode` | `string` | | `"fixed"` | `"level"` colours the tank by fill instead of using `liquid_color` |
+| `warn_threshold_percent` | `number` | | `50` | Amber below this, red below `alert_threshold_percent`. Only used by `color_mode: level` |
 | `alert_threshold_percent` | `number` | | `20` | Alert threshold (%) |
 | `name` | `string` | | `"Dosing Tank"` | Title shown in the card header |
 | `liquid_color` | `string` | | `"#3b82f6"` | Liquid color (any CSS hex color) |
@@ -123,6 +127,14 @@ alert_threshold_percent: 15
 
 A sensor already reporting `%` needs no range at all. For any other unit, `level_full` says what a full tank reads.
 
+**Reading a tank in kilos.** A softener reports a percentage, but what you actually want to know is how much salt is left. `capacity` says what a full tank holds, and every quantity follows: remaining, 7-day consumption, the chart and its title. The level itself is still measured by the sensor, `capacity` only changes what the figures are counted in.
+
+```yaml
+level_entity: sensor.softener_salt_level
+capacity: 35
+capacity_unit: "kg"
+```
+
 **Inverted probes work as-is.** An ultrasonic sensor measures the distance down to the surface, so a full tank reads *small*. Just give the two readings in the order they happen:
 
 ```yaml
@@ -131,7 +143,7 @@ level_full: 5           # cm from the sensor to the surface, tank full
 level_empty: 30         # cm, tank empty
 ```
 
-The three tiles change meaning in this mode. Two are fixed: consumption over the last 7 days, and **autonomy**, how long the tank lasts at the recent average rate. The first one adapts to the sensor: on a `%` sensor it shows the average daily consumption, since the level itself is already printed on the tank; on any other unit it shows what is left in tank units, which on an inverted probe is the liquid height and not the raw distance reading.
+The three tiles change meaning in this mode. Two are fixed: consumption over the last 7 days, and **autonomy**, how long the tank lasts at the recent average rate. The first one adapts: on a bare `%` sensor it shows the average daily consumption, since the level itself is already printed on the tank; otherwise it shows what is left, which on an inverted probe is the liquid height and not the raw distance reading. Setting `capacity` gives that figure a meaning of its own, so it goes back to showing what remains.
 
 That average deliberately ignores days when the level went **up**: a refill hides whatever was consumed alongside it, and counting it as a zero-consumption day would inflate the autonomy of a tank that is in fact running out. Refill days appear as a green `+` in the chart. Days where the level genuinely did not move are kept — a softener that did not regenerate is real information. Autonomy shows `—` until there are at least two complete days of decline.
 
@@ -146,6 +158,8 @@ That average deliberately ignores days when the level went **up**: a refill hide
 | pH+ | Purple | `#8b5cf6` |
 | Flocculant | Yellow | `#eab308` |
 | Algaecide | Green | `#22c55e` |
+
+**Or colour by level instead.** `color_mode: level` ignores `liquid_color` and paints the tank green above `warn_threshold_percent` (50 by default), amber below it, red below `alert_threshold_percent` (20). Off by default, because `liquid_color` is what tells a chlorine tank from a pH− one at a glance. Works in both modes.
 
 
 ---

@@ -11,7 +11,7 @@
       --force-device-scale-factor=2 --hide-scrollbars --virtual-time-budget=4000 \
       "http://localhost:8731/docs/demo.html?lang=en&mode=direct"
 
-  Query params: lang=en|fr|…  mode=direct|pump|all
+  Query params: lang=en|fr|…  mode=direct|pump|all  colors=fixed|level
 -->
 <style>
   body { margin:0; padding:20px; background:#111214; font-family:Roboto,system-ui,sans-serif; }
@@ -26,8 +26,9 @@
 import '../dist/dosing-tank-card.js';
 
 const p    = new URLSearchParams(location.search);
-const lang = p.get('lang') || 'fr';
-const mode = p.get('mode') || 'direct';
+const lang   = p.get('lang') || 'fr';
+const mode   = p.get('mode') || 'direct';
+const colors = p.get('colors') || 'fixed';
 const DAY  = 86400000;
 const now  = Date.now();
 
@@ -48,7 +49,7 @@ function add(caption, config, states, hist) {
   col.className = 'col';
   col.innerHTML = `<p class="cap">${caption}</p>`;
   const card = document.createElement('dosing-tank-card');
-  card.setConfig(config);
+  card.setConfig({ ...config, color_mode: colors });
   card.hass = { states, locale: { language: lang },
                 callApi: async () => hist, callService: async () => {} };
   col.appendChild(card);
@@ -56,9 +57,11 @@ function add(caption, config, states, hist) {
 }
 
 if (mode === 'direct' || mode === 'all') {
-  // Softener salt tank, refilled four days ago.
+  // Softener salt tank, refilled four days ago. The sensor reports a
+  // percentage; capacity turns it into the kilos actually left.
   add(cap.pct,
     { level_entity: 'sensor.salt_level', name: lang === 'fr' ? 'Sel adoucisseur' : 'Softener salt',
+      capacity: 35, capacity_unit: 'kg',
       liquid_color: '#94a3b8', alert_threshold_percent: 15 },
     { 'sensor.salt_level': { state: '34',
         attributes: { unit_of_measurement: '%',

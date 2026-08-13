@@ -97,6 +97,10 @@ liquid_color: "#3b82f6"
 | `level_entity` | `string` | ✅ ² | — | Capteur remontant le niveau. **La renseigner bascule la carte en mode niveau direct** et toute la chaîne pompe ci-dessus devient sans objet |
 | `level_full` | `number` | ² | `100` si l'unité est `%` | Valeur du capteur bidon plein |
 | `level_empty` | `number` | ² | `0` | Valeur du capteur bidon vide |
+| `capacity` | `number` | ² | — | Ce que contient physiquement une cuve pleine, pour lire les quantités en kg ou en litres même si le capteur ne remonte qu'un pourcentage |
+| `capacity_unit` | `string` | ² | — | Unité affichée à côté de ces quantités (`kg`, `L`…) |
+| `color_mode` | `string` | | `"fixed"` | `"level"` colore le bidon selon le remplissage au lieu d'utiliser `liquid_color` |
+| `warn_threshold_percent` | `number` | | `50` | Orange en dessous, rouge sous `alert_threshold_percent`. Utilisé uniquement par `color_mode: level` |
 | `alert_threshold_percent` | `number` | | `20` | Seuil d'alerte (%) |
 | `name` | `string` | | `"Dosing Tank"` | Titre affiché dans l'en-tête de la carte |
 | `liquid_color` | `string` | | `"#3b82f6"` | Couleur du liquide (toute couleur CSS hexadécimale) |
@@ -123,6 +127,14 @@ alert_threshold_percent: 15
 
 Un capteur qui remonte déjà des `%` n'a besoin d'aucune plage. Pour toute autre unité, `level_full` indique ce que lit le capteur quand la cuve est pleine.
 
+**Lire une cuve en kilos.** Un adoucisseur remonte un pourcentage, alors que ce qu'on veut savoir c'est combien il reste de sel. `capacity` indique ce que contient une cuve pleine, et toutes les quantités suivent : restant, consommation 7 jours, graphe et son titre. Le niveau reste mesuré par le capteur, `capacity` ne change que l'unité dans laquelle on compte.
+
+```yaml
+level_entity: sensor.adoucisseur_niveau_sel
+capacity: 35
+capacity_unit: "kg"
+```
+
 **Les sondes inversées fonctionnent telles quelles.** Un capteur ultrason mesure la distance jusqu'à la surface : une cuve pleine donne donc une *petite* valeur. Donnez simplement les deux lectures dans cet ordre :
 
 ```yaml
@@ -131,7 +143,7 @@ level_full: 5           # cm entre le capteur et la surface, cuve pleine
 level_empty: 30         # cm, cuve vide
 ```
 
-Les trois tuiles changent de sens dans ce mode. Deux sont fixes : la consommation des 7 derniers jours, et l'**autonomie**, combien de temps la cuve tient au rythme moyen récent. La première s'adapte au capteur : sur un capteur en `%` elle affiche la consommation moyenne par jour, puisque le niveau est déjà inscrit sur le bidon ; sur toute autre unité elle affiche ce qu'il reste en unités de cuve, ce qui sur une sonde inversée est la hauteur de liquide et non la distance brute.
+Les trois tuiles changent de sens dans ce mode. Deux sont fixes : la consommation des 7 derniers jours, et l'**autonomie**, combien de temps la cuve tient au rythme moyen récent. La première s'adapte : sur un capteur en `%` seul elle affiche la consommation moyenne par jour, puisque le niveau est déjà inscrit sur le bidon ; sinon elle affiche ce qu'il reste, ce qui sur une sonde inversée est la hauteur de liquide et non la distance brute. Renseigner `capacity` donne à ce chiffre un sens propre, il repasse donc en quantité restante.
 
 Cette moyenne ignore délibérément les journées où le niveau est **monté** : un remplissage masque ce qui a été consommé en parallèle, et le compter comme une journée à consommation nulle gonflerait l'autonomie d'une cuve qui est en réalité en train de se vider. Les jours de remplissage apparaissent en `+` vert dans le graphe. Les journées où le niveau n'a réellement pas bougé sont conservées — un adoucisseur qui n'a pas régénéré, c'est une vraie information. L'autonomie affiche `—` tant qu'il n'y a pas au moins deux journées complètes de baisse.
 
@@ -146,6 +158,8 @@ Cette moyenne ignore délibérément les journées où le niveau est **monté** 
 | pH+ | Violet | `#8b5cf6` |
 | Floculant | Jaune | `#eab308` |
 | Algicide | Vert | `#22c55e` |
+
+**Ou colorer selon le niveau.** `color_mode: level` ignore `liquid_color` et peint le bidon en vert au-dessus de `warn_threshold_percent` (50 par défaut), en orange en dessous, en rouge sous `alert_threshold_percent` (20). Désactivé par défaut, parce que `liquid_color` est ce qui distingue un bidon de chlore d'un bidon de pH− au premier coup d'œil. Fonctionne dans les deux modes.
 
 
 ---
