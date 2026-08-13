@@ -1421,11 +1421,15 @@ ${/* Tick marks only. The 25/50/75 % labels used to sit exactly where the big
       figure and the "% left" caption underneath. Slightly longer and stronger
       now that they carry the scale on their own. */''}
 ${[25,50,75].map(lv=>{const ly=BY+BH-(lv/100)*BH;return `<line x1="${BX+2}" y1="${ly}" x2="${BX+14}" y2="${ly}" stroke="var(--secondary-text-color,#8a8a8a)" stroke-opacity=".5" stroke-width="1.5" stroke-linecap="round"/>`;}).join('')}
-${/* A CSS text-shadow blurs under bold SVG glyphs. A stroke painted behind
-      them keeps the edges crisp on any liquid color. */''}
+${/* Always white, never --primary-text-color: this figure is drawn on top of
+      the tank, not on the card surface. On a light theme that variable is
+      near black, which put dark glyphs inside a dark halo and made the number
+      unreadable. The halo is what carries white over both the liquid and the
+      empty part, in any theme, and a stroke painted behind the glyphs also
+      keeps them crisp where a CSS text-shadow blurred. */''}
 <text x="${W/2}" y="${BY+BH/2+7}" text-anchor="middle" font-size="19" font-weight="700"
-  fill="${pct<35?'#fff':'var(--primary-text-color,#fff)'}"
-  paint-order="stroke" stroke="rgba(0,0,0,.6)" stroke-width="3.5"
+  fill="#fff"
+  paint-order="stroke" stroke="rgba(0,0,0,.7)" stroke-width="3.5"
   stroke-linejoin="round">${label ?? `${pct.toFixed(0)}%`}</text>
 <rect x="${BX+8}" y="${BY+BH-2}" width="${BW-16}" height="8" rx="4"
   fill="var(--secondary-background-color,#2a2a2a)"

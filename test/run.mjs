@@ -278,6 +278,15 @@ check('plus de libellé sous le bidon',
 check('le bidon porte le pourcentage une seule fois',
   (makeDirect({ value: 62 }).html.match(/62%/g) || []).length, 1);
 
+// The figure sits on top of the tank, not on the card surface. Following
+// --primary-text-color made it near black on a light theme, inside a dark
+// halo: unreadable. Reported from a real install running the HA light theme.
+const tankText = h => h.match(/<text[^>]*>[^<]*<\/text>/)?.[0] ?? '';
+contains('le chiffre du bidon est blanc en dur',
+  tankText(makeDirect({ value: 62 }).html), 'fill="#fff"');
+check('le chiffre du bidon ne suit pas le thème',
+  /primary-text-color/.test(tankText(makeDirect({ value: 62 }).html)), false);
+
 // ── Ce que le mode direct ne doit PAS afficher ───────────────────────────────
 
 const plain = makeDirect({ value: 62 }).html;
