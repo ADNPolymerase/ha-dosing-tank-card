@@ -69,6 +69,7 @@ const DTL = {
     edCapacity:'Full-tank quantity', edCapacityUnit:'Unit',
     edColorMode:'Color mode', edColorFixed:'Fixed color', edColorLevel:'By level',
     edWarn:'Warning threshold (%)',
+    edShowSettings:'Show the settings block',
   },
   fr: {
     remaining:'Restant', today:"Aujourd'hui", pump7d:'Pompe 7j',
@@ -102,6 +103,7 @@ const DTL = {
     edCapacity:'Quantité bidon plein', edCapacityUnit:'Unité',
     edColorMode:'Mode couleur', edColorFixed:'Couleur fixe', edColorLevel:'Par palier',
     edWarn:"Seuil d'avertissement (%)",
+    edShowSettings:'Afficher le bloc Paramètres',
   },
   es: {
     remaining:'Restante', today:'Hoy', pump7d:'Bomba 7d',
@@ -135,6 +137,7 @@ const DTL = {
     edCapacity:'Cantidad depósito lleno', edCapacityUnit:'Unidad',
     edColorMode:'Modo de color', edColorFixed:'Color fijo', edColorLevel:'Por nivel',
     edWarn:'Umbral de aviso (%)',
+    edShowSettings:'Mostrar el bloque de ajustes',
   },
   ru: {
     remaining:'Осталось', today:'Сегодня', pump7d:'Насос 7д',
@@ -168,6 +171,7 @@ const DTL = {
     edCapacity:'Объём полного бака', edCapacityUnit:'Единица',
     edColorMode:'Режим цвета', edColorFixed:'Фиксированный цвет', edColorLevel:'По уровню',
     edWarn:'Порог предупреждения (%)',
+    edShowSettings:'Показывать блок настроек',
   },
   de: {
     remaining:'Verbleibend', today:'Heute', pump7d:'Pumpe 7T',
@@ -201,6 +205,7 @@ const DTL = {
     edCapacity:'Menge bei vollem Tank', edCapacityUnit:'Einheit',
     edColorMode:'Farbmodus', edColorFixed:'Feste Farbe', edColorLevel:'Nach Füllstand',
     edWarn:'Warnschwelle (%)',
+    edShowSettings:'Einstellungsblock anzeigen',
   },
   it: {
     remaining:'Rimanente', today:'Oggi', pump7d:'Pompa 7g',
@@ -234,6 +239,7 @@ const DTL = {
     edCapacity:'Quantità serbatoio pieno', edCapacityUnit:'Unità',
     edColorMode:'Modalità colore', edColorFixed:'Colore fisso', edColorLevel:'Per livello',
     edWarn:'Soglia di avviso (%)',
+    edShowSettings:'Mostra il blocco impostazioni',
   },
   nl: {
     remaining:'Resterend', today:'Vandaag', pump7d:'Pomp 7d',
@@ -267,6 +273,7 @@ const DTL = {
     edCapacity:'Hoeveelheid volle tank', edCapacityUnit:'Eenheid',
     edColorMode:'Kleurmodus', edColorFixed:'Vaste kleur', edColorLevel:'Per niveau',
     edWarn:'Waarschuwingsdrempel (%)',
+    edShowSettings:'Instellingenblok tonen',
   },
   sv: {
     remaining:'Återstår', today:'Idag', pump7d:'Pump 7d',
@@ -300,6 +307,7 @@ const DTL = {
     edCapacity:'Mängd full tank', edCapacityUnit:'Enhet',
     edColorMode:'Färgläge', edColorFixed:'Fast färg', edColorLevel:'Efter nivå',
     edWarn:'Varningströskel (%)',
+    edShowSettings:'Visa inställningsblocket',
   },
   no: {
     remaining:'Gjenstår', today:'I dag', pump7d:'Pumpe 7d',
@@ -333,6 +341,7 @@ const DTL = {
     edCapacity:'Mengde full tank', edCapacityUnit:'Enhet',
     edColorMode:'Fargemodus', edColorFixed:'Fast farge', edColorLevel:'Etter nivå',
     edWarn:'Varselgrense (%)',
+    edShowSettings:'Vis innstillingsblokken',
   },
   da: {
     remaining:'Tilbage', today:'I dag', pump7d:'Pumpe 7d',
@@ -366,6 +375,7 @@ const DTL = {
     edCapacity:'Mængde fuld tank', edCapacityUnit:'Enhed',
     edColorMode:'Farvetilstand', edColorFixed:'Fast farve', edColorLevel:'Efter niveau',
     edWarn:'Advarselsgrænse (%)',
+    edShowSettings:'Vis indstillingsblokken',
   },
   pl: {
     remaining:'Pozostało', today:'Dziś', pump7d:'Pompa 7d',
@@ -399,6 +409,7 @@ const DTL = {
     edCapacity:'Ilość przy pełnym', edCapacityUnit:'Jednostka',
     edColorMode:'Tryb koloru', edColorFixed:'Stały kolor', edColorLevel:'Wg poziomu',
     edWarn:'Próg ostrzeżenia (%)',
+    edShowSettings:'Pokaż blok ustawień',
   },
 };
 
@@ -539,6 +550,8 @@ class DosingTankCardEditor extends HTMLElement {
     set('capunit',c.capacity_unit            ?? '');
     set('warn',   c.warn_threshold_percent   ?? 50);
     set('cmode',  c.color_mode               ?? 'fixed');
+    const box = this.shadowRoot.getElementById('showset');
+    if (box) box.checked = c.show_settings !== false;
 
     const keys = this._mode === 'direct'
       ? { 'level-wrap': 'level_entity' }
@@ -619,6 +632,9 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
 .create-btn:hover:not(:disabled){background:var(--primary-color,#03a9f4);color:#fff}
 .create-btn:disabled{opacity:.5;cursor:default}
 .create-status{font-size:11px;color:var(--secondary-text-color,#888);flex:1;word-break:break-all}
+.check{display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;
+  color:var(--primary-text-color,#e1e1e1)}
+.check input{width:16px;height:16px;margin:0;cursor:pointer;accent-color:var(--primary-color,#03a9f4)}
 </style>
 <div class="form">
   <div class="field">
@@ -708,6 +724,10 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
       <input type="text"  id="ctext" value="${_esc(c.liquid_color??'#3b82f6')}" placeholder="#3b82f6" maxlength="7">
     </div>
   </div>
+  <label class="check">
+    <input type="checkbox" id="showset"${c.show_settings===false?'':' checked'}>
+    ${T.edShowSettings}
+  </label>
 </div>`;
 
     // Entity pickers — label comes from ha-entity-picker itself (no duplicate <label>)
@@ -807,6 +827,11 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
     bind('warn',   'warn_threshold_percent',  Number);
     bind('cmode',  'color_mode',              v => v);
 
+    // A checkbox carries its state in .checked, not .value, so it cannot go
+    // through bind(). Ticked is the default, so it writes nothing at all.
+    this.shadowRoot.getElementById('showset')?.addEventListener('change', e =>
+      this._fire({ ...this._config, show_settings: e.target.checked ? undefined : false }));
+
     // Color sync
     const cp = this.shadowRoot.getElementById('cpick');
     const ct = this.shadowRoot.getElementById('ctext');
@@ -898,6 +923,7 @@ class DosingTankCard extends HTMLElement {
       // using liquid_color. Off by default: liquid_color is how a chlorine tank
       // is told apart from a pH− one at a glance.
       color_mode:              config.color_mode === 'level' ? 'level' : 'fixed',
+      show_settings:           config.show_settings !== false,
       warn_threshold_percent:  Number(config.warn_threshold_percent) || 50,
       name:                    config.name || 'Dosing Tank',
       liquid_color:            config.liquid_color || '#3b82f6',
@@ -1696,7 +1722,10 @@ ${/* Always white, never --primary-text-color: this figure is drawn on top of
               }).join('')}
         </div>
       </div>
-      <div>
+      ${/* Reference material: useful while configuring, never again. On a tank
+            looked at once a week it took a third of the card, hence the
+            option to drop it. Shown by default so nothing changes on its own. */''}
+      ${this._config.show_settings===false?'':`<div>
         <div class="stitle">${T.settings}</div>
         <div class="cfg">
           ${direct?this._directSettings(T,lvlState,lvlRange,this._levelUnit()):`
@@ -1705,7 +1734,7 @@ ${/* Always white, never --primary-text-color: this figure is drawn on top of
           <div class="cfgr"><span class="l">${T.alertAt}</span><span class="v">${this._config.alert_threshold_percent}%</span></div>
           <div class="cfgr"><span class="l">${T.totalUsed}</span><span class="v">${this._fmtVol(consumedMl)}</span></div>`}
         </div>
-      </div>
+      </div>`}
     </div>
   </div>
 

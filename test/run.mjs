@@ -26,7 +26,7 @@ const T0   = freezeClock('2026-08-12T12:00:00Z'); // midday, so day buckets are
  *   todayMl      what that fetch put in the daily total
  */
 function makeCard({ pumpOn = true, onSinceMin = 30, lastFetchMin = null,
-                    todayMl = 0, sync = true, reset = true,
+                    todayMl = 0, sync = true, reset = true, showSettings,
                     counterAgeDays = 30, name = 'Chlorine' } = {}) {
   const states = {
     'switch.pump': { state: pumpOn ? 'on' : 'off',
@@ -43,6 +43,7 @@ function makeCard({ pumpOn = true, onSinceMin = 30, lastFetchMin = null,
     reset_entity: reset ? 'input_number.consumed' : undefined,
     sync_entity : sync  ? 'input_datetime.sync'   : undefined,
     flow_rate_ml_per_min: FLOW, tank_volume_liters: 5, name,
+    show_settings: showSettings,
   });
   c._hass             = { states, locale: { language: 'en' } };
   c._pumpOnSince      = pumpOn ? new Date(now() - onSinceMin * 60000) : null;
@@ -118,7 +119,7 @@ check('config-changed porte bien detail.config',
  */
 function makeDirect({ series = null, value = null, unit = '%',
                       full, empty, alert = 20, name = 'Bac à sel',
-                      capacity, capacity_unit, color_mode, warn,
+                      capacity, capacity_unit, color_mode, warn, show_settings,
                       entity = 'sensor.salt', present = true } = {}) {
   const cur    = value ?? (series ? series.at(-1) : null);
   const states = {};
@@ -134,7 +135,7 @@ function makeDirect({ series = null, value = null, unit = '%',
   const c = new Card();
   c.setConfig({ level_entity: entity, level_full: full, level_empty: empty,
                 alert_threshold_percent: alert, name,
-                capacity, capacity_unit, color_mode,
+                capacity, capacity_unit, color_mode, show_settings,
                 warn_threshold_percent: warn });
   c._hass = { states, locale: { language: 'en' } };
   if (series) {
@@ -304,6 +305,20 @@ check('aucune requête média sur la largeur du viewport',
   /@media\s*\(\s*max-width/.test(css), false);
 contains('le champ nombre peut rétrécir', css, '.adj-input{flex:1;min-width:');
 
+// ── Bloc Paramètres masquable ────────────────────────────────────────────────
+// Reference material, useful while configuring and never again. Shown by
+// default so no existing card changes on its own.
+
+check('le bloc Paramètres est affiché par défaut',
+  /class="stitle">Settings</.test(makeDirect({ value: 62 }).html), true);
+check('show_settings: false le retire',
+  /class="stitle">Settings</.test(
+    makeDirect({ value: 62, show_settings: false }).html), false);
+check('le graphe reste quand le bloc est masqué',
+  /class="bars"/.test(makeDirect({ value: 62, show_settings: false }).html), true);
+check('mode pompe : le bloc se masque aussi',
+  /class="stitle">Settings</.test(makeCard({ showSettings: false })), false);
+
 // ── Ce que le mode direct ne doit PAS afficher ───────────────────────────────
 
 const plain = makeDirect({ value: 62 }).html;
@@ -341,6 +356,8 @@ edPump.setConfig({ pump_entity: 'switch.pump' });
 contains('éditeur en mode pompe : champ débit', markup(edPump), 'Flow rate (mL/min)');
 check('éditeur en mode pompe : pas de champ de plage',
   /id="lfull"/.test(markup(edPump)), false);
+contains('éditeur : la case Paramètres est cochée par défaut',
+  markup(edPump), 'id="showset" checked');
 
 const edDirect = new Editor();
 edDirect.setConfig({ level_entity: 'sensor.salt' });
