@@ -287,6 +287,16 @@ contains('le chiffre du bidon est blanc en dur',
 check('le chiffre du bidon ne suit pas le thème',
   /primary-text-color/.test(tankText(makeDirect({ value: 62 }).html)), false);
 
+// The harness has no layout engine, so these guard the mechanism rather than
+// the pixels: a card in a narrow dashboard column has a wide viewport, so a
+// media query never matches it and the adjustment row overflowed.
+const css = makeCard().split('</style>')[0];
+contains('la carte est son propre conteneur de requêtes',
+  css, 'container-type:inline-size');
+check('aucune requête média sur la largeur du viewport',
+  /@media\s*\(\s*max-width/.test(css), false);
+contains('le champ nombre peut rétrécir', css, '.adj-input{flex:1;min-width:');
+
 // ── Ce que le mode direct ne doit PAS afficher ───────────────────────────────
 
 const plain = makeDirect({ value: 62 }).html;

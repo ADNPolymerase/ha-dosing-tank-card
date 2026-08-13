@@ -1518,7 +1518,11 @@ ${/* Always white, never --primary-text-color: this figure is drawn on top of
   border-radius:var(--ha-card-border-radius,12px);padding:16px;
   color:var(--primary-text-color,#e1e1e1);
   box-shadow:var(--ha-card-box-shadow,0 2px 10px rgba(0,0,0,.3));
-  font-family:var(--paper-font-body1_-_font-family,Roboto,system-ui,sans-serif);}
+  font-family:var(--paper-font-body1_-_font-family,Roboto,system-ui,sans-serif);
+  /* The card adapts to ITS OWN width, not the viewport's. A media query is
+     useless here: a 210 px card in a wide dashboard column would never match
+     one, and that is exactly where the layout broke. */
+  container-type:inline-size;}
 .hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px}
 .ttl{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
 .badge{font-size:10px;font-weight:700;padding:3px 10px;border-radius:999px;letter-spacing:.5px}
@@ -1535,20 +1539,20 @@ ${/* Always white, never --primary-text-color: this figure is drawn on top of
 .warn-create:hover:not(:disabled){background:#f59e0b;color:#000}
 .warn-create:disabled{opacity:.5;cursor:default}
 .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
-.metric{background:var(--secondary-background-color,rgba(255,255,255,.05));border-radius:8px;padding:10px 6px;text-align:center}
+.metric{background:var(--secondary-background-color,rgba(255,255,255,.05));border-radius:8px;padding:10px 6px;text-align:center;min-width:0}
 .mv{font-size:16px;font-weight:700;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mv.alert{color:#ef4444}
 .ml{font-size:9px;color:var(--secondary-text-color,#888);text-transform:uppercase;letter-spacing:.6px;margin-top:3px}
 .body{display:grid;grid-template-columns:100px 1fr;gap:14px;align-items:start}
-@media(max-width:300px){.body{grid-template-columns:1fr}}
 .tcol{display:flex;flex-direction:column;align-items:center;gap:5px}
 .rcol{display:flex;flex-direction:column;gap:12px;min-width:0}
 .stitle{font-size:10px;font-weight:600;letter-spacing:.7px;text-transform:uppercase;color:var(--secondary-text-color,#888);margin-bottom:6px}
 .bars{display:flex;align-items:flex-end;gap:5px;height:60px}
-.bw{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%}
+.bw{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%}
 .bi{flex:1;width:100%;display:flex;align-items:flex-end;min-height:0}
 .be{width:100%;border-radius:3px 3px 0 0;min-height:3px;transition:height .4s}
-.bl{font-size:9px;color:var(--secondary-text-color,#888);text-transform:capitalize}
+.bl{font-size:9px;color:var(--secondary-text-color,#888);text-transform:capitalize;
+  max-width:100%;overflow:hidden;text-overflow:clip;white-space:nowrap}
 .bi.refill{align-items:center;justify-content:center;color:#22c55e;font-size:14px;font-weight:700}
 .nodata{font-size:11px;color:var(--secondary-text-color,#888);align-self:center;font-style:italic}
 .cfg{display:flex;flex-direction:column;gap:4px}
@@ -1557,8 +1561,8 @@ ${/* Always white, never --primary-text-color: this figure is drawn on top of
 .cfgr .v{font-weight:500;white-space:nowrap}
 /* footer */
 .footer{margin-top:14px;display:flex;flex-direction:column;gap:8px}
-.btn{width:100%;padding:10px 12px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;gap:7px;
+.btn{width:100%;min-width:0;padding:10px 12px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:7px;text-align:center;
   transition:background .2s,color .2s,border-color .2s;
   border:1px solid var(--divider-color,rgba(255,255,255,.12));
   background:var(--secondary-background-color,rgba(255,255,255,.05));
@@ -1574,14 +1578,17 @@ ${/* Always white, never --primary-text-color: this figure is drawn on top of
 @keyframes fadein{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 .adj-row{display:flex;align-items:center;gap:6px}
 .adj-row label{font-size:11px;color:var(--secondary-text-color,#888);white-space:nowrap}
-.stepper{display:flex;align-items:center;gap:4px;flex:1}
-.sbtn{width:32px;height:32px;border-radius:6px;
+.stepper{display:flex;align-items:center;gap:4px;flex:1;min-width:0}
+.sbtn{flex:none;width:32px;height:32px;border-radius:6px;
   border:1px solid var(--divider-color,rgba(255,255,255,.15));
   background:var(--secondary-background-color,rgba(255,255,255,.06));
   color:var(--primary-text-color,#e1e1e1);font-size:18px;cursor:pointer;
   display:flex;align-items:center;justify-content:center;transition:background .15s;padding:0}
 .sbtn:hover{background:var(--primary-color,#03a9f4);color:#fff;border-color:transparent}
-.adj-input{flex:1;text-align:center;padding:6px 4px;border-radius:6px;font-size:14px;font-weight:600;
+/* Without min-width:0 an <input> refuses to shrink below its intrinsic size
+   (~170 px), so the stepper pushed the + button and the unit outside the card
+   on any narrow column. This is what made the adjustment row overflow. */
+.adj-input{flex:1;min-width:42px;width:100%;text-align:center;padding:6px 4px;border-radius:6px;font-size:14px;font-weight:600;
   background:var(--secondary-background-color,rgba(255,255,255,.06));
   color:var(--primary-text-color,#e1e1e1);
   border:1px solid var(--divider-color,rgba(255,255,255,.15))}
@@ -1591,6 +1598,23 @@ ${/* Always white, never --primary-text-color: this figure is drawn on top of
 .btn-add:hover:not(:disabled){background:#22c55e!important;border-color:transparent!important}
 .btn-rem{border-color:rgba(239,68,68,.4)!important}
 .btn-rem:hover:not(:disabled){background:#ef4444!important;border-color:transparent!important}
+/* Narrow column. Keyed on the card's own width, so it works in a narrow
+   dashboard column as well as on a phone. Shrinking comes first (the number
+   box gives up its width), stacking only once even that is not enough.
+   Thresholds are content-box widths, so roughly card width minus 32 px. */
+@container (max-width:280px){
+  .body{grid-template-columns:1fr}
+}
+@container (max-width:250px){
+  .adj-row{flex-direction:column;align-items:stretch;gap:5px}
+  .adj-grid{grid-template-columns:1fr}
+}
+@container (max-width:200px){
+  .metrics{grid-template-columns:1fr}
+  /* Below this the unit label is what stands between the number box and
+     nothing at all, and "mL" is obvious from the panel it sits in. */
+  .adj-unit{display:none}
+}
 .sep{height:1px;background:var(--divider-color,rgba(255,255,255,.08));margin:2px 0}
 </style>
 
