@@ -16,7 +16,15 @@ jobs:
         with:
           ref: ${{ github.event.release.tag_name }}
       - name: Upload card asset
-        run: gh release upload "$TAG" dist/dosing-tank-card.js --clobber
+        # A retried upload can fail with "ReleaseAsset.name already exists"
+        # although the first attempt landed, which failed v0.8.3 while the
+        # published asset was in fact correct. What matters is not the exit
+        # code of the upload but whether what is attached matches the tag, so
+        # that is what decides the job.
+        run: |
+          gh release upload "$TAG" dist/dosing-tank-card.js --clobber || true
+          gh release download "$TAG" -p dosing-tank-card.js -D /tmp --clobber
+          cmp /tmp/dosing-tank-card.js dist/dosing-tank-card.js
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ github.event.release.tag_name }}
