@@ -72,6 +72,10 @@ const DTL = {
     edWarn:'Warning threshold (%)',
     edShowSettings:'Show the settings block',
     edLayout:'Layout', edLayoutRows:'Metrics on top', edLayoutCols:'Tank on the side',
+    edShowChart:'Show the daily chart', edLastUpdate:'Last update',
+    edLuOff:'Not shown', edLuChanged:'Last level change', edLuReported:'Last sensor report',
+    luPrefix:'Updated',
+    edLuInjection:'Last injection', edLuPumpReported:'Last pump report', luInjPrefix:'Last injection',
   },
   fr: {
     remaining:'Restant', today:"Aujourd'hui", pump7d:'Pompe 7j',
@@ -108,6 +112,10 @@ const DTL = {
     edWarn:"Seuil d'avertissement (%)",
     edShowSettings:'Afficher le bloc Paramètres',
     edLayout:'Disposition', edLayoutRows:'Métriques en haut', edLayoutCols:'Bidon sur le côté',
+    edShowChart:'Afficher le graphe journalier', edLastUpdate:'Dernière MAJ',
+    edLuOff:'Masquée', edLuChanged:'Dernier changement de niveau', edLuReported:'Dernière réponse du capteur',
+    luPrefix:'MAJ',
+    edLuInjection:'Dernière injection', edLuPumpReported:'Dernière réponse de la pompe', luInjPrefix:'Dernière injection',
   },
   es: {
     remaining:'Restante', today:'Hoy', pump7d:'Bomba 7d',
@@ -144,6 +152,10 @@ const DTL = {
     edWarn:'Umbral de aviso (%)',
     edShowSettings:'Mostrar el bloque de ajustes',
     edLayout:'Disposición', edLayoutRows:'Métricas arriba', edLayoutCols:'Depósito al lado',
+    edShowChart:'Mostrar el gráfico diario', edLastUpdate:'Última act.',
+    edLuOff:'Oculta', edLuChanged:'Último cambio de nivel', edLuReported:'Última respuesta del sensor',
+    luPrefix:'Act.',
+    edLuInjection:'Última inyección', edLuPumpReported:'Última respuesta de la bomba', luInjPrefix:'Última inyección',
   },
   ru: {
     remaining:'Осталось', today:'Сегодня', pump7d:'Насос 7д',
@@ -180,6 +192,10 @@ const DTL = {
     edWarn:'Порог предупреждения (%)',
     edShowSettings:'Показывать блок настроек',
     edLayout:'Расположение', edLayoutRows:'Метрики сверху', edLayoutCols:'Бак сбоку',
+    edShowChart:'Показывать суточный график', edLastUpdate:'Обновлено',
+    edLuOff:'Скрыто', edLuChanged:'Последнее изменение уровня', edLuReported:'Последний ответ датчика',
+    luPrefix:'Обновлено',
+    edLuInjection:'Последняя дозировка', edLuPumpReported:'Последний ответ насоса', luInjPrefix:'Последняя дозировка',
   },
   de: {
     remaining:'Verbleibend', today:'Heute', pump7d:'Pumpe 7T',
@@ -216,6 +232,10 @@ const DTL = {
     edWarn:'Warnschwelle (%)',
     edShowSettings:'Einstellungsblock anzeigen',
     edLayout:'Anordnung', edLayoutRows:'Kennzahlen oben', edLayoutCols:'Tank an der Seite',
+    edShowChart:'Tagesdiagramm anzeigen', edLastUpdate:'Zuletzt akt.',
+    edLuOff:'Ausgeblendet', edLuChanged:'Letzte Füllstandsänderung', edLuReported:'Letzte Sensormeldung',
+    luPrefix:'Akt.',
+    edLuInjection:'Letzte Dosierung', edLuPumpReported:'Letzte Pumpenmeldung', luInjPrefix:'Letzte Dosierung',
   },
   it: {
     remaining:'Rimanente', today:'Oggi', pump7d:'Pompa 7g',
@@ -252,6 +272,10 @@ const DTL = {
     edWarn:'Soglia di avviso (%)',
     edShowSettings:'Mostra il blocco impostazioni',
     edLayout:'Disposizione', edLayoutRows:'Metriche in alto', edLayoutCols:'Serbatoio di lato',
+    edShowChart:'Mostra il grafico giornaliero', edLastUpdate:'Ultimo agg.',
+    edLuOff:'Nascosto', edLuChanged:'Ultima variazione di livello', edLuReported:'Ultima risposta del sensore',
+    luPrefix:'Agg.',
+    edLuInjection:'Ultima iniezione', edLuPumpReported:'Ultima risposta della pompa', luInjPrefix:'Ultima iniezione',
   },
   nl: {
     remaining:'Resterend', today:'Vandaag', pump7d:'Pomp 7d',
@@ -288,6 +312,10 @@ const DTL = {
     edWarn:'Waarschuwingsdrempel (%)',
     edShowSettings:'Instellingenblok tonen',
     edLayout:'Indeling', edLayoutRows:'Metrieken bovenaan', edLayoutCols:'Tank aan de zijkant',
+    edShowChart:'Dagelijkse grafiek tonen', edLastUpdate:'Laatste update',
+    edLuOff:'Verborgen', edLuChanged:'Laatste niveauwijziging', edLuReported:'Laatste sensorbericht',
+    luPrefix:'Bijgewerkt',
+    edLuInjection:'Laatste injectie', edLuPumpReported:'Laatste pompbericht', luInjPrefix:'Laatste injectie',
   },
   sv: {
     remaining:'Återstår', today:'Idag', pump7d:'Pump 7d',
@@ -324,6 +352,10 @@ const DTL = {
     edWarn:'Varningströskel (%)',
     edShowSettings:'Visa inställningsblocket',
     edLayout:'Layout', edLayoutRows:'Mätvärden överst', edLayoutCols:'Tank vid sidan',
+    edShowChart:'Visa dagsdiagrammet', edLastUpdate:'Senast uppdaterad',
+    edLuOff:'Dold', edLuChanged:'Senaste nivåändring', edLuReported:'Senaste givarsvar',
+    luPrefix:'Uppdaterad',
+    edLuInjection:'Senaste dosering', edLuPumpReported:'Senaste pumpsvar', luInjPrefix:'Senaste dosering',
   },
   no: {
     remaining:'Gjenstår', today:'I dag', pump7d:'Pumpe 7d',
@@ -360,6 +392,10 @@ const DTL = {
     edWarn:'Varselgrense (%)',
     edShowSettings:'Vis innstillingsblokken',
     edLayout:'Oppsett', edLayoutRows:'Måltall øverst', edLayoutCols:'Tank på siden',
+    edShowChart:'Vis daglig graf', edLastUpdate:'Sist oppdatert',
+    edLuOff:'Skjult', edLuChanged:'Siste nivåendring', edLuReported:'Siste sensorsvar',
+    luPrefix:'Oppdatert',
+    edLuInjection:'Siste dosering', edLuPumpReported:'Siste pumpesvar', luInjPrefix:'Siste dosering',
   },
   da: {
     remaining:'Tilbage', today:'I dag', pump7d:'Pumpe 7d',
@@ -396,6 +432,10 @@ const DTL = {
     edWarn:'Advarselsgrænse (%)',
     edShowSettings:'Vis indstillingsblokken',
     edLayout:'Layout', edLayoutRows:'Måltal øverst', edLayoutCols:'Tank i siden',
+    edShowChart:'Vis dagligt diagram', edLastUpdate:'Sidst opdateret',
+    edLuOff:'Skjult', edLuChanged:'Seneste niveauændring', edLuReported:'Seneste sensorsvar',
+    luPrefix:'Opdateret',
+    edLuInjection:'Seneste dosering', edLuPumpReported:'Seneste pumpesvar', luInjPrefix:'Seneste dosering',
   },
   pl: {
     remaining:'Pozostało', today:'Dziś', pump7d:'Pompa 7d',
@@ -432,6 +472,10 @@ const DTL = {
     edWarn:'Próg ostrzeżenia (%)',
     edShowSettings:'Pokaż blok ustawień',
     edLayout:'Układ', edLayoutRows:'Metryki u góry', edLayoutCols:'Zbiornik z boku',
+    edShowChart:'Pokaż wykres dzienny', edLastUpdate:'Ostatnia akt.',
+    edLuOff:'Ukryte', edLuChanged:'Ostatnia zmiana poziomu', edLuReported:'Ostatnia odpowiedź czujnika',
+    luPrefix:'Akt.',
+    edLuInjection:'Ostatnie dozowanie', edLuPumpReported:'Ostatnia odpowiedź pompy', luInjPrefix:'Ostatnie dozowanie',
   },
 };
 
@@ -573,8 +617,11 @@ class DosingTankCardEditor extends HTMLElement {
     set('warn',   c.warn_threshold_percent   ?? 50);
     set('cmode',  c.color_mode               ?? 'fixed');
     set('layout', c.layout                   ?? 'rows');
+    set('lastup', c.last_update              ?? 'off');
     const box = this.shadowRoot.getElementById('showset');
     if (box) box.checked = c.show_settings !== false;
+    const chartBox = this.shadowRoot.getElementById('showchart');
+    if (chartBox) chartBox.checked = c.show_chart !== false;
 
     const keys = this._mode === 'direct'
       ? { 'level-wrap': 'level_entity' }
@@ -758,6 +805,18 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
     <input type="checkbox" id="showset"${c.show_settings===false?'':' checked'}>
     ${T.edShowSettings}
   </label>
+  <label class="check">
+    <input type="checkbox" id="showchart"${c.show_chart===false?'':' checked'}>
+    ${T.edShowChart}
+  </label>
+  <div class="field">
+    <label>${T.edLastUpdate}</label>
+    <select id="lastup">
+      <option value="off"${c.last_update&&c.last_update!=='off'?'':' selected'}>${T.edLuOff}</option>
+      <option value="changed"${c.last_update==='changed'?' selected':''}>${direct?T.edLuChanged:T.edLuInjection}</option>
+      <option value="reported"${c.last_update==='reported'?' selected':''}>${direct?T.edLuReported:T.edLuPumpReported}</option>
+    </select>
+  </div>
 </div>`;
 
     // Entity pickers — label comes from ha-entity-picker itself (no duplicate <label>)
@@ -857,11 +916,14 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
     bind('warn',   'warn_threshold_percent',  Number);
     bind('cmode',  'color_mode',              v => v);
     bind('layout', 'layout',                  v => v);
+    bind('lastup', 'last_update',             v => v);
 
     // A checkbox carries its state in .checked, not .value, so it cannot go
     // through bind(). Ticked is the default, so it writes nothing at all.
     this.shadowRoot.getElementById('showset')?.addEventListener('change', e =>
       this._fire({ ...this._config, show_settings: e.target.checked ? undefined : false }));
+    this.shadowRoot.getElementById('showchart')?.addEventListener('change', e =>
+      this._fire({ ...this._config, show_chart: e.target.checked ? undefined : false }));
 
     // Color sync
     const cp = this.shadowRoot.getElementById('cpick');
@@ -955,6 +1017,13 @@ class DosingTankCard extends HTMLElement {
       // is told apart from a pH− one at a glance.
       color_mode:              config.color_mode === 'level' ? 'level' : 'fixed',
       show_settings:           config.show_settings !== false,
+      show_chart:              config.show_chart !== false,
+      // Which timestamp the "last update" line reports. They answer different
+      // questions on a slow sensor: a softener level only moves at each
+      // regeneration, so 'changed' dates that regeneration while 'reported'
+      // says whether the sensor is still alive.
+      last_update:             ['changed','reported'].includes(config.last_update)
+                                 ? config.last_update : 'off',
       // 'columns' gives the tank the full height of the card and moves the
       // three metric tiles beside it. 'rows' is the original arrangement.
       layout:                  config.layout === 'columns' ? 'columns' : 'rows',
@@ -1240,6 +1309,24 @@ class DosingTankCard extends HTMLElement {
     return h < 24 ? `${h} h` : this._t().fmtDays(Math.floor(h / 24));
   }
 
+  /**
+   * When the level entity last said something, per the configured meaning.
+   * last_reported moves on every report even when the value repeats, so it is
+   * the one that proves the sensor is alive; it only exists on recent Home
+   * Assistant versions, hence the fallbacks.
+   */
+  _lastUpdateAt() {
+    // In pump mode the equivalent question is "when did the pump last run",
+    // so the switch is read instead of the level sensor: its last_changed is
+    // the end of the last injection.
+    const st = this._isDirect ? this._levelState()
+      : (this._config.pump_entity ? this._hass?.states[this._config.pump_entity] : null);
+    if (!st) return null;
+    return this._config.last_update === 'reported'
+      ? (st.last_reported || st.last_updated || st.last_changed || null)
+      : (st.last_changed || null);
+  }
+
   _directMetrics(T, lvl, stats, isAlert, scale, tall) {
     const unit = scale?.unit ?? '';
     // What is LEFT, in tank units. The raw reading cannot be used as-is: an
@@ -1290,7 +1377,17 @@ class DosingTankCard extends HTMLElement {
   _remainingCaption(T, lvl, scale) {
     if (!scale || lvl?.pct == null || scale.unit === '%' || !scale.unit) return '';
     const qty = this._fmtLevel(lvl.pct / 100 * scale.factor, scale.unit);
-    return `<div class="tpct">${_esc(T.qtyLeft(qty))}</div>`;
+    return _esc(T.qtyLeft(qty));
+  }
+
+  // The "last update" line, shown outside the Settings block when asked for,
+  // so it survives unticking that block.
+  _lastUpdateLine(T) {
+    if (this._config.last_update === 'off') return '';
+    const at = this._lastUpdateAt();
+    if (!at) return '';
+    const injection = !this._isDirect && this._config.last_update === 'changed';
+    return _esc(`${injection ? T.luInjPrefix : T.luPrefix} ${this._fmtAgo(at)}`);
   }
 
   _directBars(T, stats, base) {
@@ -1324,7 +1421,8 @@ class DosingTankCard extends HTMLElement {
         `${unit ? ' ' + unit : ''}` +
         (range.full < range.empty ? ` (${T.inverted})` : '')
       : '—';
-    const upd  = st?.last_changed ? this._fmtAgo(st.last_changed) : '—';
+    const at   = this._lastUpdateAt() || st?.last_changed;
+    const upd  = at ? this._fmtAgo(at) : '—';
     return `
           <div class="cfgr"><span class="l">${T.levelSource}</span><span class="v">${_esc(name)}</span></div>
           <div class="cfgr"><span class="l">${T.levelRange}</span><span class="v">${_esc(rng)}</span></div>
@@ -1598,6 +1696,8 @@ ${/* Always white, never --primary-text-color: this figure is drawn on top of
     // The metrics row is placed by the layout, so it is built once here and
     // dropped into whichever column the arrangement calls for.
     const tall = this._config.layout === 'columns';
+    const subLeft  = direct && tall ? this._remainingCaption(T, lvl, lvlScale) : '';
+    const subRight = this._lastUpdateLine(T);
     const metricsHtml = direct
       ? this._directMetrics(T, lvl, lvlStats, isAlert, lvlScale, tall)
       : `<div class="metrics">
@@ -1657,10 +1757,19 @@ ${/* Always white, never --primary-text-color: this figure is drawn on top of
 .body.cols .tcol svg{width:100%;height:100%}
 .body.cols .metrics{gap:5px;margin-bottom:12px}
 .body.cols .metric{padding:6px 3px}
-.body.cols .mv{font-size:13px}
+/* "12.6 kg/j" is the widest thing these tiles ever hold: a value, a unit and
+   a per-day suffix in a third of the right column. Sized so it fits rather
+   than truncating to "12.6 k...". */
+.body.cols .mv{font-size:12px;letter-spacing:-.2px}
 .body.cols .ml{font-size:8px;letter-spacing:.3px}
+.body.cols.solo .metrics{grid-template-columns:1fr;gap:6px;margin-bottom:0}
+.body.cols.solo .metric{padding:8px 6px}
+.body.cols.solo .mv{font-size:15px}
 .tcol{display:flex;flex-direction:column;align-items:center;gap:5px}
-.tpct{font-size:11px;color:var(--secondary-text-color,#888);text-align:center}
+.tpct{font-size:11px;color:var(--secondary-text-color,#888)}
+.subline{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+  margin-top:8px}
+.subline .tpct:last-child{text-align:right}
 .rcol{display:flex;flex-direction:column;gap:12px;min-width:0}
 .stitle{font-size:10px;font-weight:600;letter-spacing:.7px;text-transform:uppercase;color:var(--secondary-text-color,#888);margin-bottom:6px}
 .bars{display:flex;align-items:flex-end;gap:5px;height:60px}
@@ -1772,7 +1881,11 @@ ${/* Always white, never --primary-text-color: this figure is drawn on top of
         the arrangement changes. */''}
   ${tall?'':metricsHtml}
 
-  <div class="body${tall?' cols':''}">
+  ${/* With neither chart nor settings the right column holds only the three
+        tiles, which left a hole beside a full-height tank. Stacking them fills
+        the column instead. */''}
+  <div class="body${tall?' cols':''}${tall && this._config.show_chart===false
+      && this._config.show_settings===false ? ' solo' : ''}">
     ${/* No caption under the tank: it repeated the figure drawn on the tank,
           and rounded to one more decimal, so the two disagreed on screen,
           "18%" above "17.6% left". The precise quantity is in the first
@@ -1780,11 +1893,12 @@ ${/* Always white, never --primary-text-color: this figure is drawn on top of
           of a percentage. */''}
     <div class="tcol">
       ${this._svgTank(pct, base, light, hasPct ? `${pct.toFixed(0)}%` : '—', tall)}
-      ${direct&&tall?this._remainingCaption(T, lvl, lvlScale):''}
     </div>
     <div class="rcol">
       ${tall?metricsHtml:''}
-      <div>
+      ${/* A softener regenerates every couple of weeks, so a day-by-day chart
+            says very little there. Shown by default all the same. */''}
+      ${this._config.show_chart===false?'':`<div>
         <div class="stitle">${direct?T.dailyChartU(lvlUnit||'%'):T.dailyChart}</div>
         <div class="bars">
           ${direct?this._directBars(T,lvlStats,base):
@@ -1801,7 +1915,7 @@ ${/* Always white, never --primary-text-color: this figure is drawn on top of
                 </div><div class="bl">${d.label}</div></div>`;
               }).join('')}
         </div>
-      </div>
+      </div>`}
       ${/* Reference material: useful while configuring, never again. On a tank
             looked at once a week it took a third of the card, hence the
             option to drop it. Shown by default so nothing changes on its own. */''}
@@ -1817,6 +1931,13 @@ ${/* Always white, never --primary-text-color: this figure is drawn on top of
       </div>`}
     </div>
   </div>
+
+  ${/* One line under the body: what is left on the left, under the tank, and
+        when the sensor last spoke pushed to the right edge. */''}
+  ${(subLeft||subRight)?`<div class="subline">
+    <span class="tpct">${subLeft}</span>
+    <span class="tpct">${subRight}</span>
+  </div>`:''}
 
   ${direct?'':`<div class="footer">
     <button class="btn${this._showAdjust?' open':''}" id="dtc-adj-toggle">

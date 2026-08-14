@@ -26,11 +26,13 @@ const T0   = freezeClock('2026-08-12T12:00:00Z'); // midday, so day buckets are
  *   todayMl      what that fetch put in the daily total
  */
 function makeCard({ pumpOn = true, onSinceMin = 30, lastFetchMin = null,
-                    todayMl = 0, sync = true, reset = true, showSettings,
+                    todayMl = 0, sync = true, reset = true, showSettings, showChart,
+                    lastUpdate, pumpChangedH = 0,
                     counterAgeDays = 30, name = 'Chlorine' } = {}) {
   const states = {
     'switch.pump': { state: pumpOn ? 'on' : 'off',
-                     last_changed: new Date(now()).toISOString() },
+                     last_changed: new Date(now() - pumpChangedH * 3600000).toISOString(),
+                     last_reported: new Date(now() - 60000).toISOString() },
   };
   if (reset) states['input_number.consumed'] = { state: '0',
     last_changed: new Date(now() - counterAgeDays * 86400000).toISOString() };
@@ -43,7 +45,7 @@ function makeCard({ pumpOn = true, onSinceMin = 30, lastFetchMin = null,
     reset_entity: reset ? 'input_number.consumed' : undefined,
     sync_entity : sync  ? 'input_datetime.sync'   : undefined,
     flow_rate_ml_per_min: FLOW, tank_volume_liters: 5, name,
-    show_settings: showSettings,
+    show_settings: showSettings, show_chart: showChart, last_update: lastUpdate,
   });
   c._hass             = { states, locale: { language: 'en' } };
   c._pumpOnSince      = pumpOn ? new Date(now() - onSinceMin * 60000) : null;
@@ -120,6 +122,7 @@ check('config-changed porte bien detail.config',
 function makeDirect({ series = null, value = null, unit = '%',
                       full, empty, alert = 20, name = 'Bac à sel',
                       capacity, capacity_unit, color_mode, warn, show_settings, layout,
+                      show_chart, last_update, lastChangedH, lastReportedMin,
                       entity = 'sensor.salt', present = true } = {}) {
   const cur    = value ?? (series ? series.at(-1) : null);
   const states = {};
@@ -127,7 +130,11 @@ function makeDirect({ series = null, value = null, unit = '%',
     states[entity] = { state: String(cur),
                        attributes: { unit_of_measurement: unit,
                                      friendly_name: 'Niveau de sel' },
-                       last_changed: new Date(now() - 3600000).toISOString() };
+                       last_changed: new Date(
+                         now() - (lastChangedH ?? 1) * 3600000).toISOString(),
+                       ...(lastReportedMin === undefined ? {} : {
+                         last_reported: new Date(
+                           now() - lastReportedMin * 60000).toISOString() }) };
   else if (present)
     states[entity] = { state: 'unavailable', attributes: {},
                        last_changed: new Date(now()).toISOString() };
@@ -136,7 +143,7 @@ function makeDirect({ series = null, value = null, unit = '%',
   c.setConfig({ level_entity: entity, level_full: full, level_empty: empty,
                 alert_threshold_percent: alert, name,
                 capacity, capacity_unit, color_mode, show_settings, layout,
-                warn_threshold_percent: warn });
+                show_chart, last_update, warn_threshold_percent: warn });
   c._hass = { states, locale: { language: 'en' } };
   if (series) {
     // One reading per day at the same time of day, oldest first.
@@ -148,10 +155,13 @@ function makeDirect({ series = null, value = null, unit = '%',
   c._render();
   return { card: c, html: markup(c) };
 }
-// Under the tank, in direct mode: the remaining quantity, when it says
-// something the percentage on the tank does not.
-const caption = html =>
-  (html.match(/<div class="tpct">([^<]*)<\/div>/) || [, '(aucun libellé)'])[1];
+// The line under the body, in direct mode: remaining quantity on the left,
+// when it says something the percentage on the tank does not, and when the
+// sensor last spoke pushed to the right edge.
+const subline = html =>
+  [...html.matchAll(/<span class="tpct">([^<]*)<\/span>/g)].map(m => m[1]);
+const caption    = html => subline(html)[0] || '(aucun libellé)';
+const lastUpdate = html => subline(html)[1] || '(aucun libellé)';
 
 const tile = (html, label) => {
   const m = html.match(
@@ -366,6 +376,53 @@ const edLay = new Editor();
 edLay.setConfig({ pump_entity: 'switch.pump' });
 contains('éditeur : le sélecteur de disposition existe',
   markup(edLay), 'id="layout"');
+
+// ── Graphe masquable et ligne « dernière MAJ » ───────────────────────────────
+// A softener regenerates every couple of weeks, so a day-by-day chart says
+// very little there. And the last-update line has to survive unticking the
+// Settings block, which is the only place it lived until now.
+
+check('le graphe est affiché par défaut',
+  /class="bars"/.test(makeDirect({ value: 62 }).html), true);
+check('show_chart: false le retire',
+  /class="bars"/.test(makeDirect({ value: 62, show_chart: false }).html), false);
+check('mode pompe : le graphe se masque aussi',
+  /class="bars"/.test(makeCard({ showChart: false })), false);
+
+// In pump mode the same line dates the pump instead of a level sensor: its
+// last_changed is the end of the last injection.
+const pumpSub = html =>
+  [...html.matchAll(/<span class="tpct">([^<]*)<\/span>/g)].map(m => m[1])[1]
+  || '(aucun libellé)';
+check('mode pompe : changed date la dernière injection',
+  pumpSub(makeCard({ pumpOn: false, lastUpdate: 'changed', pumpChangedH: 26 })),
+  'Last injection 1 d');
+check('mode pompe : reported date la réponse de la pompe',
+  pumpSub(makeCard({ pumpOn: false, lastUpdate: 'reported', pumpChangedH: 26 })),
+  'Updated 1 min');
+check('mode pompe : aucune ligne par défaut',
+  /class="tpct"/.test(makeCard()), false);
+
+check('aucune ligne de MAJ par défaut',
+  /class="tpct"/.test(makeDirect({ value: 62 }).html), false);
+check('last_update: changed affiche la ligne hors des Paramètres',
+  lastUpdate(makeDirect({ value: 62, last_update: 'changed',
+                          show_settings: false }).html), 'Updated 1 h');
+
+// The two meanings diverge on a slow sensor: the level of a softener only
+// moves at each regeneration, so 'changed' dates that regeneration while
+// 'reported' says whether the sensor still answers.
+const slow = { value: 62, lastChangedH: 288, lastReportedMin: 3 };
+check('changed → date le dernier changement de niveau',
+  lastUpdate(makeDirect({ ...slow, last_update: 'changed' }).html), 'Updated 12 d');
+check('reported → date la dernière réponse du capteur',
+  lastUpdate(makeDirect({ ...slow, last_update: 'reported' }).html), 'Updated 3 min');
+// Both halves share one row, so the quantity keeps its place when the
+// last-update line appears beside it.
+const bothHalves = makeDirect({ value: 18.4, unit: 'kg', full: 25, layout: 'columns',
+                          last_update: 'changed' }).html;
+check('quantité à gauche', caption(bothHalves), '18.4 kg left');
+check('MAJ à droite',      lastUpdate(bothHalves), 'Updated 1 h');
 
 // ── Ce que le mode direct ne doit PAS afficher ───────────────────────────────
 
