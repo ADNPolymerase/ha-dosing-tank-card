@@ -103,6 +103,8 @@ liquid_color: "#3b82f6"
 | `warn_threshold_percent` | `number` | | `50` | Amber below this, red below `alert_threshold_percent`. Only used by `color_mode: level` |
 | `alert_threshold_percent` | `number` | | `20` | Alert threshold (%) |
 | `layout` | `string` | | `"rows"` | `"columns"` gives the tank the height of the card and moves the three metric tiles beside it. A selector for it sits in the visual editor |
+| `show_chart` | `boolean` | | `true` | `false` drops the daily consumption chart. A softener regenerates every couple of weeks, where a day-by-day chart says little |
+| `last_update` | `string` | | `"off"` | `"changed"` or `"reported"` prints a last-update line under the tank, so it survives hiding the Settings block. **They answer different questions**: `changed` dates the last move of the level, which on a softener is the last regeneration; `reported` dates the last time the sensor answered, which is what tells you it is still alive. In pump-runtime mode the same line dates the pump instead: `changed` is the end of the last injection, `reported` the last time the switch answered |
 | `show_settings` | `boolean` | | `true` | `false` drops the Settings block at the bottom of the card. There is a tick box for it in the visual editor |
 | `name` | `string` | | `"Dosing Tank"` | Title shown in the card header |
 | `liquid_color` | `string` | | `"#3b82f6"` | Liquid color (any CSS hex color) |
