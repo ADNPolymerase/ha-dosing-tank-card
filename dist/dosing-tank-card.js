@@ -1186,6 +1186,7 @@ class DosingTankCard extends HTMLElement {
       const history = await this._hass.callApi('GET', url);
       const states  = history?.[0]?.length > 0 ? history[0] : [];
 
+      this._lastRunAt = this._lastRunEnd(states);
       if (states.length) this._processHistory(states, chartFrom, end);
       else this._dailyStats = this._emptyDays();
 
@@ -1216,12 +1217,49 @@ class DosingTankCard extends HTMLElement {
         `&end_time=${end.toISOString()}&significant_changes_only=1` +
         `&minimal_response&no_attributes`;
       const history = await this._hass.callApi('GET', url);
+      this._lastMoveAt = this._lastValueMove(history?.[0] || []);
       this._levelDays = this._levelDailySeries(history?.[0] || []);
     } catch (e) {
       console.error('[dosing-tank-card] Level history error:', e);
       this._levelDays = null;
     } finally { this._historyLoading = false; }
     this._render();
+  }
+
+  /**
+   * When the pump last stopped running, read from history rather than from the
+   * switch's last_changed. A restart, an integration reload or a trip through
+   * 'unavailable' resets that timestamp to the moment the entity came back,
+   * which reads as an injection that never happened. Seen in the wild: a pump
+   * idle since the previous evening reported "5 hours ago", the age of a
+   * reload. Returns now while the pump is running, null if it never ran inside
+   * the fetched window.
+   */
+  _lastRunEnd(states) {
+    let end = null, running = false;
+    for (const s of states) {
+      const t = new Date(s.last_changed || s.last_updated).getTime();
+      if (!Number.isFinite(t)) continue;
+      if (s.state === 'on') { running = true; }
+      else if (running) { running = false; end = t; }
+    }
+    return running ? Date.now() : end;
+  }
+
+  /**
+   * When the level last actually moved, for the same reason: the sensor's
+   * last_changed is reset by any round trip through 'unavailable'.
+   */
+  _lastValueMove(states) {
+    let prev = null, at = null;
+    for (const s of states) {
+      const v = _num(s.state);
+      if (v === null) continue;                      // unavailable / unknown
+      const t = new Date(s.last_changed || s.last_updated).getTime();
+      if (prev !== null && v !== prev && Number.isFinite(t)) at = t;
+      prev = v;
+    }
+    return at;
   }
 
   // 8 day buckets: [0] seeds the first delta, [1..7] are the days displayed.
@@ -1322,9 +1360,12 @@ class DosingTankCard extends HTMLElement {
     const st = this._isDirect ? this._levelState()
       : (this._config.pump_entity ? this._hass?.states[this._config.pump_entity] : null);
     if (!st) return null;
-    return this._config.last_update === 'reported'
-      ? (st.last_reported || st.last_updated || st.last_changed || null)
-      : (st.last_changed || null);
+    if (this._config.last_update === 'reported')
+      return st.last_reported || st.last_updated || st.last_changed || null;
+    // From history when it has been fetched; the entity's own last_changed is
+    // only a fallback, since it lies after any reload. See _lastRunEnd.
+    const fromHistory = this._isDirect ? this._lastMoveAt : this._lastRunAt;
+    return fromHistory ?? (st.last_changed || null);
   }
 
   _directMetrics(T, lvl, stats, isAlert, scale, tall) {

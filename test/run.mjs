@@ -27,7 +27,7 @@ const T0   = freezeClock('2026-08-12T12:00:00Z'); // midday, so day buckets are
  */
 function makeCard({ pumpOn = true, onSinceMin = 30, lastFetchMin = null,
                     todayMl = 0, sync = true, reset = true, showSettings, showChart,
-                    lastUpdate, pumpChangedH = 0,
+                    lastUpdate, pumpChangedH = 0, lastRunH,
                     counterAgeDays = 30, name = 'Chlorine' } = {}) {
   const states = {
     'switch.pump': { state: pumpOn ? 'on' : 'off',
@@ -51,6 +51,7 @@ function makeCard({ pumpOn = true, onSinceMin = 30, lastFetchMin = null,
   c._pumpOnSince      = pumpOn ? new Date(now() - onSinceMin * 60000) : null;
   c._lastHistoryFetch = lastFetchMin === null ? 0 : now() - lastFetchMin * 60000;
   c._todayConsumedMl  = todayMl;
+  if (lastRunH !== undefined) c._lastRunAt = now() - lastRunH * 3600000;
   c._dailyStats       = c._emptyDays();
   c._render();
   return markup(c);
@@ -402,6 +403,44 @@ check('mode pompe : reported date la réponse de la pompe',
   'Updated 1 min');
 check('mode pompe : aucune ligne par défaut',
   /class="tpct"/.test(makeCard()), false);
+
+// Reported from a real install: the pump had been idle since the previous
+// evening, but the Oklyn integration reloaded that morning, so the switch's
+// last_changed read 5 h and the card announced an injection that never
+// happened. The timestamp now comes from history, where the transitions are.
+const H = h => new Date(now() - h * 3600000).toISOString();
+const probe = new Card();
+probe.setConfig({ pump_entity: 'switch.p', reset_entity: 'input_number.c',
+                  sync_entity: 'input_datetime.s' });
+
+check('la ligne affiche la vraie durée',
+  pumpSub(makeCard({ pumpOn: false, lastUpdate: 'changed',
+                     pumpChangedH: 5, lastRunH: 19 })), 'Last injection 19 h');
+
+check('la dernière injection vient de l\'historique, pas de last_changed',
+  Math.round((now() - probe._lastRunEnd([
+    { state: 'off',         last_changed: H(30) },
+    { state: 'on',          last_changed: H(20) },
+    { state: 'off',         last_changed: H(19) },   // fin réelle
+    { state: 'unavailable', last_changed: H(14) },
+    { state: 'off',         last_changed: H(5)  },   // rechargement
+  ])) / 3600000), 19);
+
+check('pompe encore en marche → maintenant',
+  probe._lastRunEnd([{ state: 'off', last_changed: H(3) },
+                     { state: 'on',  last_changed: H(1) }]), now());
+check('jamais tournée dans la fenêtre → rien',
+  probe._lastRunEnd([{ state: 'off', last_changed: H(9) }]), null);
+
+// The same trap on a level sensor: coming back from unavailable at the same
+// value is not a move.
+check('le dernier mouvement de niveau ignore les retours d\'unavailable',
+  Math.round((now() - probe._lastValueMove([
+    { state: '70',          last_changed: H(40) },
+    { state: '68',          last_changed: H(30) },
+    { state: 'unavailable', last_changed: H(10) },
+    { state: '68',          last_changed: H(5)  },
+  ])) / 3600000), 30);
 
 check('aucune ligne de MAJ par défaut',
   /class="tpct"/.test(makeDirect({ value: 62 }).html), false);
