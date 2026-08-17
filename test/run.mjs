@@ -124,6 +124,7 @@ function makeDirect({ series = null, value = null, unit = '%',
                       full, empty, alert = 20, name = 'Bac à sel',
                       capacity, capacity_unit, color_mode, warn, show_settings, layout,
                       show_chart, last_update, lastChangedH, lastReportedMin,
+                      window, seriesStepDays,
                       entity = 'sensor.salt', present = true } = {}) {
   const cur    = value ?? (series ? series.at(-1) : null);
   const states = {};
@@ -144,13 +145,14 @@ function makeDirect({ series = null, value = null, unit = '%',
   c.setConfig({ level_entity: entity, level_full: full, level_empty: empty,
                 alert_threshold_percent: alert, name,
                 capacity, capacity_unit, color_mode, show_settings, layout,
-                show_chart, last_update, warn_threshold_percent: warn });
+                show_chart, last_update, window, warn_threshold_percent: warn });
   c._hass = { states, locale: { language: 'en' } };
   if (series) {
     // One reading per day at the same time of day, oldest first.
+    const step = (seriesStepDays ?? 1) * 86400000;
     c._levelDays = c._levelDailySeries(series.map((v, i) => ({
       state: String(v),
-      last_changed: new Date(now() - (series.length - 1 - i) * 86400000).toISOString(),
+      last_changed: new Date(now() - (series.length - 1 - i) * step).toISOString(),
     })));
   }
   c._render();
@@ -262,6 +264,45 @@ check('l\'autonomie est exactement restant ÷ (conso 7 jours ÷ 7)',
   tile(rel.html, 'Autonomy'),
   `${Math.round(rel.card._levelValue().pct / (relStats.used7dPct / 7))} d`);
 
+// ── Fenêtre réglable ─────────────────────────────────────────────────────────
+// Always seven bars, of a width the window decides. What matters is that the
+// consumption tile, its label and the autonomy divisor all use the days that
+// history actually covered, never the window that was asked for.
+
+const wide = makeDirect({ series: [92,88,84,80,76,72,68,64], unit: '%',
+                          capacity: 35, capacity_unit: 'kg', window: 28,
+                          seriesStepDays: 4 });
+check('fenêtre 28 j : la tuile annonce 28 jours',
+  /<div class="ml">28 days<\/div>/.test(wide.html), true);
+contains('fenêtre 28 j : le titre annonce la vraie période',
+  wide.html, 'Consumption per 4 days (kg)');
+contains('fenêtre 7 j : le titre reste journalier',
+  makeDirect({ series: [92,86,80,74,68,62,56,50], unit: '%', capacity: 35,
+               capacity_unit: 'kg' }).html, 'Daily consumption (kg)');
+check('fenêtre 28 j : toujours 7 barres',
+  (wide.html.match(/class="bw"/g) || []).length, 7);
+check('fenêtre 28 j : autonomie = restant ÷ (conso ÷ 28)',
+  tile(wide.html, 'Autonomy'),
+  `${Math.round(wide.card._levelValue().pct /
+     (wide.card._levelStats().used7dPct / 28))} d`);
+check('fenêtre 28 j : aucune note quand tout est couvert',
+  /class="histnote"/.test(wide.html), false);
+
+// Only part of the window has data, as on a default recorder purging at 10 d.
+const shortHist = makeDirect({ series: [80,76,72,68], unit: '%',
+                               capacity: 35, capacity_unit: 'kg', window: 28,
+                               seriesStepDays: 4 });
+check('historique court : la tuile annonce le couvert, pas la fenêtre',
+  /<div class="ml">12 days<\/div>/.test(shortHist.html), true);
+contains('historique court : la carte le dit', shortHist.html, 'history: 12 d');
+check('historique court : l\'autonomie divise par 12, pas par 28',
+  tile(shortHist.html, 'Autonomy'),
+  `${Math.round(shortHist.card._levelValue().pct /
+     (shortHist.card._levelStats().used7dPct / 12))} d`);
+check('fenêtre 7 j : le comportement d\'origine, étiquette comprise',
+  /<div class="ml">7 days<\/div>/.test(
+    makeDirect({ series: [92,86,80,74,68,62,56,50], unit: '%' }).html), true);
+
 // ── Capacité physique ────────────────────────────────────────────────────────
 // A softener reports a percentage, but the useful figure is kilos of salt.
 // capacity converts the percentage without touching how the level is measured.
@@ -286,6 +327,20 @@ contains('capacité : la plage reste en unités capteur', salt.html, '0 → 100 
 check('sans capacité, rien ne change sur un capteur en %',
   tile(makeDirect({ series: [92,86,80,74,68,62,56,50], unit: '%' }).html,
        'Daily avg'), '6 %/d');
+
+// The daily average is a percentage of the tank internally. Printed under a
+// kg label without scaling it read "6 kg/j" where the truth was 2.1, and no
+// test caught it because the only one covered a bare % sensor, where the
+// scale factor is 100 and the error is invisible.
+const scaled = makeDirect({ series: [92,86,80,74,68,62,56,50], unit: '%',
+                            capacity: 35, capacity_unit: 'kg', layout: 'columns' });
+check('la moyenne journalière est dans l\'unité physique, pas en %',
+  tile(scaled.html, 'Daily avg'), '2.1 kg/d');
+// Same figure, stated as the relation it must satisfy.
+const sc = scaled.card._levelStats();
+check('moyenne × jours couverts = consommation de la fenêtre',
+  Math.round(sc.avgVal * sc.coveredDays * 10) / 10,
+  Math.round(sc.used7dVal * 10) / 10);
 
 // ── Couleurs par palier ──────────────────────────────────────────────────────
 // Opt-in: liquid_color is how a chlorine tank is told from a pH− one.

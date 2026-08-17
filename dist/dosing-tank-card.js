@@ -51,12 +51,15 @@ const DTL = {
     adjustQty:'Adjust quantity', addToTank:'Add to tank',
     removeFromTank:'Remove from tank', resetFull:'Tank refilled — Reset',
     resetting:'Resetting…', on:'ON', off:'OFF',
-    autonomy:'Autonomy', days7:'7 days', levelSource:'Source', levelRange:'Range',
+    autonomy:'Autonomy', levelSource:'Source', levelRange:'Range',
+    daysN: n=>`${n} days`, histShort: n=>`history: ${n} d`,
+    edWindow:'Window', edWindow7:'1 week', edWindow28:'4 weeks', edWindow84:'12 weeks',
     qtyLeft: q=>`${q} left`,
     lastUpdate:'Last update', inverted:'inverted', fmtDays: d=>`${d} d`,
     sensorMissing:'Level sensor not found', sensorUnavailable:'Level sensor unavailable',
     rangeMissing:'Set the full-tank value', refill:'Refill',
     dailyChartU: u=>`Daily consumption (${u})`,
+    chartPerU: (n,u)=>`Consumption per ${n} days (${u})`,
     avgDaily:'Daily avg', perDay: v=>`${v}/d`,
     // editor
     edEntities:'Entities', edPump:'Pump entity',
@@ -91,12 +94,15 @@ const DTL = {
     adjustQty:'Ajuster la quantité', addToTank:'Ajouter au bidon',
     removeFromTank:'Retirer du bidon', resetFull:'Bidon rempli — Réinitialiser',
     resetting:'Réinitialisation…', on:'ACTIF', off:'INACTIF',
-    autonomy:'Autonomie', days7:'7 jours', levelSource:'Source', levelRange:'Plage',
+    autonomy:'Autonomie', levelSource:'Source', levelRange:'Plage',
+    daysN: n=>`${n} jours`, histShort: n=>`historique : ${n} j`,
+    edWindow:'Fenêtre', edWindow7:'1 semaine', edWindow28:'4 semaines', edWindow84:'12 semaines',
     qtyLeft: q=>`${q} restant`,
     lastUpdate:'Dernière MAJ', inverted:'inversée', fmtDays: d=>`${d} j`,
     sensorMissing:'Capteur de niveau introuvable', sensorUnavailable:'Capteur de niveau indisponible',
     rangeMissing:'Renseignez la valeur bidon plein', refill:'Remplissage',
     dailyChartU: u=>`Consommation journalière (${u})`,
+    chartPerU: (n,u)=>`Consommation par ${n} jours (${u})`,
     avgDaily:'Moyenne/j', perDay: v=>`${v}/j`,
     // editor
     edEntities:'Entités', edPump:'Entité pompe',
@@ -131,12 +137,15 @@ const DTL = {
     adjustQty:'Ajustar cantidad', addToTank:'Añadir al depósito',
     removeFromTank:'Retirar del depósito', resetFull:'Depósito lleno — Reiniciar',
     resetting:'Reiniciando…', on:'ON', off:'OFF',
-    autonomy:'Autonomía', days7:'7 días', levelSource:'Fuente', levelRange:'Rango',
+    autonomy:'Autonomía', levelSource:'Fuente', levelRange:'Rango',
+    daysN: n=>`${n} días`, histShort: n=>`historial: ${n} d`,
+    edWindow:'Ventana', edWindow7:'1 semana', edWindow28:'4 semanas', edWindow84:'12 semanas',
     qtyLeft: q=>`${q} restante`,
     lastUpdate:'Última act.', inverted:'invertido', fmtDays: d=>`${d} d`,
     sensorMissing:'Sensor de nivel no encontrado', sensorUnavailable:'Sensor de nivel no disponible',
     rangeMissing:'Indique el valor de depósito lleno', refill:'Rellenado',
     dailyChartU: u=>`Consumo diario (${u})`,
+    chartPerU: (n,u)=>`Consumo cada ${n} días (${u})`,
     avgDaily:'Media diaria', perDay: v=>`${v}/d`,
     // editor
     edEntities:'Entidades', edPump:'Entidad bomba',
@@ -171,12 +180,15 @@ const DTL = {
     adjustQty:'Изменить количество', addToTank:'Добавить в бак',
     removeFromTank:'Убрать из бака', resetFull:'Бак заполнен — Сбросить',
     resetting:'Сброс…', on:'ВКЛ', off:'ВЫКЛ',
-    autonomy:'Автономность', days7:'7 дней', levelSource:'Источник', levelRange:'Диапазон',
+    autonomy:'Автономность', levelSource:'Источник', levelRange:'Диапазон',
+    daysN: n=>`${n} дней`, histShort: n=>`история: ${n} д`,
+    edWindow:'Окно', edWindow7:'1 неделя', edWindow28:'4 недели', edWindow84:'12 недель',
     qtyLeft: q=>`осталось ${q}`,
     lastUpdate:'Обновлено', inverted:'инвертирован', fmtDays: d=>`${d} д`,
     sensorMissing:'Датчик уровня не найден', sensorUnavailable:'Датчик уровня недоступен',
     rangeMissing:'Укажите значение полного бака', refill:'Пополнение',
     dailyChartU: u=>`Суточный расход (${u})`,
+    chartPerU: (n,u)=>`Расход за ${n} дней (${u})`,
     avgDaily:'В среднем/д', perDay: v=>`${v}/д`,
     // editor
     edEntities:'Сущности', edPump:'Сущность насоса',
@@ -211,12 +223,15 @@ const DTL = {
     adjustQty:'Menge anpassen', addToTank:'Zum Tank hinzufügen',
     removeFromTank:'Aus Tank entnehmen', resetFull:'Tank voll — Zurücksetzen',
     resetting:'Zurücksetzen…', on:'AN', off:'AUS',
-    autonomy:'Reichweite', days7:'7 Tage', levelSource:'Quelle', levelRange:'Bereich',
+    autonomy:'Reichweite', levelSource:'Quelle', levelRange:'Bereich',
+    daysN: n=>`${n} Tage`, histShort: n=>`Verlauf: ${n} T`,
+    edWindow:'Zeitraum', edWindow7:'1 Woche', edWindow28:'4 Wochen', edWindow84:'12 Wochen',
     qtyLeft: q=>`${q} verbleibend`,
     lastUpdate:'Zuletzt akt.', inverted:'invertiert', fmtDays: d=>`${d} T`,
     sensorMissing:'Füllstandsensor nicht gefunden', sensorUnavailable:'Füllstandsensor nicht verfügbar',
     rangeMissing:'Wert für vollen Tank angeben', refill:'Nachfüllung',
     dailyChartU: u=>`Tagesverbrauch (${u})`,
+    chartPerU: (n,u)=>`Verbrauch je ${n} Tage (${u})`,
     avgDaily:'Ø pro Tag', perDay: v=>`${v}/T`,
     // editor
     edEntities:'Entitäten', edPump:'Pumpen-Entität',
@@ -251,12 +266,15 @@ const DTL = {
     adjustQty:'Regola quantità', addToTank:'Aggiungi al serbatoio',
     removeFromTank:'Rimuovi dal serbatoio', resetFull:'Serbatoio pieno — Azzera',
     resetting:'Azzerando…', on:'ON', off:'OFF',
-    autonomy:'Autonomia', days7:'7 giorni', levelSource:'Sorgente', levelRange:'Intervallo',
+    autonomy:'Autonomia', levelSource:'Sorgente', levelRange:'Intervallo',
+    daysN: n=>`${n} giorni`, histShort: n=>`storico: ${n} g`,
+    edWindow:'Finestra', edWindow7:'1 settimana', edWindow28:'4 settimane', edWindow84:'12 settimane',
     qtyLeft: q=>`${q} rimanente`,
     lastUpdate:'Ultimo agg.', inverted:'invertito', fmtDays: d=>`${d} g`,
     sensorMissing:'Sensore di livello non trovato', sensorUnavailable:'Sensore di livello non disponibile',
     rangeMissing:'Imposta il valore a serbatoio pieno', refill:'Riempimento',
     dailyChartU: u=>`Consumo giornaliero (${u})`,
+    chartPerU: (n,u)=>`Consumo ogni ${n} giorni (${u})`,
     avgDaily:'Media/g', perDay: v=>`${v}/g`,
     // editor
     edEntities:'Entità', edPump:'Entità pompa',
@@ -291,12 +309,15 @@ const DTL = {
     adjustQty:'Hoeveelheid aanpassen', addToTank:'Toevoegen aan tank',
     removeFromTank:'Verwijderen uit tank', resetFull:'Tank gevuld — Resetten',
     resetting:'Resetten…', on:'AAN', off:'UIT',
-    autonomy:'Autonomie', days7:'7 dagen', levelSource:'Bron', levelRange:'Bereik',
+    autonomy:'Autonomie', levelSource:'Bron', levelRange:'Bereik',
+    daysN: n=>`${n} dagen`, histShort: n=>`historie: ${n} d`,
+    edWindow:'Venster', edWindow7:'1 week', edWindow28:'4 weken', edWindow84:'12 weken',
     qtyLeft: q=>`${q} resterend`,
     lastUpdate:'Laatste update', inverted:'omgekeerd', fmtDays: d=>`${d} d`,
     sensorMissing:'Niveausensor niet gevonden', sensorUnavailable:'Niveausensor niet beschikbaar',
     rangeMissing:'Stel de waarde bij volle tank in', refill:'Bijvullen',
     dailyChartU: u=>`Dagelijks verbruik (${u})`,
+    chartPerU: (n,u)=>`Verbruik per ${n} dagen (${u})`,
     avgDaily:'Gem. per dag', perDay: v=>`${v}/d`,
     // editor
     edEntities:'Entiteiten', edPump:'Pomp entiteit',
@@ -331,12 +352,15 @@ const DTL = {
     adjustQty:'Justera mängd', addToTank:'Lägg till i tank',
     removeFromTank:'Ta bort från tank', resetFull:'Tank påfylld — Återställ',
     resetting:'Återställer…', on:'PÅ', off:'AV',
-    autonomy:'Räckvidd', days7:'7 dagar', levelSource:'Källa', levelRange:'Intervall',
+    autonomy:'Räckvidd', levelSource:'Källa', levelRange:'Intervall',
+    daysN: n=>`${n} dagar`, histShort: n=>`historik: ${n} d`,
+    edWindow:'Fönster', edWindow7:'1 vecka', edWindow28:'4 veckor', edWindow84:'12 veckor',
     qtyLeft: q=>`${q} kvar`,
     lastUpdate:'Senast uppdaterad', inverted:'inverterad', fmtDays: d=>`${d} d`,
     sensorMissing:'Nivågivare hittades inte', sensorUnavailable:'Nivågivare otillgänglig',
     rangeMissing:'Ange värdet för full tank', refill:'Påfyllning',
     dailyChartU: u=>`Daglig förbrukning (${u})`,
+    chartPerU: (n,u)=>`Förbrukning per ${n} dagar (${u})`,
     avgDaily:'Snitt/dag', perDay: v=>`${v}/d`,
     // editor
     edEntities:'Entiteter', edPump:'Pumpenhet',
@@ -371,12 +395,15 @@ const DTL = {
     adjustQty:'Juster mengde', addToTank:'Legg til i tank',
     removeFromTank:'Fjern fra tank', resetFull:'Tank fylt — Tilbakestill',
     resetting:'Tilbakestiller…', on:'PÅ', off:'AV',
-    autonomy:'Rekkevidde', days7:'7 dager', levelSource:'Kilde', levelRange:'Område',
+    autonomy:'Rekkevidde', levelSource:'Kilde', levelRange:'Område',
+    daysN: n=>`${n} dager`, histShort: n=>`historikk: ${n} d`,
+    edWindow:'Vindu', edWindow7:'1 uke', edWindow28:'4 uker', edWindow84:'12 uker',
     qtyLeft: q=>`${q} igjen`,
     lastUpdate:'Sist oppdatert', inverted:'invertert', fmtDays: d=>`${d} d`,
     sensorMissing:'Nivåsensor ikke funnet', sensorUnavailable:'Nivåsensor utilgjengelig',
     rangeMissing:'Angi verdien for full tank', refill:'Påfylling',
     dailyChartU: u=>`Daglig forbruk (${u})`,
+    chartPerU: (n,u)=>`Forbruk per ${n} dager (${u})`,
     avgDaily:'Snitt/dag', perDay: v=>`${v}/d`,
     // editor
     edEntities:'Entiteter', edPump:'Pumpenhet',
@@ -411,12 +438,15 @@ const DTL = {
     adjustQty:'Juster mængde', addToTank:'Tilføj til tank',
     removeFromTank:'Fjern fra tank', resetFull:'Tank fyldt — Nulstil',
     resetting:'Nulstiller…', on:'TIL', off:'FRA',
-    autonomy:'Rækkevidde', days7:'7 dage', levelSource:'Kilde', levelRange:'Område',
+    autonomy:'Rækkevidde', levelSource:'Kilde', levelRange:'Område',
+    daysN: n=>`${n} dage`, histShort: n=>`historik: ${n} d`,
+    edWindow:'Vindue', edWindow7:'1 uge', edWindow28:'4 uger', edWindow84:'12 uger',
     qtyLeft: q=>`${q} tilbage`,
     lastUpdate:'Sidst opdateret', inverted:'inverteret', fmtDays: d=>`${d} d`,
     sensorMissing:'Niveausensor ikke fundet', sensorUnavailable:'Niveausensor utilgængelig',
     rangeMissing:'Angiv værdien for fuld tank', refill:'Påfyldning',
     dailyChartU: u=>`Dagligt forbrug (${u})`,
+    chartPerU: (n,u)=>`Forbrug pr. ${n} dage (${u})`,
     avgDaily:'Gns./dag', perDay: v=>`${v}/d`,
     // editor
     edEntities:'Entiteter', edPump:'Pumpeenhed',
@@ -451,12 +481,15 @@ const DTL = {
     adjustQty:'Dostosuj ilość', addToTank:'Dodaj do zbiornika',
     removeFromTank:'Usuń ze zbiornika', resetFull:'Zbiornik napełniony — Reset',
     resetting:'Resetowanie…', on:'WŁ.', off:'WYŁ.',
-    autonomy:'Autonomia', days7:'7 dni', levelSource:'Źródło', levelRange:'Zakres',
+    autonomy:'Autonomia', levelSource:'Źródło', levelRange:'Zakres',
+    daysN: n=>`${n} dni`, histShort: n=>`historia: ${n} d`,
+    edWindow:'Okno', edWindow7:'1 tydzień', edWindow28:'4 tygodnie', edWindow84:'12 tygodni',
     qtyLeft: q=>`pozostało ${q}`,
     lastUpdate:'Ostatnia akt.', inverted:'odwrócony', fmtDays: d=>`${d} d`,
     sensorMissing:'Nie znaleziono czujnika poziomu', sensorUnavailable:'Czujnik poziomu niedostępny',
     rangeMissing:'Podaj wartość dla pełnego zbiornika', refill:'Napełnienie',
     dailyChartU: u=>`Dzienne zużycie (${u})`,
+    chartPerU: (n,u)=>`Zużycie co ${n} dni (${u})`,
     avgDaily:'Śr./dzień', perDay: v=>`${v}/d`,
     // editor
     edEntities:'Encje', edPump:'Encja pompy',
@@ -618,6 +651,7 @@ class DosingTankCardEditor extends HTMLElement {
     set('cmode',  c.color_mode               ?? 'fixed');
     set('layout', c.layout                   ?? 'rows');
     set('lastup', c.last_update              ?? 'off');
+    set('window', c.window                   ?? 7);
     const box = this.shadowRoot.getElementById('showset');
     if (box) box.checked = c.show_settings !== false;
     const chartBox = this.shadowRoot.getElementById('showchart');
@@ -757,6 +791,14 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
       <input type="number" id="volume" min="0.1" step="0.1" value="${c.tank_volume_liters??5}">
     </div>
   </div>`}
+  ${direct?`<div class="field">
+    <label>${T.edWindow}</label>
+    <select id="window">
+      <option value="7"${c.window==28||c.window==84?'':' selected'}>${T.edWindow7}</option>
+      <option value="28"${c.window==28?' selected':''}>${T.edWindow28}</option>
+      <option value="84"${c.window==84?' selected':''}>${T.edWindow84}</option>
+    </select>
+  </div>`:''}
   <div class="grid2">
     <div class="field">
       <label>${T.edAlert}</label>
@@ -917,6 +959,7 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
     bind('cmode',  'color_mode',              v => v);
     bind('layout', 'layout',                  v => v);
     bind('lastup', 'last_update',             v => v);
+    bind('window', 'window',                  Number);
 
     // A checkbox carries its state in .checked, not .value, so it cannot go
     // through bind(). Ticked is the default, so it writes nothing at all.
@@ -1027,6 +1070,11 @@ class DosingTankCard extends HTMLElement {
       // 'columns' gives the tank the full height of the card and moves the
       // three metric tiles beside it. 'rows' is the original arrangement.
       layout:                  config.layout === 'columns' ? 'columns' : 'rows',
+      // Direct mode only, and always seven bars: 7 days of one, 4 weeks of
+      // four, 12 weeks of twelve. Each window is a multiple of the one before
+      // it. A softener regenerating twice a month says nothing over 7 days.
+      window:                  [7, 28, 84].includes(Number(config.window))
+                                 ? Number(config.window) : 7,
       warn_threshold_percent:  Number(config.warn_threshold_percent) || 50,
       name:                    config.name || 'Dosing Tank',
       liquid_color:            config.liquid_color || '#3b82f6',
@@ -1206,8 +1254,9 @@ class DosingTankCard extends HTMLElement {
     this._lastHistoryFetch = Date.now();
     try {
       const end = new Date();
-      // Midnight 7 days back: that extra day seeds the first daily delta.
-      const start = new Date(end.getFullYear(), end.getMonth(), end.getDate() - 7);
+      // Midnight one window back, plus a bucket to seed the first delta.
+      const back = this._config.window + this._bucketDays();
+      const start = new Date(end.getFullYear(), end.getMonth(), end.getDate() - back);
       // A level sensor reports far more often than a pump switch, so unlike
       // _loadHistory this asks for significant changes only and the compact
       // payload — a week of a 30 s sensor is otherwise tens of thousands of
@@ -1262,15 +1311,23 @@ class DosingTankCard extends HTMLElement {
     return at;
   }
 
-  // 8 day buckets: [0] seeds the first delta, [1..7] are the days displayed.
+  _bucketDays() { return this._config.window / 7; }
+
+  // 8 buckets: [0] seeds the first delta, [1..7] are the ones displayed. Each
+  // is _bucketDays() long, so this is the plain daily series when window is 7.
   _levelDailySeries(states) {
     const now = new Date();
     const T   = this._t();
     const loc = Object.keys(DTL).find(k => DTL[k] === T) || 'en';
+    const bd  = this._bucketDays();
     const days = Array.from({ length: 8 }, (_, i) => {
-      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (7 - i));
-      return { date: d, endDate: new Date(d.getTime() + 86400000), last: null,
-               label: d.toLocaleDateString(loc, { weekday: 'short' }) };
+      const d = new Date(now.getFullYear(), now.getMonth(),
+                         now.getDate() - (7 - i) * bd);
+      return { date: d, endDate: new Date(d.getTime() + bd * 86400000), last: null,
+               // A weekday name only reads as a bucket when the bucket is a
+               // day; wider ones are labelled by the date they start on.
+               label: bd === 1 ? d.toLocaleDateString(loc, { weekday: 'short' })
+                               : d.toLocaleDateString(loc, { day: 'numeric', month: 'numeric' }) };
     });
     for (const s of states) {
       const v = _num(s.state);
@@ -1302,7 +1359,8 @@ class DosingTankCard extends HTMLElement {
       : Math.max(0, Math.min(100, (v - empty) / (full - empty) * 100));
 
     const bars = [];
-    let used7dPct = 0;
+    const bd = this._bucketDays();
+    let used7dPct = 0, knownBuckets = 0;
     for (let i = 1; i < days.length; i++) {
       const prev = toPct(days[i - 1].last), cur = toPct(days[i].last);
       const known  = prev !== null && cur !== null;
@@ -1312,16 +1370,24 @@ class DosingTankCard extends HTMLElement {
       bars.push({ label: days[i].label, usedPct: used,
                   usedVal: used / 100 * scale.factor, refill, known });
       used7dPct += used;
+      if (known) knownBuckets++;
     }
 
-    // Plainly the 7-day consumption over 7 days, so the autonomy can be
-    // checked by hand against the tile printed right above it. Earlier this
-    // divided by "complete non-refill days" instead, which was defensible in
-    // isolation but disagreed with that tile whenever the history was short:
-    // a card three days old read 2.5 kg over 7 days and 30 days of autonomy
-    // at the same time, and nothing on screen explained the gap.
-    const avgPctDay = used7dPct > 0 ? used7dPct / 7 : null;
-    return { bars, span: scale.factor, unit: scale.unit, used7dPct,
+    // Divided by the days actually covered, not by the window asked for. The
+    // recorder purges at 10 days by default, so a 3-month window usually holds
+    // far less; dividing by 84 there would understate the rate eight-fold. The
+    // consumption tile is labelled with the same number, so the autonomy stays
+    // checkable by hand against it.
+    const coveredDays = knownBuckets * bd;
+    const avgPctDay = used7dPct > 0 && coveredDays > 0
+      ? used7dPct / coveredDays : null;
+    // avgPctDay is a percentage of the tank per day. Printing it under a kg
+    // label read "4.6 kg/j" where the truth was 1.6, because 4.6 was the
+    // percentage. The scaled figure is carried alongside so the tile can show
+    // the same unit as the consumption tile above it.
+    return { bars, span: scale.factor, unit: scale.unit, used7dPct, coveredDays,
+             avgVal: avgPctDay === null ? null : avgPctDay / 100 * scale.factor,
+             short: coveredDays > 0 && coveredDays < this._config.window,
              used7dVal: used7dPct / 100 * scale.factor, avgPctDay };
   }
 
@@ -1382,8 +1448,8 @@ class DosingTankCard extends HTMLElement {
     // one figure the card works out and would otherwise show nowhere once
     // capacity is configured. In rows nothing moves, so the slot keeps the
     // quantity unless that would only repeat the percentage on the tank.
-    const rate  = stats?.avgPctDay
-      ? T.perDay(this._fmtLevel(stats.avgPctDay, unit)) : '—';
+    const rate  = stats?.avgVal != null
+      ? T.perDay(this._fmtLevel(stats.avgVal, unit)) : '—';
     const first = tall || (unit === '%' && stats?.avgPctDay)
       ? { v: rate, l: T.avgDaily }
       : { v: remain, l: T.remaining };
@@ -1398,7 +1464,7 @@ class DosingTankCard extends HTMLElement {
     </div>
     <div class="metric">
       <div class="mv">${_esc(used)}</div>
-      <div class="ml">${T.days7}</div>
+      <div class="ml">${T.daysN(stats?.coveredDays ?? this._config.window)}</div>
     </div>
     <div class="metric">
       <div class="mv">${_esc(auto)}</div>
@@ -1429,6 +1495,14 @@ class DosingTankCard extends HTMLElement {
     if (!at) return '';
     const injection = !this._isDirect && this._config.last_update === 'changed';
     return _esc(`${injection ? T.luInjPrefix : T.luPrefix} ${this._fmtAgo(at)}`);
+  }
+
+  // Says how far the history actually reached when it falls short of the
+  // window asked for. Without it a 3-month window on a default recorder shows
+  // ten days of bars and looks like three months of near-nothing.
+  _historyNote(T, stats) {
+    return stats?.short
+      ? `<div class="histnote">${_esc(T.histShort(stats.coveredDays))}</div>` : '';
   }
 
   _directBars(T, stats, base) {
@@ -1819,8 +1893,12 @@ ${/* Always white, never --primary-text-color: this figure is drawn on top of
 .be{width:100%;border-radius:3px 3px 0 0;min-height:3px;transition:height .4s}
 .bl{font-size:9px;color:var(--secondary-text-color,#888);text-transform:capitalize;
   max-width:100%;overflow:hidden;text-overflow:clip;white-space:nowrap}
+/* Weekday names fit; a date like 06/06 does not, on a bar a seventh of the
+   chart wide. */
+.bars.wide .bl{font-size:8px;letter-spacing:-.3px}
 .bi.refill{align-items:center;justify-content:center;color:#22c55e;font-size:14px;font-weight:700}
 .nodata{font-size:11px;color:var(--secondary-text-color,#888);align-self:center;font-style:italic}
+.histnote{font-size:10px;color:var(--secondary-text-color,#888);margin-top:4px;text-align:right}
 .cfg{display:flex;flex-direction:column;gap:4px}
 .cfgr{display:flex;justify-content:space-between;font-size:11px;gap:6px}
 .cfgr .l{color:var(--secondary-text-color,#888)}
@@ -1940,8 +2018,13 @@ ${/* Always white, never --primary-text-color: this figure is drawn on top of
       ${/* A softener regenerates every couple of weeks, so a day-by-day chart
             says very little there. Shown by default all the same. */''}
       ${this._config.show_chart===false?'':`<div>
-        <div class="stitle">${direct?T.dailyChartU(lvlUnit||'%'):T.dailyChart}</div>
-        <div class="bars">
+        ${/* "Daily" stops being true the moment a bar covers four or twelve
+              days, so the title states the bucket it actually draws. */''}
+        <div class="stitle">${direct
+          ? (this._bucketDays()===1 ? T.dailyChartU(lvlUnit||'%')
+                                    : T.chartPerU(this._bucketDays(), lvlUnit||'%'))
+          : T.dailyChart}</div>
+        <div class="bars${direct&&this._bucketDays()>1?' wide':''}">
           ${direct?this._directBars(T,lvlStats,base):
             this._historyLoading||!days.length
             ?`<div class="nodata">${T.loading}</div>`
@@ -1956,6 +2039,7 @@ ${/* Always white, never --primary-text-color: this figure is drawn on top of
                 </div><div class="bl">${d.label}</div></div>`;
               }).join('')}
         </div>
+        ${direct?this._historyNote(T,lvlStats):''}
       </div>`}
       ${/* Reference material: useful while configuring, never again. On a tank
             looked at once a week it took a third of the card, hence the
