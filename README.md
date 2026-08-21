@@ -1,6 +1,6 @@
 # Dosing Tank Card
 
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/ADNPolymerase/ha-dosing-tank-card)
+[![hacs_badge](https://img.shields.io/badge/HACS-Default-blue.svg)](https://github.com/hacs/default)
 [![GitHub Release](https://badgen.net/github/release/ADNPolymerase/ha-dosing-tank-card)](https://github.com/ADNPolymerase/ha-dosing-tank-card/releases)
 [![Validate](https://github.com/ADNPolymerase/ha-dosing-tank-card/actions/workflows/hacs.yml/badge.svg)](https://github.com/ADNPolymerase/ha-dosing-tank-card/actions/workflows/hacs.yml)
 [![HA Version](https://img.shields.io/badge/Home%20Assistant-2024.1%2B-blue.svg)](https://www.home-assistant.io/)
@@ -61,8 +61,12 @@ If you dose **by hand** (no pump), use the +/- adjustment panel to track the lev
 
 ## Installation
 
-1. HACS → **⋮** → **Custom repositories** → `https://github.com/ADNPolymerase/ha-dosing-tank-card`, category **Dashboard**.
-2. Download **Dosing Tank Card**, then hard-reload the browser (`Shift`+`F5`).
+Available directly in HACS, no custom repository needed.
+
+1. Open **HACS**, search for **Dosing Tank Card** and install it.
+2. Hard-reload the browser (`Shift`+`F5`).
+
+As a custom repository: HACS → **⋮** → **Custom repositories** → `https://github.com/ADNPolymerase/ha-dosing-tank-card`, category **Dashboard**.
 
 Manual alternative: copy `dosing-tank-card.js` from the [latest release](../../releases/latest) to `config/www/`, then add `/local/dosing-tank-card.js` as a JavaScript-module resource.
 
