@@ -61,14 +61,22 @@ Si vous dosez **à la main** (sans pompe), utilisez le panneau d'ajustement +/- 
 
 ## Installation
 
-Disponible directement dans HACS, sans dépôt personnalisé.
+### Avec HACS
 
-1. Ouvrez **HACS**, cherchez **Dosing Tank Card** et installez-la.
+La carte est dans le magasin par défaut, aucun dépôt personnalisé n'est nécessaire.
+
+1. Ouvrez **HACS**, cherchez **Dosing Tank Card**, installez-la.
 2. Rechargez le navigateur en vidant le cache (`Shift`+`F5`).
 
-En dépôt personnalisé : HACS → **⋮** → **Dépôts personnalisés** → `https://github.com/ADNPolymerase/ha-dosing-tank-card`, catégorie **Dashboard**.
+Si la recherche ne trouve rien, c'est que HACS n'a pas encore rafraîchi sa liste. Ajoutez le dépôt à la main : **⋮** → **Dépôts personnalisés** → `https://github.com/ADNPolymerase/ha-dosing-tank-card`, catégorie **Dashboard**.
 
-Alternative manuelle : copiez `dosing-tank-card.js` depuis la [dernière version](../../releases/latest) vers `config/www/`, puis ajoutez `/local/dosing-tank-card.js` comme ressource module JavaScript.
+### Sans HACS
+
+1. Téléchargez `dosing-tank-card.js` depuis la [dernière version](https://github.com/ADNPolymerase/ha-dosing-tank-card/releases/latest) vers `config/www/`.
+2. **Paramètres** → **Tableaux de bord** → **⋮** → **Ressources** → ajoutez `/local/dosing-tank-card.js` en **module JavaScript**.
+3. Rechargez le navigateur en vidant le cache (`Shift`+`F5`).
+
+Les mises à jour sont alors manuelles : la carte ne vous préviendra pas qu'une nouvelle version est sortie.
 
 ---
 

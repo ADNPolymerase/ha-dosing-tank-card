@@ -61,14 +61,22 @@ If you dose **by hand** (no pump), use the +/- adjustment panel to track the lev
 
 ## Installation
 
-Available directly in HACS, no custom repository needed.
+### With HACS
 
-1. Open **HACS**, search for **Dosing Tank Card** and install it.
+The card is in the default store, so no custom repository is needed.
+
+1. Open **HACS**, search for **Dosing Tank Card**, install it.
 2. Hard-reload the browser (`Shift`+`F5`).
 
-As a custom repository: HACS → **⋮** → **Custom repositories** → `https://github.com/ADNPolymerase/ha-dosing-tank-card`, category **Dashboard**.
+If the search finds nothing, HACS has not refreshed its list yet. Add the repository by hand: **⋮** → **Custom repositories** → `https://github.com/ADNPolymerase/ha-dosing-tank-card`, category **Dashboard**.
 
-Manual alternative: copy `dosing-tank-card.js` from the [latest release](../../releases/latest) to `config/www/`, then add `/local/dosing-tank-card.js` as a JavaScript-module resource.
+### Without HACS
+
+1. Download `dosing-tank-card.js` from the [latest release](https://github.com/ADNPolymerase/ha-dosing-tank-card/releases/latest) into `config/www/`.
+2. **Settings** → **Dashboards** → **⋮** → **Resources** → add `/local/dosing-tank-card.js` as a **JavaScript module**.
+3. Hard-reload the browser (`Shift`+`F5`).
+
+Updates are then manual: the card will not tell you a new version is out.
 
 ---
 
