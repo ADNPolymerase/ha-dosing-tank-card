@@ -125,7 +125,7 @@ function makeDirect({ series = null, value = null, unit = '%',
                       full, empty, alert = 20, name = 'Bac à sel',
                       capacity, capacity_unit, color_mode, warn, show_settings, layout,
                       show_chart, last_update, lastChangedH, lastReportedMin,
-                      window, seriesStepDays, order,
+                      window, seriesStepDays, order, extra, names, format,
                       entity = 'sensor.salt', present = true } = {}) {
   const cur    = value ?? (series ? series.at(-1) : null);
   const states = {};
@@ -148,7 +148,9 @@ function makeDirect({ series = null, value = null, unit = '%',
                 capacity, capacity_unit, color_mode, show_settings, layout,
                 show_chart, last_update, window, warn_threshold_percent: warn,
                 metrics_order: order });
-  c._hass = { states, locale: { language: 'en' } };
+  Object.assign(states, extra || {});
+  c._hass = { states, locale: { language: 'en' }, entities: names || {},
+              ...(format ? { formatEntityState: format } : {}) };
   if (series) {
     // One reading per day at the same time of day, oldest first.
     const step = (seriesStepDays ?? 1) * 86400000;
@@ -670,6 +672,94 @@ const SERIES = [100, 96, 92, 88, 84, 80, 76, 72];
     'Pump 7d | Remaining');
   check('pompe : une clé du mode direct ne passe pas',
     tiles(makeCard({ pumpOn: false, order: ['autonomy'] })), '');
+}
+
+// ── Tuiles d'entité ─────────────────────────────────────────────────────────
+{
+  const SALT = { series: SERIES, capacity: 35, capacity_unit: 'kg' };
+  const water = { 'sensor.eau': { state: '1250',
+    attributes: { unit_of_measurement: 'L', friendly_name: 'Adoucisseur eau restante' } } };
+
+  const a = makeDirect({ ...SALT, extra: water,
+                         order: ['consumption', 'sensor.eau'] });
+  check('une entité devient une tuile, libellée par son nom',
+    tiles(a.html), '7 days | Adoucisseur eau restante');
+  check('sans formatEntityState : état et unité',
+    /<div class="mv">1250 L<\/div>/.test(a.html), true);
+
+  // Le nom du registre prime sur le friendly_name, comme dans oklyn-card :
+  // c'est celui-là qui est débarrassé du préfixe d'appareil.
+  const b = makeDirect({ ...SALT, extra: water, order: ['sensor.eau'],
+    names: { 'sensor.eau': { name: 'Eau restante' } },
+    format: st => `${st.state} litres` });
+  check('formatEntityState rend la valeur quand il existe',
+    /<div class="mv[^"]*">1250 litres<\/div>/.test(b.html), true);
+  check('une valeur longue passe au cran de taille en dessous',
+    /class="mv long"/.test(b.html), true);
+  check('une valeur courte n\'y passe pas',
+    /class="mv long"/.test(a.html), false);
+  check('le nom du registre prime sur le friendly_name',
+    tiles(b.html), 'Eau restante');
+
+  const off = makeDirect({ ...SALT, order: ['consumption', 'sensor.eau'],
+    extra: { 'sensor.eau': { state: 'unavailable', attributes: {} } } });
+  check('entité décrochée : la tuile reste',
+    tiles(off.html), '7 days | sensor.eau');
+  check('entité décrochée : un tiret, pas "unavailable"',
+    /<div class="mv">—<\/div>/.test(off.html), true);
+
+  // Une entité absente de hass ne doit pas casser le rendu non plus.
+  const gone = makeDirect({ ...SALT, order: ['sensor.jamais_vue'] });
+  check('entité inconnue : tuile avec un tiret', tiles(gone.html), 'sensor.jamais_vue');
+
+  check('seule une tuile d\'entité est cliquable',
+    (a.html.match(/data-entity="/g) || []).length, 1);
+  check('la tuile cliquable porte son entité',
+    a.html.includes('data-entity="sensor.eau"'), true);
+
+  // Le plafond : quatre tuiles, pas cinq.
+  const five = makeDirect({ ...SALT, extra: water,
+    order: ['remaining', 'average', 'consumption', 'autonomy', 'sensor.eau'] });
+  check('cinq demandées, quatre affichées',
+    tiles(five.html), 'Remaining | Daily avg | 7 days | Autonomy');
+  check('la grille reste à quatre', /class="metrics n4"/.test(five.html), true);
+}
+
+{
+  // L'éditeur : les entités configurées sont proposées avec les tuiles
+  // intégrées, sinon elles ne seraient ni déplaçables ni supprimables.
+  // The stub returns null from getElementById, so the two slots the editor
+  // fills by hand have to be handed to it. Everything else stays untouched.
+  const withSlots = (hass, config) => {
+    const e = new Editor();
+    const slots = {};
+    e.shadowRoot.getElementById = id =>
+      (id === 'morder' || id === 'addtile')
+        ? (slots[id] ||= document.createElement('div')) : null;
+    e.hass = hass;
+    e.setConfig(config);
+    return e;
+  };
+
+  const ed = withSlots(
+    { states: { 'sensor.eau': { state: '1250',
+        attributes: { friendly_name: 'Eau restante' } } }, entities: {} },
+    { level_entity: 'sensor.s', metrics_order: ['consumption', 'sensor.eau'] });
+  const opts = ed._orderForm.schema[0].selector.select.options.map(o => o.value);
+  check('les quatre tuiles intégrées sont proposées',
+    opts.slice(0, 4).join(), 'remaining,average,consumption,autonomy');
+  check('l\'entité configurée est proposée elle aussi',
+    opts.includes('sensor.eau'), true);
+  check('elle est proposée sous son nom',
+    ed._orderForm.schema[0].selector.select.options
+      .find(o => o.value === 'sensor.eau').label, 'Eau restante');
+
+  // Plein, donc plus rien à ajouter.
+  const full = withSlots({ states: {}, entities: {} },
+    { level_entity: 'sensor.s',
+      metrics_order: ['remaining', 'average', 'consumption', 'autonomy'] });
+  check('rangée pleine : le sélecteur d\'ajout disparaît',
+    full.shadowRoot.getElementById('addtile')?.style.display, 'none');
 }
 
 // ── Changer de fenêtre sur une carte déjà affichée ───────────────────────────

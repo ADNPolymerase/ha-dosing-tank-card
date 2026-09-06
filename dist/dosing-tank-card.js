@@ -63,6 +63,7 @@ const DTL = {
     avgDaily:'Daily avg', perDay: v=>`${v}/d`,
     // editor
     edOrder:'Tiles shown', edTileUsed:'Consumption',
+    edAddTile:'Add an entity',
     edEntities:'Entities', edPump:'Pump entity',
     edCounter:'Counter (mL)', edFlowEnt:'Flow-rate entity (mL/min)',
     edSync:'Sync entity', edTank:'Tank',
@@ -107,6 +108,7 @@ const DTL = {
     avgDaily:'Moyenne/j', perDay: v=>`${v}/j`,
     // editor
     edOrder:'Tuiles affichées', edTileUsed:'Consommation',
+    edAddTile:'Ajouter une entité',
     edEntities:'Entités', edPump:'Entité pompe',
     edCounter:'Compteur (mL)', edFlowEnt:'Entité débit (mL/min)',
     edSync:'Entité sync', edTank:'Bidon',
@@ -151,6 +153,7 @@ const DTL = {
     avgDaily:'Media diaria', perDay: v=>`${v}/d`,
     // editor
     edOrder:'Casillas mostradas', edTileUsed:'Consumo',
+    edAddTile:'Añadir una entidad',
     edEntities:'Entidades', edPump:'Entidad bomba',
     edCounter:'Contador (mL)', edFlowEnt:'Entidad caudal (mL/min)',
     edSync:'Entidad sync', edTank:'Depósito',
@@ -195,6 +198,7 @@ const DTL = {
     avgDaily:'В среднем/д', perDay: v=>`${v}/д`,
     // editor
     edOrder:'Показываемые плитки', edTileUsed:'Расход',
+    edAddTile:'Добавить сущность',
     edEntities:'Сущности', edPump:'Сущность насоса',
     edCounter:'Счётчик (мл)', edFlowEnt:'Сущность расхода (мл/мин)',
     edSync:'Сущность синхронизации', edTank:'Бак',
@@ -239,6 +243,7 @@ const DTL = {
     avgDaily:'Ø pro Tag', perDay: v=>`${v}/T`,
     // editor
     edOrder:'Angezeigte Kacheln', edTileUsed:'Verbrauch',
+    edAddTile:'Entität hinzufügen',
     edEntities:'Entitäten', edPump:'Pumpen-Entität',
     edCounter:'Zähler (mL)', edFlowEnt:'Durchfluss-Entität (mL/min)',
     edSync:'Sync-Entität', edTank:'Tank',
@@ -283,6 +288,7 @@ const DTL = {
     avgDaily:'Media/g', perDay: v=>`${v}/g`,
     // editor
     edOrder:'Riquadri mostrati', edTileUsed:'Consumo',
+    edAddTile:"Aggiungi un'entità",
     edEntities:'Entità', edPump:'Entità pompa',
     edCounter:'Contatore (mL)', edFlowEnt:'Entità portata (mL/min)',
     edSync:'Entità sync', edTank:'Serbatoio',
@@ -327,6 +333,7 @@ const DTL = {
     avgDaily:'Gem. per dag', perDay: v=>`${v}/d`,
     // editor
     edOrder:'Getoonde tegels', edTileUsed:'Verbruik',
+    edAddTile:'Entiteit toevoegen',
     edEntities:'Entiteiten', edPump:'Pomp entiteit',
     edCounter:'Teller (mL)', edFlowEnt:'Doorstroom entiteit (mL/min)',
     edSync:'Sync entiteit', edTank:'Tank',
@@ -371,6 +378,7 @@ const DTL = {
     avgDaily:'Snitt/dag', perDay: v=>`${v}/d`,
     // editor
     edOrder:'Visade rutor', edTileUsed:'Förbrukning',
+    edAddTile:'Lägg till entitet',
     edEntities:'Entiteter', edPump:'Pumpenhet',
     edCounter:'Räknare (mL)', edFlowEnt:'Flödesenhet (mL/min)',
     edSync:'Synkroniseringsenhet', edTank:'Tank',
@@ -415,6 +423,7 @@ const DTL = {
     avgDaily:'Snitt/dag', perDay: v=>`${v}/d`,
     // editor
     edOrder:'Viste ruter', edTileUsed:'Forbruk',
+    edAddTile:'Legg til entitet',
     edEntities:'Entiteter', edPump:'Pumpenhet',
     edCounter:'Teller (mL)', edFlowEnt:'Strømenhet (mL/min)',
     edSync:'Synkenhet', edTank:'Tank',
@@ -459,6 +468,7 @@ const DTL = {
     avgDaily:'Gns./dag', perDay: v=>`${v}/d`,
     // editor
     edOrder:'Viste felter', edTileUsed:'Forbrug',
+    edAddTile:'Tilføj enhed',
     edEntities:'Entiteter', edPump:'Pumpeenhed',
     edCounter:'Tæller (mL)', edFlowEnt:'Flow entitet (mL/min)',
     edSync:'Synkroniseringsenhed', edTank:'Tank',
@@ -503,6 +513,7 @@ const DTL = {
     avgDaily:'Śr./dzień', perDay: v=>`${v}/d`,
     // editor
     edOrder:'Wyświetlane kafelki', edTileUsed:'Zużycie',
+    edAddTile:'Dodaj encję',
     edEntities:'Encje', edPump:'Encja pompy',
     edCounter:'Licznik (mL)', edFlowEnt:'Encja przepływu (mL/min)',
     edSync:'Encja sync', edTank:'Zbiornik',
@@ -553,6 +564,16 @@ const DTC_TILES = {
   direct: ['remaining', 'average', 'consumption', 'autonomy'],
   pump:   ['remaining', 'today', 'pump7d'],
 };
+
+// Four is the ceiling, not an arbitrary round number: three sit in a row and
+// four fall into a 2x2, while five would have to shrink to fit a dashboard
+// column and the figures are the whole point of a tile.
+const DTC_MAX_TILES = 4;
+
+// A tile key is either one of the above or an entity to read. Nothing else in
+// a Lovelace config looks like domain.object_id, so the dot is enough to tell
+// them apart.
+const _isEntityId = k => typeof k === 'string' && /^[a-z_]+\.[a-z0-9_]+$/.test(k);
 
 // Creates whichever of the three helpers the card needs is still missing:
 // consumed counter (mL), flow-rate helper (mL/min) and the sync watermark.
@@ -718,14 +739,33 @@ class DosingTankCardEditor extends HTMLElement {
          'consumption', 'autonomy']
       : ['remaining', 'today', 'pump7d'];
     this._orderShown = Array.isArray(cfg)
-      ? cfg.filter(k => DTC_TILES[mode].includes(k)) : dflt;
+      ? cfg.filter(k => DTC_TILES[mode].includes(k) || _isEntityId(k))
+           .slice(0, DTC_MAX_TILES)
+      : dflt;
     if (this._hass && form.hass !== this._hass) form.hass = this._hass;
+    // The entities already configured are offered alongside the built-in
+    // tiles, otherwise they could be neither reordered nor removed.
+    const opts = DTC_TILES[mode].map(k => ({ value: k, label: label[k] }));
+    for (const k of this._orderShown) {
+      if (!_isEntityId(k)) continue;
+      const st = this._hass?.states[k];
+      opts.push({ value: k, label: this._hass?.entities?.[k]?.name
+                              || st?.attributes?.friendly_name || k });
+    }
     form.schema = [{
       name: 'metrics_order', label: T.edOrder,
-      selector: { select: { multiple: true, reorder: true, options:
-        DTC_TILES[mode].map(k => ({ value: k, label: label[k] })) } },
+      selector: { select: { multiple: true, reorder: true, options: opts } },
     }];
     form.data = { metrics_order: this._orderShown };
+    // Nothing more to add once the row is full: the picker goes away rather
+    // than accepting a choice the card would then ignore.
+    const addWrap = this.shadowRoot?.getElementById('addtile');
+    if (addWrap)
+      addWrap.style.display =
+        this._orderShown.length >= DTC_MAX_TILES ? 'none' : '';
+    if (this._addPicker && this._hass && this._addPicker.hass !== this._hass
+        && customElements.get('ha-entity-picker'))
+      this._addPicker.hass = this._hass;
   }
 
   _syncCreateRow() {
@@ -861,6 +901,7 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
         is what a select selector already does, and hand-rolling it would cost
         far more than it is worth. Filled in after the markup is written. */''}
   <div class="field" id="morder"></div>
+  <div class="field" id="addtile"></div>
   <div class="grid2">
     <div class="field">
       <label>${T.edAlert}</label>
@@ -1034,13 +1075,50 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
         if (!Array.isArray(v)) return;
         // Setting .data must not look like a user edit, and an editor that
         // wrote its own default on open would freeze it into the config.
-        if (v.join() === this._orderShown.join()) return;
-        this._fire({ ...this._config, metrics_order: v });
+        const capped = v.slice(0, DTC_MAX_TILES);
+        if (capped.join() === this._orderShown.join()) return;
+        this._fire({ ...this._config, metrics_order: capped });
       });
       slot.appendChild(form);
       this._orderForm = form;
-      this._syncOrder();
     }
+
+    // Adding an entity tile. The reorder widget can only offer a fixed list,
+    // so picking an entity is a separate step; once added it appears in that
+    // list like any other tile, and is reordered and removed there.
+    const addWrap = this.shadowRoot.getElementById('addtile');
+    if (addWrap) {
+      const add = v => {
+        if (!v || !_isEntityId(v)) return;
+        const cur = this._orderShown;
+        if (cur.includes(v) || cur.length >= DTC_MAX_TILES) return;
+        this._fire({ ...this._config, metrics_order: [...cur, v] });
+      };
+      if (customElements.get('ha-entity-picker')) {
+        const p = document.createElement('ha-entity-picker');
+        p.label = T.edAddTile;
+        p.allowCustomEntity = true;
+        if (this._hass) p.hass = this._hass;
+        p.addEventListener('value-changed', e => {
+          add(e.detail.value);
+          // The picker is a command, not a stored value: it must come back
+          // empty for the next entity.
+          p.value = '';
+        });
+        addWrap.appendChild(p);
+        this._addPicker = p;
+      } else {
+        const lbl = document.createElement('label');
+        lbl.textContent = T.edAddTile;
+        const inp = document.createElement('input');
+        inp.type = 'text';
+        inp.addEventListener('change', e => { add(e.target.value.trim());
+                                             e.target.value = ''; });
+        addWrap.appendChild(lbl); addWrap.appendChild(inp);
+        this._addPicker = inp;
+      }
+    }
+    this._syncOrder();
 
     // A checkbox carries its state in .checked, not .value, so it cannot go
     // through bind(). Ticked is the default, so it writes nothing at all.
@@ -1544,14 +1622,43 @@ class DosingTankCard extends HTMLElement {
     if (!Array.isArray(cfg)) return fallback;
     // Authoritative: a tile removed in the editor must stay out. Re-appending
     // what is missing here would make removal silently do nothing.
-    return cfg.filter(k => DTC_TILES[mode].includes(k));
+    return cfg.filter(k => DTC_TILES[mode].includes(k) || _isEntityId(k))
+              .slice(0, DTC_MAX_TILES);
   }
 
-  _tile(label, value, alert = false) {
-    return `<div class="metric">
-      <div class="mv${alert ? ' alert' : ''}">${_esc(value)}</div>
-      <div class="ml">${label}</div>
+  _tile(label, value, alert = false, entity = null) {
+    // Labels are ours everywhere but on an entity tile, where the name comes
+    // from Home Assistant and has to be escaped like any other state.
+    return `<div class="metric${entity ? ' tap' : ''}"`
+      + (entity ? ` data-entity="${_esc(entity)}" role="button" tabindex="0"` : '')
+      + `>
+      <div class="mv${alert ? ' alert' : ''}`
+      + `${entity && String(value).length > 9 ? ' long' : ''}">${_esc(value)}</div>
+      <div class="ml">${_esc(label)}</div>
     </div>`;
+  }
+
+  /**
+   * A tile for any entity the user asked for. The value is rendered by Home
+   * Assistant itself, which is what turns a raw state into "Régénération" or
+   * "1 250 L" in the user's language, with the integration's own wording.
+   */
+  _entityTile(id) {
+    const st   = this._hass?.states[id];
+    const name = this._hass?.entities?.[id]?.name
+              || st?.attributes?.friendly_name || id;
+    let value = '—';
+    // A tile that vanished when a sensor dropped would change the shape of the
+    // card, so an unreachable entity keeps its place and shows a dash.
+    if (st && st.state !== 'unavailable' && st.state !== 'unknown') {
+      value = st.state;
+      if (typeof this._hass?.formatEntityState === 'function') {
+        try { value = this._hass.formatEntityState(st); } catch (e) { /* raw */ }
+      } else if (st.attributes?.unit_of_measurement) {
+        value = `${st.state} ${st.attributes.unit_of_measurement}`;
+      }
+    }
+    return this._tile(name, value, false, id);
   }
 
   // The row sizes itself to what it actually holds, from one tile to four.
@@ -1559,7 +1666,7 @@ class DosingTankCard extends HTMLElement {
   _metricsHtml(order, tiles) {
     if (!order.length) return '';
     return `<div class="metrics n${order.length}">`
-      + order.map(k => tiles[k]).join('') + `</div>`;
+      + order.map(k => tiles[k] ?? this._entityTile(k)).join('') + `</div>`;
   }
 
   _directMetrics(T, lvl, stats, isAlert, scale, tall) {
@@ -1990,7 +2097,19 @@ ${/* Always white, never --primary-text-color: this figure is drawn on top of
 .metric{background:var(--secondary-background-color,rgba(255,255,255,.05));border-radius:8px;padding:10px 6px;text-align:center;min-width:0}
 .mv{font-size:16px;font-weight:700;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mv.alert{color:#ef4444}
-.ml{font-size:9px;color:var(--secondary-text-color,#888);text-transform:uppercase;letter-spacing:.6px;margin-top:3px}
+.ml{font-size:9px;color:var(--secondary-text-color,#888);text-transform:uppercase;letter-spacing:.6px;margin-top:3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* A computed tile holds a number and can be clipped without losing much; an
+   entity tile holds words like "Régénération", where the tail is the meaning.
+   It gets two lines and breaks the word rather than swallowing its end. */
+.metric.tap .mv{white-space:normal;overflow-wrap:anywhere;line-height:1.12}
+/* One notch down buys "Régénération" a single line at full card width. In a
+   narrow right-hand column nothing buys it one, hence the wrapping above. */
+.mv.long{font-size:12px;letter-spacing:-.2px}
+.body.cols .mv.long{font-size:10.5px;letter-spacing:-.3px}
+.metric.tap{cursor:pointer}
+.metric.tap:hover{background:var(--secondary-background-color,rgba(255,255,255,.09));filter:brightness(1.06)}
+.metric.tap:focus-visible{outline:2px solid var(--primary-color,#03a9f4);outline-offset:1px}
 .body{display:grid;grid-template-columns:100px 1fr;gap:14px;align-items:start}
 /* Columns layout: the tank takes the whole height of the row and the metrics
    sit beside it, tightened so three of them still fit a narrower column. */
@@ -2245,6 +2364,18 @@ ${/* Always white, never --primary-text-color: this figure is drawn on top of
         ?.addEventListener('click', () => this._applyAdjustment('remove'));
       this.shadowRoot.getElementById('dtc-reset-btn')
         ?.addEventListener('click', () => this._resetTank());
+    }
+
+    // An entity tile opens the entity, like every other tile in Home
+    // Assistant. The computed ones have nothing to open, hence the marker.
+    for (const el of this.shadowRoot.querySelectorAll('.metric[data-entity]')) {
+      const open = () => this.dispatchEvent(new CustomEvent('hass-more-info', {
+        detail: { entityId: el.getAttribute('data-entity') },
+        bubbles: true, composed: true }));
+      el.addEventListener('click', open);
+      el.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
+      });
     }
 
     if (isPumpOn && !this._ticker) {
