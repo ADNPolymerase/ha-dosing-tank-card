@@ -62,6 +62,7 @@ const DTL = {
     chartPerU: (n,u)=>`Consumption per ${n} days (${u})`,
     avgDaily:'Daily avg', perDay: v=>`${v}/d`,
     // editor
+    edOrder:'Tiles shown', edTileUsed:'Consumption',
     edEntities:'Entities', edPump:'Pump entity',
     edCounter:'Counter (mL)', edFlowEnt:'Flow-rate entity (mL/min)',
     edSync:'Sync entity', edTank:'Tank',
@@ -105,6 +106,7 @@ const DTL = {
     chartPerU: (n,u)=>`Consommation par ${n} jours (${u})`,
     avgDaily:'Moyenne/j', perDay: v=>`${v}/j`,
     // editor
+    edOrder:'Tuiles affichées', edTileUsed:'Consommation',
     edEntities:'Entités', edPump:'Entité pompe',
     edCounter:'Compteur (mL)', edFlowEnt:'Entité débit (mL/min)',
     edSync:'Entité sync', edTank:'Bidon',
@@ -148,6 +150,7 @@ const DTL = {
     chartPerU: (n,u)=>`Consumo cada ${n} días (${u})`,
     avgDaily:'Media diaria', perDay: v=>`${v}/d`,
     // editor
+    edOrder:'Casillas mostradas', edTileUsed:'Consumo',
     edEntities:'Entidades', edPump:'Entidad bomba',
     edCounter:'Contador (mL)', edFlowEnt:'Entidad caudal (mL/min)',
     edSync:'Entidad sync', edTank:'Depósito',
@@ -191,6 +194,7 @@ const DTL = {
     chartPerU: (n,u)=>`Расход за ${n} дней (${u})`,
     avgDaily:'В среднем/д', perDay: v=>`${v}/д`,
     // editor
+    edOrder:'Показываемые плитки', edTileUsed:'Расход',
     edEntities:'Сущности', edPump:'Сущность насоса',
     edCounter:'Счётчик (мл)', edFlowEnt:'Сущность расхода (мл/мин)',
     edSync:'Сущность синхронизации', edTank:'Бак',
@@ -234,6 +238,7 @@ const DTL = {
     chartPerU: (n,u)=>`Verbrauch je ${n} Tage (${u})`,
     avgDaily:'Ø pro Tag', perDay: v=>`${v}/T`,
     // editor
+    edOrder:'Angezeigte Kacheln', edTileUsed:'Verbrauch',
     edEntities:'Entitäten', edPump:'Pumpen-Entität',
     edCounter:'Zähler (mL)', edFlowEnt:'Durchfluss-Entität (mL/min)',
     edSync:'Sync-Entität', edTank:'Tank',
@@ -277,6 +282,7 @@ const DTL = {
     chartPerU: (n,u)=>`Consumo ogni ${n} giorni (${u})`,
     avgDaily:'Media/g', perDay: v=>`${v}/g`,
     // editor
+    edOrder:'Riquadri mostrati', edTileUsed:'Consumo',
     edEntities:'Entità', edPump:'Entità pompa',
     edCounter:'Contatore (mL)', edFlowEnt:'Entità portata (mL/min)',
     edSync:'Entità sync', edTank:'Serbatoio',
@@ -320,6 +326,7 @@ const DTL = {
     chartPerU: (n,u)=>`Verbruik per ${n} dagen (${u})`,
     avgDaily:'Gem. per dag', perDay: v=>`${v}/d`,
     // editor
+    edOrder:'Getoonde tegels', edTileUsed:'Verbruik',
     edEntities:'Entiteiten', edPump:'Pomp entiteit',
     edCounter:'Teller (mL)', edFlowEnt:'Doorstroom entiteit (mL/min)',
     edSync:'Sync entiteit', edTank:'Tank',
@@ -363,6 +370,7 @@ const DTL = {
     chartPerU: (n,u)=>`Förbrukning per ${n} dagar (${u})`,
     avgDaily:'Snitt/dag', perDay: v=>`${v}/d`,
     // editor
+    edOrder:'Visade rutor', edTileUsed:'Förbrukning',
     edEntities:'Entiteter', edPump:'Pumpenhet',
     edCounter:'Räknare (mL)', edFlowEnt:'Flödesenhet (mL/min)',
     edSync:'Synkroniseringsenhet', edTank:'Tank',
@@ -406,6 +414,7 @@ const DTL = {
     chartPerU: (n,u)=>`Forbruk per ${n} dager (${u})`,
     avgDaily:'Snitt/dag', perDay: v=>`${v}/d`,
     // editor
+    edOrder:'Viste ruter', edTileUsed:'Forbruk',
     edEntities:'Entiteter', edPump:'Pumpenhet',
     edCounter:'Teller (mL)', edFlowEnt:'Strømenhet (mL/min)',
     edSync:'Synkenhet', edTank:'Tank',
@@ -449,6 +458,7 @@ const DTL = {
     chartPerU: (n,u)=>`Forbrug pr. ${n} dage (${u})`,
     avgDaily:'Gns./dag', perDay: v=>`${v}/d`,
     // editor
+    edOrder:'Viste felter', edTileUsed:'Forbrug',
     edEntities:'Entiteter', edPump:'Pumpeenhed',
     edCounter:'Tæller (mL)', edFlowEnt:'Flow entitet (mL/min)',
     edSync:'Synkroniseringsenhed', edTank:'Tank',
@@ -492,6 +502,7 @@ const DTL = {
     chartPerU: (n,u)=>`Zużycie co ${n} dni (${u})`,
     avgDaily:'Śr./dzień', perDay: v=>`${v}/d`,
     // editor
+    edOrder:'Wyświetlane kafelki', edTileUsed:'Zużycie',
     edEntities:'Encje', edPump:'Encja pompy',
     edCounter:'Licznik (mL)', edFlowEnt:'Encja przepływu (mL/min)',
     edSync:'Encja sync', edTank:'Zbiornik',
@@ -534,6 +545,14 @@ function _num(v) {
   const n = Number(v);
   return Number.isFinite(n) ? n : null;
 }
+
+// Which tiles each mode can draw. metrics_order lists the ones to draw and in
+// which order; anything left out of it stays out. The two modes have nothing
+// in common but the quantity left, hence two lists rather than one.
+const DTC_TILES = {
+  direct: ['remaining', 'average', 'consumption', 'autonomy'],
+  pump:   ['remaining', 'today', 'pump7d'],
+};
 
 // Creates whichever of the three helpers the card needs is still missing:
 // consumed counter (mL), flow-rate helper (mL/min) and the sync watermark.
@@ -594,6 +613,8 @@ class DosingTankCardEditor extends HTMLElement {
     this.shadowRoot.querySelectorAll('ha-entity-picker').forEach(el => {
       if (el.hass !== hass) el.hass = hass;
     });
+    if (this._orderForm && this._orderForm.hass !== hass)
+      this._orderForm.hass = hass;
     this._syncCreateRow();
   }
 
@@ -657,6 +678,8 @@ class DosingTankCardEditor extends HTMLElement {
     const chartBox = this.shadowRoot.getElementById('showchart');
     if (chartBox) chartBox.checked = c.show_chart !== false;
 
+    this._syncOrder();
+
     const keys = this._mode === 'direct'
       ? { 'level-wrap': 'level_entity' }
       : { 'pump-wrap': 'pump_entity',  'reset-wrap': 'reset_entity',
@@ -668,6 +691,41 @@ class DosingTankCardEditor extends HTMLElement {
       if (el && el.value !== v) el.value = v;
     }
     this._syncCreateRow();
+  }
+
+  /**
+   * Fills the tile-order widget. The options depend on the mode, and the value
+   * shown when the option is absent is the arrangement the card would draw
+   * anyway, so the field always describes what is on screen.
+   */
+  _syncOrder() {
+    const form = this._orderForm;
+    if (!form) return;
+    const T      = this._t();
+    const direct = this._mode === 'direct';
+    const label  = {
+      remaining:   T.remaining,
+      average:     T.avgDaily,
+      consumption: T.edTileUsed,
+      autonomy:    T.autonomy,
+      today:       T.today,
+      pump7d:      T.pump7d,
+    };
+    const mode = direct ? 'direct' : 'pump';
+    const cfg  = this._config.metrics_order;
+    const dflt = direct
+      ? [this._config.layout === 'columns' ? 'average' : 'remaining',
+         'consumption', 'autonomy']
+      : ['remaining', 'today', 'pump7d'];
+    this._orderShown = Array.isArray(cfg)
+      ? cfg.filter(k => DTC_TILES[mode].includes(k)) : dflt;
+    if (this._hass && form.hass !== this._hass) form.hass = this._hass;
+    form.schema = [{
+      name: 'metrics_order', label: T.edOrder,
+      selector: { select: { multiple: true, reorder: true, options:
+        DTC_TILES[mode].map(k => ({ value: k, label: label[k] })) } },
+    }];
+    form.data = { metrics_order: this._orderShown };
   }
 
   _syncCreateRow() {
@@ -799,6 +857,10 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
       <option value="84"${c.window==84?' selected':''}>${T.edWindow84}</option>
     </select>
   </div>`:''}
+  ${/* The one field built with ha-form rather than by hand: reordering by drag
+        is what a select selector already does, and hand-rolling it would cost
+        far more than it is worth. Filled in after the markup is written. */''}
+  <div class="field" id="morder"></div>
   <div class="grid2">
     <div class="field">
       <label>${T.edAlert}</label>
@@ -961,6 +1023,25 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
     bind('lastup', 'last_update',             v => v);
     bind('window', 'window',                  Number);
 
+    // The tile order. ha-form is fed a one-field schema; the field itself is
+    // rebuilt on every sync because its options follow the mode.
+    const slot = this.shadowRoot.getElementById('morder');
+    if (slot) {
+      const form = document.createElement('ha-form');
+      form.computeLabel = sc => sc.label || sc.name;
+      form.addEventListener('value-changed', e => {
+        const v = e.detail?.value?.metrics_order;
+        if (!Array.isArray(v)) return;
+        // Setting .data must not look like a user edit, and an editor that
+        // wrote its own default on open would freeze it into the config.
+        if (v.join() === this._orderShown.join()) return;
+        this._fire({ ...this._config, metrics_order: v });
+      });
+      slot.appendChild(form);
+      this._orderForm = form;
+      this._syncOrder();
+    }
+
     // A checkbox carries its state in .checked, not .value, so it cannot go
     // through bind(). Ticked is the default, so it writes nothing at all.
     this.shadowRoot.getElementById('showset')?.addEventListener('change', e =>
@@ -1036,6 +1117,7 @@ class DosingTankCard extends HTMLElement {
   setConfig(config) {
     if (!config.pump_entity && !config.level_entity)
       throw new Error('dosing-tank-card: pump_entity or level_entity is required');
+    const prev = this._config;
     this._helperNotice = null;   // a fresh config supersedes any "created" notice
     this._levelDays    = null;
     this._config = {
@@ -1075,11 +1157,29 @@ class DosingTankCard extends HTMLElement {
       // it. A softener regenerating twice a month says nothing over 7 days.
       window:                  [7, 28, 84].includes(Number(config.window))
                                  ? Number(config.window) : 7,
+      // Which metric tiles to draw, in which order. Absent means the
+      // arrangement every card had before the option existed; an empty list
+      // means none at all, which is a legitimate wish on a card kept to the
+      // tank and its chart. Unknown keys are dropped at render, where the
+      // mode is known.
+      metrics_order:           Array.isArray(config.metrics_order)
+                                 ? config.metrics_order.map(String) : null,
       warn_threshold_percent:  Number(config.warn_threshold_percent) || 50,
       name:                    config.name || 'Dosing Tank',
       liquid_color:            config.liquid_color || '#3b82f6',
       language:                config.language || null,
     };
+
+    // History is fetched at most every 15 minutes, and Home Assistant reuses
+    // the same element when a card is edited rather than building a new one.
+    // So a card switched from 1 week to 4 weeks kept its old 7-day fetch and,
+    // since _levelDays was just cleared, drew "Loading…" with no bars for up
+    // to a quarter of an hour while the tile already announced 28 days.
+    // Anything that changes what the query asks for invalidates the fetch.
+    if (prev && (prev.window      !== this._config.window ||
+                 prev.level_entity!== this._config.level_entity ||
+                 prev.pump_entity !== this._config.pump_entity))
+      this._lastHistoryFetch = 0;
   }
 
   get _isDirect() { return !!this._config.level_entity; }
@@ -1434,6 +1534,34 @@ class DosingTankCard extends HTMLElement {
     return fromHistory ?? (st.last_changed || null);
   }
 
+  /**
+   * metrics_order decides what is drawn and in which order. The default is not
+   * a constant, since the first slot has never been one: the caller passes the
+   * arrangement it would have used, and an absent option keeps it exactly.
+   */
+  _tileOrder(mode, fallback) {
+    const cfg = this._config.metrics_order;
+    if (!Array.isArray(cfg)) return fallback;
+    // Authoritative: a tile removed in the editor must stay out. Re-appending
+    // what is missing here would make removal silently do nothing.
+    return cfg.filter(k => DTC_TILES[mode].includes(k));
+  }
+
+  _tile(label, value, alert = false) {
+    return `<div class="metric">
+      <div class="mv${alert ? ' alert' : ''}">${_esc(value)}</div>
+      <div class="ml">${label}</div>
+    </div>`;
+  }
+
+  // The row sizes itself to what it actually holds, from one tile to four.
+  // Empty means the row goes away entirely rather than leaving a gap.
+  _metricsHtml(order, tiles) {
+    if (!order.length) return '';
+    return `<div class="metrics n${order.length}">`
+      + order.map(k => tiles[k]).join('') + `</div>`;
+  }
+
   _directMetrics(T, lvl, stats, isAlert, scale, tall) {
     const unit = scale?.unit ?? '';
     // What is LEFT, in tank units. The raw reading cannot be used as-is: an
@@ -1451,26 +1579,20 @@ class DosingTankCard extends HTMLElement {
     const rate  = stats?.avgVal != null
       ? T.perDay(this._fmtLevel(stats.avgVal, unit)) : '—';
     const first = tall || (unit === '%' && stats?.avgPctDay)
-      ? { v: rate, l: T.avgDaily }
-      : { v: remain, l: T.remaining };
-    const pace = first.l === T.avgDaily;
+      ? 'average' : 'remaining';
     const used = stats ? this._fmtLevel(stats.used7dVal, unit) : '—';
     const auto = (stats?.avgPctDay && lvl?.pct != null)
       ? this._fmtAutonomy(T, lvl.pct / stats.avgPctDay) : '—';
-    return `<div class="metrics">
-    <div class="metric">
-      <div class="mv${isAlert&&!pace?' alert':''}">${_esc(first.v)}</div>
-      <div class="ml">${first.l}</div>
-    </div>
-    <div class="metric">
-      <div class="mv">${_esc(used)}</div>
-      <div class="ml">${T.daysN(stats?.coveredDays ?? this._config.window)}</div>
-    </div>
-    <div class="metric">
-      <div class="mv">${_esc(auto)}</div>
-      <div class="ml">${T.autonomy}</div>
-    </div>
-  </div>`;
+    // Red belongs to the quantity left, wherever the user puts it, and never
+    // to a rate: "0.4 kg/j" in red would read as an alarming rate.
+    return this._metricsHtml(
+      this._tileOrder('direct', [first, 'consumption', 'autonomy']), {
+        remaining:   this._tile(T.remaining, remain, isAlert),
+        average:     this._tile(T.avgDaily, rate),
+        consumption: this._tile(
+                       T.daysN(stats?.coveredDays ?? this._config.window), used),
+        autonomy:    this._tile(T.autonomy, auto),
+      });
   }
 
   /**
@@ -1815,20 +1937,14 @@ ${/* Always white, never --primary-text-color: this figure is drawn on top of
     const subRight = this._lastUpdateLine(T);
     const metricsHtml = direct
       ? this._directMetrics(T, lvl, lvlStats, isAlert, lvlScale, tall)
-      : `<div class="metrics">
-    <div class="metric">
-      <div class="mv${isAlert?' alert':''}">${(remaining/1000).toFixed(2)} L</div>
-      <div class="ml">${T.remaining}</div>
-    </div>
-    <div class="metric">
-      <div class="mv">${this._fmtVol(todayMl)}</div>
-      <div class="ml">${T.today}</div>
-    </div>
-    <div class="metric">
-      <div class="mv">${this._fmtDuration(this._week7dMinutes)}</div>
-      <div class="ml">${T.pump7d}</div>
-    </div>
-  </div>`;
+      : this._metricsHtml(
+          this._tileOrder('pump', ['remaining', 'today', 'pump7d']), {
+            remaining: this._tile(T.remaining,
+                                  `${(remaining / 1000).toFixed(2)} L`, isAlert),
+            today:     this._tile(T.today, this._fmtVol(todayMl)),
+            pump7d:    this._tile(T.pump7d,
+                                  this._fmtDuration(this._week7dMinutes)),
+          });
 
     this.shadowRoot.innerHTML = `
 <style>
@@ -1860,6 +1976,17 @@ ${/* Always white, never --primary-text-color: this figure is drawn on top of
 .warn-create:hover:not(:disabled){background:#f59e0b;color:#000}
 .warn-create:disabled{opacity:.5;cursor:default}
 .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.metrics.n1{grid-template-columns:1fr}
+.metrics.n2{grid-template-columns:repeat(2,1fr)}
+/* Four tiles across a 330 px card leaves ~70 px each, and "25.2 kg" becomes
+   "25...". Two rows of two by default; four abreast only on a card wide enough
+   for it, and never in the columns arrangement, where the tiles only get the
+   right-hand column whatever the card measures. */
+.metrics.n4{grid-template-columns:repeat(2,1fr)}
+.body.cols .metrics.n4{grid-template-columns:repeat(2,1fr)}
+@container (min-width:420px){
+  .metrics.n4{grid-template-columns:repeat(4,1fr)}
+}
 .metric{background:var(--secondary-background-color,rgba(255,255,255,.05));border-radius:8px;padding:10px 6px;text-align:center;min-width:0}
 .mv{font-size:16px;font-weight:700;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mv.alert{color:#ef4444}
@@ -1954,7 +2081,9 @@ ${/* Always white, never --primary-text-color: this figure is drawn on top of
   .adj-grid{grid-template-columns:1fr}
 }
 @container (max-width:200px){
-  .metrics{grid-template-columns:1fr}
+  /* Written to beat .metrics.nN, which is one class more specific than a bare
+     .metrics would be. */
+  .metrics[class]{grid-template-columns:1fr}
   /* Below this the unit label is what stands between the number box and
      nothing at all, and "mL" is obvious from the panel it sits in. */
   .adj-unit{display:none}

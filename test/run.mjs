@@ -27,7 +27,7 @@ const T0   = freezeClock('2026-08-12T12:00:00Z'); // midday, so day buckets are
  */
 function makeCard({ pumpOn = true, onSinceMin = 30, lastFetchMin = null,
                     todayMl = 0, sync = true, reset = true, showSettings, showChart,
-                    lastUpdate, pumpChangedH = 0, lastRunH,
+                    lastUpdate, pumpChangedH = 0, lastRunH, order,
                     counterAgeDays = 30, name = 'Chlorine' } = {}) {
   const states = {
     'switch.pump': { state: pumpOn ? 'on' : 'off',
@@ -46,6 +46,7 @@ function makeCard({ pumpOn = true, onSinceMin = 30, lastFetchMin = null,
     sync_entity : sync  ? 'input_datetime.sync'   : undefined,
     flow_rate_ml_per_min: FLOW, tank_volume_liters: 5, name,
     show_settings: showSettings, show_chart: showChart, last_update: lastUpdate,
+    metrics_order: order,
   });
   c._hass             = { states, locale: { language: 'en' } };
   c._pumpOnSince      = pumpOn ? new Date(now() - onSinceMin * 60000) : null;
@@ -124,7 +125,7 @@ function makeDirect({ series = null, value = null, unit = '%',
                       full, empty, alert = 20, name = 'Bac à sel',
                       capacity, capacity_unit, color_mode, warn, show_settings, layout,
                       show_chart, last_update, lastChangedH, lastReportedMin,
-                      window, seriesStepDays,
+                      window, seriesStepDays, order,
                       entity = 'sensor.salt', present = true } = {}) {
   const cur    = value ?? (series ? series.at(-1) : null);
   const states = {};
@@ -145,7 +146,8 @@ function makeDirect({ series = null, value = null, unit = '%',
   c.setConfig({ level_entity: entity, level_full: full, level_empty: empty,
                 alert_threshold_percent: alert, name,
                 capacity, capacity_unit, color_mode, show_settings, layout,
-                show_chart, last_update, window, warn_threshold_percent: warn });
+                show_chart, last_update, window, warn_threshold_percent: warn,
+                metrics_order: order });
   c._hass = { states, locale: { language: 'en' } };
   if (series) {
     // One reading per day at the same time of day, oldest first.
@@ -421,9 +423,9 @@ check('columns pose la classe qui déplace les tuiles',
   /class="body cols"/.test(colsHtml), true);
 // In rows the metrics come before the body, in columns they are inside it.
 check('rows : les tuiles sont au-dessus du corps',
-  rowsHtml.indexOf('class="metrics"') < rowsHtml.indexOf('class="body"'), true);
+  rowsHtml.indexOf('class="metrics ') < rowsHtml.indexOf('class="body"'), true);
 check('columns : les tuiles sont dans le corps',
-  colsHtml.indexOf('class="metrics"') > colsHtml.indexOf('class="body cols"'), true);
+  colsHtml.indexOf('class="metrics ') > colsHtml.indexOf('class="body cols"'), true);
 check('columns : le bidon prend la hauteur qu\'on lui donne',
   /<svg width="100%" height="100%"/.test(colsHtml), true);
 check('rows : le bidon garde sa taille naturelle',
@@ -603,5 +605,123 @@ edMode._mode = 'direct';
 edMode.setConfig({ level_entity: 'sensor.s' });
 check('changer de mode reconstruit bien le formulaire',
   markup(edMode) !== 'SENTINELLE', true);
+
+// ── metrics_order : quelles tuiles, dans quel ordre ─────────────────────────
+// Les libellés des tuiles, dans l'ordre où la carte les dessine.
+const tiles = html => [...html.matchAll(/<div class="ml">([^<]*)<\/div>/g)]
+  .map(m => m[1]).join(' | ');
+const SERIES = [100, 96, 92, 88, 84, 80, 76, 72];
+
+{
+  const rows = makeDirect({ series: SERIES, capacity: 35, capacity_unit: 'kg' });
+  check('défaut en lignes : restant, consommation, autonomie',
+    tiles(rows.html), 'Remaining | 7 days | Autonomy');
+
+  const cols = makeDirect({ series: SERIES, capacity: 35, capacity_unit: 'kg',
+                            layout: 'columns' });
+  check('défaut en colonnes : la moyenne prend la première place',
+    tiles(cols.html), 'Daily avg | 7 days | Autonomy');
+  check('le défaut ne pose pas de metrics_order dans la config',
+    cols.card._config.metrics_order, null);
+}
+
+{
+  // La demande de pascal_ha : ne garder que la consommation.
+  const one = makeDirect({ series: SERIES, capacity: 35, capacity_unit: 'kg',
+                           layout: 'columns', order: ['consumption'] });
+  check('une seule tuile demandée, une seule affichée',
+    tiles(one.html), '7 days');
+  check('la rangée annonce son nombre de tuiles',
+    /class="metrics n1"/.test(one.html), true);
+
+  const two = makeDirect({ series: SERIES, capacity: 35, capacity_unit: 'kg',
+                           order: ['autonomy', 'consumption'] });
+  check('l\'ordre demandé est respecté',
+    tiles(two.html), 'Autonomy | 7 days');
+
+  // Les quatre à la fois : le restant et la moyenne ne s'excluent plus.
+  const four = makeDirect({ series: SERIES, capacity: 35, capacity_unit: 'kg',
+                            layout: 'columns',
+                            order: ['remaining', 'average', 'consumption', 'autonomy'] });
+  check('les quatre tuiles peuvent coexister',
+    tiles(four.html), 'Remaining | Daily avg | 7 days | Autonomy');
+  check('quatre tuiles, la grille suit',
+    /class="metrics n4"/.test(four.html), true);
+
+  const none = makeDirect({ series: SERIES, capacity: 35, capacity_unit: 'kg',
+                            order: [] });
+  check('liste vide : la rangée disparaît, elle ne revient pas au défaut',
+    /class="metrics/.test(none.html), false);
+
+  // Le piège corrigé dans oklyn-card : réinjecter les clés absentes ferait que
+  // supprimer une tuile ne supprimerait rien.
+  const bogus = makeDirect({ series: SERIES, capacity: 35, capacity_unit: 'kg',
+                             order: ['autonomy', 'today', 'inconnu'] });
+  check('les clés d\'un autre mode ou inventées sont écartées',
+    tiles(bogus.html), 'Autonomy');
+}
+
+{
+  // Le mode temps de pompe a ses propres tuiles et la même option.
+  check('pompe : les trois tuiles par défaut',
+    tiles(makeCard({ pumpOn: false })), 'Remaining | Today | Pump 7d');
+  check('pompe : réordonnées et filtrées comme en direct',
+    tiles(makeCard({ pumpOn: false, order: ['pump7d', 'remaining'] })),
+    'Pump 7d | Remaining');
+  check('pompe : une clé du mode direct ne passe pas',
+    tiles(makeCard({ pumpOn: false, order: ['autonomy'] })), '');
+}
+
+// ── Changer de fenêtre sur une carte déjà affichée ───────────────────────────
+// Home Assistant réutilise l'élément quand une carte est modifiée, il n'en
+// construit pas un neuf : setConfig est rappelé sur la même instance. Or
+// l'historique n'est rechargé qu'une fois par quart d'heure. Une carte passée
+// de 1 à 4 semaines gardait donc sa requête de 7 jours, et comme setConfig
+// venait de vider la série, elle dessinait un graphe vide sous une tuile qui
+// annonçait déjà 28 jours.
+{
+  const bars = html => (html.match(/class="bi[ "]/g) || []).length;
+  const states = [];
+  for (let h = 40 * 24; h >= 0; h--)
+    states.push({ state: String(100 - (40 * 24 - h) * 0.02),
+                  last_changed: new Date(now() - h * 3600000).toISOString() });
+
+  let calls = 0;
+  const hass = value => ({
+    states: { 'sensor.salt': { state: String(value),
+              attributes: { unit_of_measurement: '%', friendly_name: 'Sel' },
+              last_changed: new Date(now() - 86400000).toISOString() } },
+    locale: { language: 'en' },
+    callApi: async () => { calls++; return [states]; },
+    callService: async () => {},
+  });
+
+  const c = new Card();
+  c.setConfig({ level_entity: 'sensor.salt', capacity: 35, capacity_unit: 'kg',
+                window: 7 });
+  c.hass = hass(50);
+  await new Promise(r => setTimeout(r, 30));
+  check('fenêtre 7 j : le graphe est rempli au premier affichage',
+    bars(markup(c)), 7);
+
+  c.setConfig({ level_entity: 'sensor.salt', capacity: 35, capacity_unit: 'kg',
+                window: 28 });
+  c.hass = hass(49);
+  await new Promise(r => setTimeout(r, 30));
+  check('passer en 28 j relance la requête, sans attendre le quart d\'heure',
+    calls, 2);
+  check('passer en 28 j : le graphe reste rempli',
+    bars(markup(c)), 7);
+
+  // Le garde ne doit pas rouvrir la vanne à chaque setConfig : l'éditeur en
+  // émet un par frappe, et refaire l'appel à chacun mitraillerait le recorder.
+  const before = calls;
+  c.setConfig({ level_entity: 'sensor.salt', capacity: 35, capacity_unit: 'kg',
+                window: 28, name: 'Autre nom' });
+  c.hass = hass(48);
+  await new Promise(r => setTimeout(r, 30));
+  check('une config sans effet sur la requête ne la relance pas',
+    calls, before);
+}
 
 report();
