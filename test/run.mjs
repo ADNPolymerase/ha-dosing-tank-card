@@ -717,12 +717,22 @@ const SERIES = [100, 96, 92, 88, 84, 80, 76, 72];
   check('la tuile cliquable porte son entité',
     a.html.includes('data-entity="sensor.eau"'), true);
 
-  // Le plafond : quatre tuiles, pas cinq.
+  // Le plafond : six tuiles, pas sept. Cinq et six passent à la ligne plutôt
+  // que de rétrécir, c'est le nombre PAR LIGNE qui limitait, pas le total.
   const five = makeDirect({ ...SALT, extra: water,
     order: ['remaining', 'average', 'consumption', 'autonomy', 'sensor.eau'] });
-  check('cinq demandées, quatre affichées',
-    tiles(five.html), 'Remaining | Daily avg | 7 days | Autonomy');
-  check('la grille reste à quatre', /class="metrics n4"/.test(five.html), true);
+  check('cinq tuiles demandées, cinq affichées',
+    tiles(five.html), 'Remaining | Daily avg | 7 days | Autonomy | Adoucisseur eau restante');
+  check('la grille annonce cinq', /class="metrics n5"/.test(five.html), true);
+
+  const seven = makeDirect({ ...SALT,
+    extra: { ...water, 'sensor.cycle': { state: 'ok', attributes: {} } },
+    order: ['remaining', 'average', 'consumption', 'autonomy',
+            'sensor.eau', 'sensor.cycle', 'sensor.trop'] });
+  check('sept demandées, six affichées',
+    tiles(seven.html),
+    'Remaining | Daily avg | 7 days | Autonomy | Adoucisseur eau restante | sensor.cycle');
+  check('la grille reste à six', /class="metrics n6"/.test(seven.html), true);
 }
 
 {
@@ -755,10 +765,17 @@ const SERIES = [100, 96, 92, 88, 84, 80, 76, 72];
       .find(o => o.value === 'sensor.eau').label, 'Eau restante');
 
   // Plein, donc plus rien à ajouter.
-  const full = withSlots({ states: {}, entities: {} },
+  const four = withSlots({ states: {}, entities: {} },
     { level_entity: 'sensor.s',
       metrics_order: ['remaining', 'average', 'consumption', 'autonomy'] });
-  check('rangée pleine : le sélecteur d\'ajout disparaît',
+  check('quatre tuiles : on peut encore en ajouter',
+    four.shadowRoot.getElementById('addtile')?.style.display, '');
+
+  const full = withSlots({ states: {}, entities: {} },
+    { level_entity: 'sensor.s',
+      metrics_order: ['remaining', 'average', 'consumption', 'autonomy',
+                      'sensor.a', 'sensor.b'] });
+  check('rangée pleine à six : le sélecteur d\'ajout disparaît',
     full.shadowRoot.getElementById('addtile')?.style.display, 'none');
 }
 

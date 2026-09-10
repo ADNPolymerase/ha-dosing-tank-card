@@ -565,10 +565,11 @@ const DTC_TILES = {
   pump:   ['remaining', 'today', 'pump7d'],
 };
 
-// Four is the ceiling, not an arbitrary round number: three sit in a row and
-// four fall into a 2x2, while five would have to shrink to fit a dashboard
-// column and the figures are the whole point of a tile.
-const DTC_MAX_TILES = 4;
+// Six is the ceiling. The constraint was never the number of tiles but the
+// number per row: five abreast on a 330 px card gives "9.8..." and splits
+// "Régénération" in two. Wrapping removes that, and what a sixth tile costs is
+// card height, not legibility.
+const DTC_MAX_TILES = 6;
 
 // A tile key is either one of the above or an entity to read. Nothing else in
 // a Lovelace config looks like domain.object_id, so the dot is enough to tell
@@ -2094,6 +2095,17 @@ ${/* Always white, never --primary-text-color: this figure is drawn on top of
 @container (min-width:420px){
   .metrics.n4{grid-template-columns:repeat(4,1fr)}
 }
+/* Five and six wrap at three to a row. A five would otherwise leave a hole at
+   the end, so its last two tiles take half the width each. */
+.metrics.n5{grid-template-columns:repeat(6,1fr)}
+.metrics.n5 .metric{grid-column:span 2}
+.metrics.n5 .metric:nth-child(4),
+.metrics.n5 .metric:nth-child(5){grid-column:span 3}
+.metrics.n6{grid-template-columns:repeat(3,1fr)}
+/* Beside a full-height tank the row only gets the right-hand column: two. */
+.body.cols .metrics.n5,
+.body.cols .metrics.n6{grid-template-columns:repeat(2,1fr)}
+.body.cols .metrics.n5 .metric{grid-column:auto}
 .metric{background:var(--secondary-background-color,rgba(255,255,255,.05));border-radius:8px;padding:10px 6px;text-align:center;min-width:0}
 .mv{font-size:16px;font-weight:700;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mv.alert{color:#ef4444}
@@ -2124,6 +2136,7 @@ ${/* Always white, never --primary-text-color: this figure is drawn on top of
 .body.cols .mv{font-size:12px;letter-spacing:-.2px}
 .body.cols .ml{font-size:8px;letter-spacing:.3px}
 .body.cols.solo .metrics{grid-template-columns:1fr;gap:6px;margin-bottom:0}
+.body.cols.solo .metrics .metric{grid-column:auto}
 .body.cols.solo .metric{padding:8px 6px}
 .body.cols.solo .mv{font-size:15px}
 .tcol{display:flex;flex-direction:column;align-items:center;gap:5px}
@@ -2202,7 +2215,12 @@ ${/* Always white, never --primary-text-color: this figure is drawn on top of
 @container (max-width:200px){
   /* Written to beat .metrics.nN, which is one class more specific than a bare
      .metrics would be. */
-  .metrics[class]{grid-template-columns:1fr}
+  /* Written to out-specify .body.cols .metrics.nN and .metrics.n5 .metric: a
+     container query adds no specificity of its own, so a two-class selector
+     here would lose to the three-class rules above. */
+  .metrics[class],
+  .body.cols .metrics[class]{grid-template-columns:1fr}
+  .body .metrics[class] .metric{grid-column:auto}
   /* Below this the unit label is what stands between the number box and
      nothing at all, and "mL" is obvious from the panel it sits in. */
   .adj-unit{display:none}
