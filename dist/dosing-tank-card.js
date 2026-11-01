@@ -29,6 +29,8 @@
  *   capacity_unit: "kg" # be read in kg or L behind a percentage-only sensor
  *
  * Config — both modes:
+ *   tank_shape: "ibc"          # can (default) / ibc / barrel
+ *   tank_view: "iso"           # face (default) / iso, three-quarter view
  *   color_mode: "level"        # green / amber / red by fill instead of
  *   warn_threshold_percent: 50 # liquid_color. Amber below this, red below
  *                              # alert_threshold_percent. Default is "fixed".
@@ -77,6 +79,8 @@ const DTL = {
     edWarn:'Warning threshold (%)',
     edShowSettings:'Show the settings block',
     edLayout:'Layout', edLayoutRows:'Metrics on top', edLayoutCols:'Tank on the side',
+    edShape:'Shape', edShapeCan:'Jerrycan', edShapeIbc:'IBC tank', edShapeBarrel:'Water butt',
+    edView:'View', edViewFace:'Front', edViewIso:'Three-quarter',
     edShowChart:'Show the daily chart', edLastUpdate:'Last update',
     edLuOff:'Not shown', edLuChanged:'Last level change', edLuReported:'Last sensor report',
     luPrefix:'Updated',
@@ -122,6 +126,8 @@ const DTL = {
     edWarn:"Seuil d'avertissement (%)",
     edShowSettings:'Afficher le bloc Paramètres',
     edLayout:'Disposition', edLayoutRows:'Métriques en haut', edLayoutCols:'Bidon sur le côté',
+    edShape:'Forme', edShapeCan:'Bidon', edShapeIbc:'Cuve IBC', edShapeBarrel:'Récupérateur',
+    edView:'Vue', edViewFace:'De face', edViewIso:'3/4',
     edShowChart:'Afficher le graphe journalier', edLastUpdate:'Dernière MAJ',
     edLuOff:'Masquée', edLuChanged:'Dernier changement de niveau', edLuReported:'Dernière réponse du capteur',
     luPrefix:'MAJ',
@@ -167,6 +173,8 @@ const DTL = {
     edWarn:'Umbral de aviso (%)',
     edShowSettings:'Mostrar el bloque de ajustes',
     edLayout:'Disposición', edLayoutRows:'Métricas arriba', edLayoutCols:'Depósito al lado',
+    edShape:'Forma', edShapeCan:'Bidón', edShapeIbc:'Depósito IBC', edShapeBarrel:'Depósito cilíndrico',
+    edView:'Vista', edViewFace:'Frontal', edViewIso:'Tres cuartos',
     edShowChart:'Mostrar el gráfico diario', edLastUpdate:'Última act.',
     edLuOff:'Oculta', edLuChanged:'Último cambio de nivel', edLuReported:'Última respuesta del sensor',
     luPrefix:'Act.',
@@ -212,6 +220,8 @@ const DTL = {
     edWarn:'Порог предупреждения (%)',
     edShowSettings:'Показывать блок настроек',
     edLayout:'Расположение', edLayoutRows:'Метрики сверху', edLayoutCols:'Бак сбоку',
+    edShape:'Форма', edShapeCan:'Канистра', edShapeIbc:'IBC-контейнер', edShapeBarrel:'Бочка',
+    edView:'Вид', edViewFace:'Спереди', edViewIso:'В три четверти',
     edShowChart:'Показывать суточный график', edLastUpdate:'Обновлено',
     edLuOff:'Скрыто', edLuChanged:'Последнее изменение уровня', edLuReported:'Последний ответ датчика',
     luPrefix:'Обновлено',
@@ -257,6 +267,8 @@ const DTL = {
     edWarn:'Warnschwelle (%)',
     edShowSettings:'Einstellungsblock anzeigen',
     edLayout:'Anordnung', edLayoutRows:'Kennzahlen oben', edLayoutCols:'Tank an der Seite',
+    edShape:'Form', edShapeCan:'Kanister', edShapeIbc:'IBC-Container', edShapeBarrel:'Regentonne',
+    edView:'Ansicht', edViewFace:'Vorderansicht', edViewIso:'Schrägansicht',
     edShowChart:'Tagesdiagramm anzeigen', edLastUpdate:'Zuletzt akt.',
     edLuOff:'Ausgeblendet', edLuChanged:'Letzte Füllstandsänderung', edLuReported:'Letzte Sensormeldung',
     luPrefix:'Akt.',
@@ -302,6 +314,8 @@ const DTL = {
     edWarn:'Soglia di avviso (%)',
     edShowSettings:'Mostra il blocco impostazioni',
     edLayout:'Disposizione', edLayoutRows:'Metriche in alto', edLayoutCols:'Serbatoio di lato',
+    edShape:'Forma', edShapeCan:'Tanica', edShapeIbc:'Cisterna IBC', edShapeBarrel:'Cisterna cilindrica',
+    edView:'Vista', edViewFace:'Frontale', edViewIso:'Tre quarti',
     edShowChart:'Mostra il grafico giornaliero', edLastUpdate:'Ultimo agg.',
     edLuOff:'Nascosto', edLuChanged:'Ultima variazione di livello', edLuReported:'Ultima risposta del sensore',
     luPrefix:'Agg.',
@@ -347,6 +361,8 @@ const DTL = {
     edWarn:'Waarschuwingsdrempel (%)',
     edShowSettings:'Instellingenblok tonen',
     edLayout:'Indeling', edLayoutRows:'Metrieken bovenaan', edLayoutCols:'Tank aan de zijkant',
+    edShape:'Vorm', edShapeCan:'Jerrycan', edShapeIbc:'IBC-tank', edShapeBarrel:'Regenton',
+    edView:'Aanzicht', edViewFace:'Vooraanzicht', edViewIso:'Driekwart',
     edShowChart:'Dagelijkse grafiek tonen', edLastUpdate:'Laatste update',
     edLuOff:'Verborgen', edLuChanged:'Laatste niveauwijziging', edLuReported:'Laatste sensorbericht',
     luPrefix:'Bijgewerkt',
@@ -392,6 +408,8 @@ const DTL = {
     edWarn:'Varningströskel (%)',
     edShowSettings:'Visa inställningsblocket',
     edLayout:'Layout', edLayoutRows:'Mätvärden överst', edLayoutCols:'Tank vid sidan',
+    edShape:'Form', edShapeCan:'Dunk', edShapeIbc:'IBC-tank', edShapeBarrel:'Regntunna',
+    edView:'Vy', edViewFace:'Framifrån', edViewIso:'Snedifrån',
     edShowChart:'Visa dagsdiagrammet', edLastUpdate:'Senast uppdaterad',
     edLuOff:'Dold', edLuChanged:'Senaste nivåändring', edLuReported:'Senaste givarsvar',
     luPrefix:'Uppdaterad',
@@ -437,6 +455,8 @@ const DTL = {
     edWarn:'Varselgrense (%)',
     edShowSettings:'Vis innstillingsblokken',
     edLayout:'Oppsett', edLayoutRows:'Måltall øverst', edLayoutCols:'Tank på siden',
+    edShape:'Form', edShapeCan:'Kanne', edShapeIbc:'IBC-tank', edShapeBarrel:'Regntønne',
+    edView:'Visning', edViewFace:'Forfra', edViewIso:'Skrått',
     edShowChart:'Vis daglig graf', edLastUpdate:'Sist oppdatert',
     edLuOff:'Skjult', edLuChanged:'Siste nivåendring', edLuReported:'Siste sensorsvar',
     luPrefix:'Oppdatert',
@@ -482,6 +502,8 @@ const DTL = {
     edWarn:'Advarselsgrænse (%)',
     edShowSettings:'Vis indstillingsblokken',
     edLayout:'Layout', edLayoutRows:'Måltal øverst', edLayoutCols:'Tank i siden',
+    edShape:'Form', edShapeCan:'Dunk', edShapeIbc:'IBC-tank', edShapeBarrel:'Regntønde',
+    edView:'Visning', edViewFace:'Forfra', edViewIso:'Skråt',
     edShowChart:'Vis dagligt diagram', edLastUpdate:'Sidst opdateret',
     edLuOff:'Skjult', edLuChanged:'Seneste niveauændring', edLuReported:'Seneste sensorsvar',
     luPrefix:'Opdateret',
@@ -527,6 +549,8 @@ const DTL = {
     edWarn:'Próg ostrzeżenia (%)',
     edShowSettings:'Pokaż blok ustawień',
     edLayout:'Układ', edLayoutRows:'Metryki u góry', edLayoutCols:'Zbiornik z boku',
+    edShape:'Kształt', edShapeCan:'Kanister', edShapeIbc:'Zbiornik IBC', edShapeBarrel:'Beczka',
+    edView:'Widok', edViewFace:'Z przodu', edViewIso:'Ukośny',
     edShowChart:'Pokaż wykres dzienny', edLastUpdate:'Ostatnia akt.',
     edLuOff:'Ukryte', edLuChanged:'Ostatnia zmiana poziomu', edLuReported:'Ostatnia odpowiedź czujnika',
     luPrefix:'Akt.',
@@ -692,6 +716,8 @@ class DosingTankCardEditor extends HTMLElement {
     set('capunit',c.capacity_unit            ?? '');
     set('warn',   c.warn_threshold_percent   ?? 50);
     set('cmode',  c.color_mode               ?? 'fixed');
+    set('shape',  c.tank_shape               ?? 'can');
+    set('tview',  c.tank_view                ?? 'face');
     set('layout', c.layout                   ?? 'rows');
     set('lastup', c.last_update              ?? 'off');
     set('window', c.window                   ?? 7);
@@ -941,6 +967,21 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
     </div>
   </div>
   <div class="field">
+    <label>${T.edShape}</label>
+    <select id="shape">
+      <option value="can"${c.tank_shape==='ibc'||c.tank_shape==='barrel'?'':' selected'}>${T.edShapeCan}</option>
+      <option value="ibc"${c.tank_shape==='ibc'?' selected':''}>${T.edShapeIbc}</option>
+      <option value="barrel"${c.tank_shape==='barrel'?' selected':''}>${T.edShapeBarrel}</option>
+    </select>
+  </div>
+  <div class="field">
+    <label>${T.edView}</label>
+    <select id="tview">
+      <option value="face"${c.tank_view==='iso'?'':' selected'}>${T.edViewFace}</option>
+      <option value="iso"${c.tank_view==='iso'?' selected':''}>${T.edViewIso}</option>
+    </select>
+  </div>
+  <div class="field">
     <label>${T.edLayout}</label>
     <select id="layout">
       <option value="rows"${c.layout==='columns'?'':' selected'}>${T.edLayoutRows}</option>
@@ -1061,6 +1102,8 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
     bind('capunit','capacity_unit',           v => v.trim() || undefined);
     bind('warn',   'warn_threshold_percent',  Number);
     bind('cmode',  'color_mode',              v => v);
+    bind('shape',  'tank_shape',              v => v);
+    bind('tview',  'tank_view',               v => v);
     bind('layout', 'layout',                  v => v);
     bind('lastup', 'last_update',             v => v);
     bind('window', 'window',                  Number);
@@ -1231,6 +1274,11 @@ class DosingTankCard extends HTMLElement {
       // 'columns' gives the tank the full height of the card and moves the
       // three metric tiles beside it. 'rows' is the original arrangement.
       layout:                  config.layout === 'columns' ? 'columns' : 'rows',
+      // Shape of the drawing, and whether it is seen from the front or from a
+      // three quarter angle. Both default to what the card has always drawn.
+      tank_shape:              ['ibc','barrel'].includes(config.tank_shape)
+                                 ? config.tank_shape : 'can',
+      tank_view:               config.tank_view === 'iso' ? 'iso' : 'face',
       // Direct mode only, and always seven bars: 7 days of one, 4 weeks of
       // four, 12 weeks of twelve. Each window is a multiple of the one before
       // it. A softener regenerating twice a month says nothing over 7 days.
@@ -1907,21 +1955,118 @@ class DosingTankCard extends HTMLElement {
 
   // ── SVG tank ─────────────────────────────────────────────────────────────
 
+  /* Six drawings: three shapes, each from the front or from a three quarter
+     angle. The front views are the original geometry, so a card that does not
+     set the options keeps exactly the drawing it had. */
   _svgTank(pct, base, light, label, fill) {
-    const W=86,H=140,BX=3,BY=22,BW=80,BH=105,BR=10,NX=28,NY=3,NW=30,NH=18,NR=6;
+    const shape = this._config.tank_shape ?? 'can';
+    const iso   = (this._config.tank_view ?? 'face') === 'iso';
+    const a = [pct, base, light, label, fill];
+    if (shape === 'ibc')    return iso ? this._svgIbcIso(...a)    : this._svgIbcFace(...a);
+    if (shape === 'barrel') return iso ? this._svgBarrelIso(...a) : this._svgBarrelFace(...a);
+    return iso ? this._svgCanIso(...a) : this._svgCanFace(...a);
+  }
+
+  /* `fill` lets the drawing take the height its column is given instead of
+     its natural size; the viewBox keeps the proportions either way. */
+  _svgSize(fill, W, H) {
+    return fill ? 'width="100%" height="100%" preserveAspectRatio="xMidYMid meet"'
+                : `width="${W}" height="${H}"`;
+  }
+
+  _svgGrad(u, base, light) {
+    return `<linearGradient id="dtc-lg-${u}" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%" stop-color="${base}"/><stop offset="100%" stop-color="${light}"/>
+  </linearGradient>`;
+  }
+
+  /* Always white, never --primary-text-color: this figure is drawn on top of
+     the tank, not on the card surface. The halo is what carries it over both
+     the liquid and the empty part, in any theme. */
+  _svgPct(x, y, label, size) {
+    return `<text x="${x}" y="${y}" text-anchor="middle" font-size="${size}" font-weight="700"
+  fill="#fff" paint-order="stroke" stroke="rgba(0,0,0,.75)" stroke-width="1.8"
+  stroke-linejoin="round">${label}</text>`;
+  }
+
+  _svgTicks(x1, x2, top, h) {
+    return [25, 50, 75].map(lv => {
+      const y = top + h - (lv / 100) * h;
+      return `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="var(--secondary-text-color,#8a8a8a)"
+  stroke-opacity=".5" stroke-width="1.5" stroke-linecap="round"/>`;
+    }).join('');
+  }
+
+  /* A polygon with rounded corners. Drawing the three quarter box as one
+     silhouette rather than a rounded rectangle glued to a parallelogram is
+     what removes the notch where the two used to meet. */
+  _roundPoly(pts, r) {
+    const n = pts.length, f = v => v.toFixed(2);
+    const dir = (a, b) => {
+      const dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1;
+      return [dx / l, dy / l, l];
+    };
+    let d = '';
+    for (let i = 0; i < n; i++) {
+      const p0 = pts[(i - 1 + n) % n], p1 = pts[i], p2 = pts[(i + 1) % n];
+      const [ux, uy, l1] = dir(p0, p1), [vx, vy, l2] = dir(p1, p2);
+      const rr = Math.min(r, l1 / 2, l2 / 2);
+      const a = [p1[0] - ux * rr, p1[1] - uy * rr], b = [p1[0] + vx * rr, p1[1] + vy * rr];
+      d += (i ? 'L' : 'M') + f(a[0]) + ',' + f(a[1])
+         + 'Q' + f(p1[0]) + ',' + f(p1[1]) + ' ' + f(b[0]) + ',' + f(b[1]);
+    }
+    return d + 'Z';
+  }
+
+  /* Shared body of the two box shapes seen from three quarters. The liquid is
+     a prism that hangs below the tank and slides up under the silhouette, so
+     the surface stays a parallelogram at every level. */
+  _box34({ u, s, base, light, FX, FY, FW, FH, DX, DY, R,
+           ef = 'rgba(0,0,0,.3)', es = 'rgba(0,0,0,.3)', et = 'rgba(255,255,255,.08)' }) {
+    const X2 = FX + FW, BTY = FY + DY, BBY = FY + FH + DY;
+    const A  = [FX, FY],       B  = [X2, FY],       C  = [X2 + DX, BTY], D = [FX + DX, BTY];
+    const Ab = [FX, FY + FH],  Bb = [X2, FY + FH],  Cb = [X2 + DX, BBY];
+    const sil   = this._roundPoly([A, D, C, Cb, Bb, Ab], R);
+    const top   = this._roundPoly([A, B, C, D],  Math.min(R, 3));
+    const side  = this._roundPoly([B, C, Cb, Bb], Math.min(R, 3));
+    const front = this._roundPoly([A, B, Bb, Ab], Math.min(R, 3));
+    const over  = FH;
+    const t     = (1 - s) * FH;
+    const surf  = `M${FX},${FY} H${X2} L${X2 + DX},${BTY} H${FX + DX} Z`;
+    const sidePrism = `M${X2},${FY} L${X2 + DX},${BTY} V${BBY + over} L${X2},${FY + FH + over} Z`;
+    const clip = `<clipPath id="dtc-cp-${u}"><path d="${sil}"/></clipPath>
+  <clipPath id="dtc-nt-${u}"><path d="${front}"/><path d="${side}"/></clipPath>`;
+    const shell = `<g clip-path="url(#dtc-cp-${u})">
+  <path d="${side}"  fill="${es}"/>
+  <path d="${top}"   fill="${et}"/>
+  <path d="${front}" fill="${ef}"/></g>`;
+    /* The ceiling only takes the colour of the liquid on a full tank. A band
+       that is half covered leaves a dark stripe across the top, which reads
+       as a hole rather than as a lid. */
+    const ceiling = s >= .995 ? `<g clip-path="url(#dtc-cp-${u})">
+  <path d="${top}" fill="${light}"/><path d="${top}" fill="rgba(255,255,255,.22)"/></g>` : '';
+    const liquid = s <= 0 ? '' : `<g clip-path="url(#dtc-cp-${u})"><g clip-path="url(#dtc-nt-${u})">
+  <g style="transform:translateY(${t.toFixed(2)}px);transition:transform .9s cubic-bezier(.4,0,.2,1)">
+    <rect x="${FX}" y="${FY}" width="${FW}" height="${FH + over}" fill="url(#dtc-lg-${u})"/>
+    <path d="${sidePrism}" fill="${base}"/>
+    <path d="${sidePrism}" fill="rgba(0,0,0,.26)"/>
+    <path d="${surf}" fill="${light}"/>
+    <path d="${surf}" fill="rgba(255,255,255,.22)"/>
+  </g></g></g>`;
+    return { sil, side, top, front, shell, liquid, ceiling, clip, X2 };
+  }
+
+  // ── Jerrycan, front ───────────────────────────────────────────────────────
+
+  _svgCanFace(pct, base, light, label, fill) {
+    const W = 86, H = 140, BX = 3, BY = 22, BW = 80, BH = 105, BR = 10,
+          NX = 28, NY = 3, NW = 30, NH = 18, NR = 6;
     const s = Math.max(0, Math.min(1, pct / 100));
     const u = this._uid;
-    // `fill` lets the drawing take the height its column is given instead of
-    // its natural 86×140; the viewBox keeps the proportions either way.
-    const size = fill
-      ? 'width="100%" height="100%" preserveAspectRatio="xMidYMid meet"'
-      : `width="${W}" height="${H}"`;
-    return `<svg ${size} viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+    return `<svg ${this._svgSize(fill, W, H)} viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
 <defs>
   <clipPath id="dtc-cp-${u}"><rect x="${BX}" y="${BY}" width="${BW}" height="${BH}" rx="${BR}"/></clipPath>
-  <linearGradient id="dtc-lg-${u}" x1="0" y1="0" x2="1" y2="0">
-    <stop offset="0%" stop-color="${base}"/><stop offset="100%" stop-color="${light}"/>
-  </linearGradient>
+  ${this._svgGrad(u, base, light)}
   <linearGradient id="dtc-sh-${u}" x1="0" y1="0" x2="1" y2="0">
     <stop offset="0%" stop-color="rgba(255,255,255,0)"/>
     <stop offset="30%" stop-color="rgba(255,255,255,.12)"/>
@@ -1931,7 +2076,7 @@ class DosingTankCard extends HTMLElement {
 <rect x="${NX}" y="${NY}" width="${NW}" height="${NH}" rx="${NR}"
   fill="var(--secondary-background-color,#2a2a2a)"
   stroke="var(--divider-color,rgba(255,255,255,.18))" stroke-width="1.5"/>
-<rect x="${NX+4}" y="${NY+5}" width="${NW-8}" height="3" rx="1.5" fill="rgba(255,255,255,.08)"/>
+<rect x="${NX + 4}" y="${NY + 5}" width="${NW - 8}" height="3" rx="1.5" fill="rgba(255,255,255,.08)"/>
 <rect x="${BX}" y="${BY}" width="${BW}" height="${BH}" rx="${BR}"
   fill="rgba(0,0,0,.3)" stroke="var(--divider-color,rgba(255,255,255,.18))" stroke-width="1.5"/>
 <g clip-path="url(#dtc-cp-${u})">
@@ -1939,29 +2084,228 @@ class DosingTankCard extends HTMLElement {
     style="transform-box:fill-box;transform-origin:50% 100%;transform:scaleY(${s});transition:transform .9s cubic-bezier(.4,0,.2,1)"/>
 </g>
 <rect x="${BX}" y="${BY}" width="${BW}" height="${BH}" rx="${BR}" fill="url(#dtc-sh-${u})" pointer-events="none"/>
-<rect x="${BX+5}" y="${BY+6}" width="5" height="${BH-12}" rx="2.5" fill="rgba(255,255,255,.07)" pointer-events="none"/>
-${/* Tick marks only. The 25/50/75 % labels used to sit exactly where the big
-      figure is drawn, hiding one of them behind it; they also duplicated that
-      figure and the "% left" caption underneath. Slightly longer and stronger
-      now that they carry the scale on their own. */''}
-${[25,50,75].map(lv=>{const ly=BY+BH-(lv/100)*BH;return `<line x1="${BX+2}" y1="${ly}" x2="${BX+14}" y2="${ly}" stroke="var(--secondary-text-color,#8a8a8a)" stroke-opacity=".5" stroke-width="1.5" stroke-linecap="round"/>`;}).join('')}
-${/* Always white, never --primary-text-color: this figure is drawn on top of
-      the tank, not on the card surface. On a light theme that variable is
-      near black, which put dark glyphs inside a dark halo and made the number
-      unreadable. The halo is what carries white over both the liquid and the
-      empty part, in any theme, and a stroke painted behind the glyphs also
-      keeps them crisp where a CSS text-shadow blurred. */''}
-<text x="${W/2}" y="${BY+BH/2+7}" text-anchor="middle" font-size="19" font-weight="700"
-  fill="#fff"
-  ${/* 1.8 and not more: paint-order draws the stroke behind the glyphs, and
-        half of its width falls inside the outline. On a 19 px bold figure a
-        3.5 px stroke closed the counters of the zeros, which read as filled
-        blobs. */''}
-  paint-order="stroke" stroke="rgba(0,0,0,.75)" stroke-width="1.8"
-  stroke-linejoin="round">${label ?? `${pct.toFixed(0)}%`}</text>
-<rect x="${BX+8}" y="${BY+BH-2}" width="${BW-16}" height="8" rx="4"
+<rect x="${BX + 5}" y="${BY + 6}" width="5" height="${BH - 12}" rx="2.5" fill="rgba(255,255,255,.07)" pointer-events="none"/>
+${this._svgTicks(BX + 2, BX + 14, BY, BH)}
+${this._svgPct(W / 2, BY + BH / 2 + 7, label ?? `${pct.toFixed(0)}%`, 19)}
+<rect x="${BX + 8}" y="${BY + BH - 2}" width="${BW - 16}" height="8" rx="4"
   fill="var(--secondary-background-color,#2a2a2a)"
   stroke="var(--divider-color,rgba(255,255,255,.12))" stroke-width="1.5"/>
+</svg>`;
+  }
+
+  // ── Jerrycan, three quarters ──────────────────────────────────────────────
+
+  _svgCanIso(pct, base, light, label, fill) {
+    const W = 100, H = 140, FX = 10, FY = 48, FW = 52, FH = 78, DX = 19, DY = -13, R = 8;
+    const s = Math.max(0, Math.min(1, pct / 100));
+    const u = this._uid;
+    const b = this._box34({ u, s, base, light, FX, FY, FW, FH, DX, DY, R });
+    const X2 = b.X2, shell = 'var(--secondary-background-color,#2a2a2a)',
+          edge = 'var(--divider-color,rgba(255,255,255,.18))';
+    const cx = X2 + DX * .5 - 9, cy = FY + DY * .5 - 1;
+    return `<svg ${this._svgSize(fill, W, H)} viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+<defs>${this._svgGrad(u, base, light)}${b.clip}</defs>
+${b.shell}${b.liquid}${b.ceiling}
+<path d="${b.sil}" fill="none" stroke="${edge}" stroke-width="1.5" stroke-linejoin="round"/>
+<g clip-path="url(#dtc-cp-${u})">
+  <path d="M${X2},${FY} V${FY + FH}" stroke="${edge}" stroke-width="1.2"/>
+  <path d="M${FX},${FY} H${X2} L${X2 + DX},${FY + DY}" fill="none" stroke="${edge}" stroke-width="1.2"/>
+  <path d="M${FX + 7},${FY + FH * .34} H${X2 - 7}" stroke="rgba(0,0,0,.16)" stroke-width="2" stroke-linecap="round"/>
+  <path d="M${FX + 7},${FY + FH * .66} H${X2 - 7}" stroke="rgba(0,0,0,.16)" stroke-width="2" stroke-linecap="round"/>
+</g>
+<path d="M${cx - 9},${cy - 1} v-6 a9,5 0 0 1 18,0 v6 a9,5 0 0 1 -18,0 Z" fill="${shell}" stroke="${edge}" stroke-width="1.2"/>
+<ellipse cx="${cx}" cy="${cy - 7}" rx="9" ry="5" fill="${shell}" stroke="${edge}" stroke-width="1.2"/>
+<ellipse cx="${cx}" cy="${cy - 7}" rx="5" ry="2.7" fill="rgba(0,0,0,.16)"/>
+${this._svgTicks(FX + 4, FX + 14, FY, FH)}
+${this._svgPct(FX + FW / 2, FY + FH / 2 + 7, label ?? `${pct.toFixed(0)}%`, 18)}
+</svg>`;
+  }
+
+  // ── IBC tank, front ───────────────────────────────────────────────────────
+
+  _svgIbcFace(pct, base, light, label, fill) {
+    const W = 100, H = 112, BX = 7, BY = 16, BW = 86, BH = 66, R = 3;
+    const s = Math.max(0, Math.min(1, pct / 100));
+    const u = this._uid;
+    const cage = 'rgba(150,158,166,.95)', rearC = 'rgba(128,136,144,.42)';
+    let rear = '';
+    for (let k = 1; k <= 3; k++) {
+      const y = BY + 3 + k * (BH - 6) / 4;
+      rear += `<line x1="${BX + 4}" y1="${y}" x2="${BX + BW - 4}" y2="${y}" stroke="${rearC}" stroke-width="1.8"/>`;
+    }
+    for (let k = 1; k <= 4; k++) {
+      const x = BX + 4 + k * (BW - 8) / 5;
+      rear += `<line x1="${x}" y1="${BY + 3}" x2="${x}" y2="${BY + BH - 3}" stroke="${rearC}" stroke-width="1.6"/>`;
+    }
+    let bars = '';
+    for (let k = 1; k <= 3; k++) {
+      const y = BY + k * BH / 4;
+      bars += `<line x1="${BX}" y1="${y}" x2="${BX + BW}" y2="${y}" stroke="${cage}" stroke-width="2.6"/>`;
+    }
+    for (let k = 1; k <= 4; k++) {
+      const x = BX + k * BW / 5;
+      bars += `<line x1="${x}" y1="${BY}" x2="${x}" y2="${BY + BH}" stroke="${cage}" stroke-width="2.2"/>`;
+    }
+    return `<svg ${this._svgSize(fill, W, H)} viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+<defs><clipPath id="dtc-cp-${u}"><rect x="${BX}" y="${BY}" width="${BW}" height="${BH}" rx="${R}"/></clipPath>
+${this._svgGrad(u, base, light)}</defs>
+<rect x="${BX + 32}" y="${BY - 7}" width="22" height="7" rx="2" fill="#9aa1a8" stroke="rgba(0,0,0,.22)" stroke-width="1"/>
+<rect x="${BX}" y="${BY}" width="${BW}" height="${BH}" rx="${R}" fill="rgba(127,127,127,.10)"/>
+<g clip-path="url(#dtc-cp-${u})">${rear}</g>
+<g clip-path="url(#dtc-cp-${u})">
+  <rect x="${BX}" y="${BY}" width="${BW}" height="${BH}" fill="url(#dtc-lg-${u})"
+    style="transform-box:fill-box;transform-origin:50% 100%;transform:scaleY(${s});transition:transform .9s cubic-bezier(.4,0,.2,1)"/>
+</g>
+${bars}
+<rect x="${BX}" y="${BY}" width="${BW}" height="${BH}" rx="${R}" fill="none" stroke="${cage}" stroke-width="3"/>
+<rect x="${BX + 30}" y="${BY + BH - 8}" width="16" height="8" rx="2" fill="#3a3f44"/>
+<rect x="${BX + 45}" y="${BY + BH - 7}" width="10" height="5" rx="2" fill="#2f7fd8"/>
+<rect x="${BX - 2}" y="${BY + BH}" width="${BW + 4}" height="8" fill="#7d848b"/>
+${[0, 1, 2].map(i => `<rect x="${BX + 2 + i * 34}" y="${BY + BH + 8}" width="14" height="6" rx="1" fill="#50565b"/>`).join('')}
+${this._svgTicks(BX + 3, BX + 13, BY, BH)}
+${this._svgPct(BX + BW / 2, BY + BH / 2 + 6, label ?? `${pct.toFixed(0)}%`, 18)}
+</svg>`;
+  }
+
+  // ── IBC tank, three quarters ──────────────────────────────────────────────
+
+  _svgIbcIso(pct, base, light, label, fill) {
+    const W = 100, H = 112, FX = 8, FY = 22, FW = 60, FH = 59, DX = 19, DY = -13, R = 3;
+    const s = Math.max(0, Math.min(1, pct / 100));
+    const u = this._uid;
+    /* The body is nearly transparent so the empty part reads as the card
+       surface, white on a light theme, and the cage keeps its contrast. */
+    const b = this._box34({ u, s, base, light, FX, FY, FW, FH, DX, DY, R,
+      ef: 'rgba(127,127,127,.10)', es: 'rgba(0,0,0,.16)', et: 'rgba(127,127,127,.10)' });
+    const X2 = b.X2, cage = 'rgba(150,158,166,.95)', cageD = 'rgba(104,112,120,.95)',
+          rearC = 'rgba(128,136,144,.45)';
+    let rear = `<path d="M${FX + DX},${FY + DY} V${FY + FH + DY} H${X2 + DX}" fill="none" stroke="${rearC}" stroke-width="2"/>`;
+    for (let k = 1; k <= 3; k++) {
+      const y = FY + DY + k * FH / 4;
+      rear += `<path d="M${FX},${y - DY} L${FX + DX},${y} H${X2 + DX}" fill="none" stroke="${rearC}" stroke-width="1.8"/>`;
+    }
+    for (let k = 1; k <= 3; k++) {
+      const x = FX + DX + k * FW / 4;
+      rear += `<line x1="${x}" y1="${FY + DY}" x2="${x}" y2="${FY + FH + DY}" stroke="${rearC}" stroke-width="1.6"/>`;
+    }
+    let bars = '';
+    for (let k = 1; k <= 3; k++) {
+      const y = FY + k * FH / 4;
+      bars += `<path d="M${FX},${y} H${X2} l${DX},${DY}" fill="none" stroke="${cage}"
+    stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>`;
+    }
+    for (let k = 1; k <= 3; k++) {
+      const x = FX + k * FW / 4;
+      bars += `<line x1="${x}" y1="${FY}" x2="${x}" y2="${FY + FH}" stroke="${cage}" stroke-width="2"/>`;
+    }
+    for (let k = 1; k <= 2; k++) {
+      const t = k / 3, x = X2 + DX * t;
+      bars += `<line x1="${x}" y1="${FY + DY * t}" x2="${x}" y2="${FY + FH + DY * t}" stroke="${cageD}" stroke-width="1.8"/>`;
+    }
+    return `<svg ${this._svgSize(fill, W, H)} viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+<defs>${this._svgGrad(u, base, light)}${b.clip}
+  <mask id="dtc-pm-${u}" maskUnits="userSpaceOnUse" x="0" y="0" width="${W}" height="${H}">
+    <rect x="0" y="0" width="${W}" height="${H}" fill="#fff"/><path d="${b.sil}" fill="#000"/></mask>
+</defs>
+${/* The pallet is masked under the body: drawn on top it showed as a floor
+      through a full tank, drawn behind it showed through the empty shell. */''}
+<g mask="url(#dtc-pm-${u})">
+  <path d="M${FX - 3},${FY + FH} H${X2 + 2} l${DX},${DY} H${FX - 3 + DX} Z" fill="#9aa1a8"/>
+  <rect x="${FX - 3}" y="${FY + FH}" width="${FW + 5}" height="7" fill="#7d848b"/>
+  <path d="M${X2 + 2},${FY + FH} l${DX},${DY} v7 l${-DX},${-DY} Z" fill="#636a70"/>
+  ${[0, 1, 2].map(i => `<rect x="${FX - 2 + i * 26}" y="${FY + FH + 7}" width="13" height="5.5" rx="1" fill="#50565b"/>`).join('')}
+</g>
+${b.shell}
+<g clip-path="url(#dtc-cp-${u})">${rear}</g>
+${b.liquid}${b.ceiling}
+${bars}
+<path d="${b.sil}"   fill="none" stroke="${cage}" stroke-width="2.8" stroke-linejoin="round"/>
+<path d="${b.front}" fill="none" stroke="${cage}" stroke-width="2.4" stroke-linejoin="round"/>
+<path d="${b.top}"   fill="none" stroke="${cage}" stroke-width="2.4" stroke-linejoin="round"/>
+<path d="M${FX + 21},${FY - 2} h15 l6,-4 h-15 Z" fill="#9aa1a8" stroke="rgba(0,0,0,.22)" stroke-width="1"/>
+<rect x="${FX + 21}" y="${FY + FH - 8}" width="14" height="7" rx="2" fill="#3a3f44"/>
+<rect x="${FX + 34}" y="${FY + FH - 7}" width="9" height="4.5" rx="2" fill="#2f7fd8"/>
+<rect x="${FX + 36.5}" y="${FY + FH - 10.5}" width="3.5" height="4" rx="1.5" fill="#2f7fd8"/>
+${this._svgTicks(FX + 2, FX + 7, FY, FH)}
+${this._svgPct(FX + FW / 2, FY + FH / 2 + 6, label ?? `${pct.toFixed(0)}%`, 17)}
+</svg>`;
+  }
+
+  // ── Water butt, front ─────────────────────────────────────────────────────
+
+  _svgBarrelFace(pct, base, light, label, fill) {
+    const W = 86, H = 132, BX = 8, BY = 24, BW = 70, BH = 86, R = 9;
+    const s = Math.max(0, Math.min(1, pct / 100));
+    const u = this._uid;
+    let ribs = '';
+    for (let k = 1; k <= 4; k++) {
+      const y = BY + k * BH / 5;
+      ribs += `<line x1="${BX + 2}" y1="${y}" x2="${BX + BW - 2}" y2="${y}" stroke="rgba(0,0,0,.22)" stroke-width="2.2"/>`;
+    }
+    return `<svg ${this._svgSize(fill, W, H)} viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+<defs><clipPath id="dtc-cp-${u}"><rect x="${BX}" y="${BY}" width="${BW}" height="${BH}" rx="${R}"/></clipPath>
+${this._svgGrad(u, base, light)}
+  <linearGradient id="dtc-rd-${u}" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%" stop-color="rgba(0,0,0,.3)"/><stop offset="22%" stop-color="rgba(0,0,0,0)"/>
+    <stop offset="72%" stop-color="rgba(0,0,0,0)"/><stop offset="100%" stop-color="rgba(0,0,0,.26)"/>
+  </linearGradient></defs>
+<rect x="${BX + 22}" y="${BY - 10}" width="26" height="11" rx="4"
+  fill="var(--secondary-background-color,#2a2a2a)" stroke="var(--divider-color,rgba(255,255,255,.18))" stroke-width="1.4"/>
+<rect x="${BX}" y="${BY}" width="${BW}" height="${BH}" rx="${R}" fill="rgba(0,0,0,.3)"/>
+<g clip-path="url(#dtc-cp-${u})">
+  <rect x="${BX}" y="${BY}" width="${BW}" height="${BH}" fill="url(#dtc-lg-${u})"
+    style="transform-box:fill-box;transform-origin:50% 100%;transform:scaleY(${s});transition:transform .9s cubic-bezier(.4,0,.2,1)"/>
+</g>
+${ribs}
+<rect x="${BX}" y="${BY}" width="${BW}" height="${BH}" rx="${R}" fill="url(#dtc-rd-${u})" pointer-events="none"/>
+<rect x="${BX}" y="${BY}" width="${BW}" height="${BH}" rx="${R}" fill="none"
+  stroke="var(--divider-color,rgba(255,255,255,.18))" stroke-width="1.5"/>
+<ellipse cx="${BX + BW / 2}" cy="${BY + 2}" rx="${BW / 2 - 1}" ry="5" fill="rgba(255,255,255,.1)"
+  stroke="var(--divider-color,rgba(255,255,255,.18))" stroke-width="1.2"/>
+<rect x="${BX + 26}" y="${BY + BH - 7}" width="13" height="7" rx="2" fill="#3a3f44"/>
+<rect x="${BX + 38}" y="${BY + BH - 6}" width="10" height="4.5" rx="2" fill="#2f7fd8"/>
+<rect x="${BX + 8}" y="${BY + BH}" width="${BW - 16}" height="8" rx="4"
+  fill="var(--secondary-background-color,#2a2a2a)" stroke="var(--divider-color,rgba(255,255,255,.18))" stroke-width="1.4"/>
+${this._svgTicks(BX + 3, BX + 14, BY, BH)}
+${this._svgPct(BX + BW / 2, BY + BH / 2 + 7, label ?? `${pct.toFixed(0)}%`, 19)}
+</svg>`;
+  }
+
+  // ── Water butt, three quarters ────────────────────────────────────────────
+
+  _svgBarrelIso(pct, base, light, label, fill) {
+    const W = 100, H = 132, CX = 48, RX = 30, RY = 11, TY = 26, BY = 110, BH = BY - TY;
+    const s = Math.max(0, Math.min(1, pct / 100));
+    const u = this._uid;
+    const edge = 'var(--divider-color,rgba(255,255,255,.18))';
+    const body = `M${CX - RX},${TY} V${BY} a${RX},${RY} 0 0 0 ${RX * 2},0 V${TY} Z`;
+    const over = BH;
+    const liq  = `M${CX - RX},${TY} V${BY + over} a${RX},${RY} 0 0 0 ${RX * 2},0 V${TY} Z`;
+    let ribs = '';
+    for (let k = 1; k <= 4; k++) {
+      const y = TY + k * BH / 5;
+      ribs += `<path d="M${CX - RX},${y} a${RX},${RY} 0 0 0 ${RX * 2},0" fill="none"
+    stroke="rgba(0,0,0,.16)" stroke-width="1.6"/>`;
+    }
+    const liquid = s <= 0 ? '' : `<g clip-path="url(#dtc-cp-${u})">
+  <g style="transform:translateY(${((1 - s) * (BH + RY)).toFixed(2)}px);transition:transform .9s cubic-bezier(.4,0,.2,1)">
+    <path d="${liq}" fill="url(#dtc-lg-${u})"/>
+    <ellipse cx="${CX}" cy="${TY}" rx="${RX}" ry="${RY}" fill="${light}"/>
+    <ellipse cx="${CX}" cy="${TY}" rx="${RX}" ry="${RY}" fill="rgba(255,255,255,.2)"/>
+  </g></g>`;
+    return `<svg ${this._svgSize(fill, W, H)} viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+<defs><clipPath id="dtc-cp-${u}"><path d="${body}"/></clipPath>${this._svgGrad(u, base, light)}</defs>
+<path d="${body}" fill="rgba(0,0,0,.3)"/>
+<ellipse cx="${CX}" cy="${TY}" rx="${RX}" ry="${RY}" fill="rgba(255,255,255,.08)"/>
+${liquid}${ribs}
+<path d="${body}" fill="none" stroke="${edge}" stroke-width="1.5"/>
+<ellipse cx="${CX}" cy="${TY}" rx="${RX}" ry="${RY}" fill="none" stroke="${edge}" stroke-width="1.5"/>
+<ellipse cx="${CX}" cy="${TY - 4}" rx="13" ry="5"
+  fill="var(--secondary-background-color,#2a2a2a)" stroke="${edge}" stroke-width="1.3"/>
+<rect x="${CX - 6}" y="${BY - 5}" width="12" height="6" rx="2" fill="#3a3f44"/>
+<rect x="${CX + 5}" y="${BY - 4}" width="9" height="4" rx="2" fill="#2f7fd8"/>
+${this._svgTicks(CX - RX + 3, CX - RX + 13, TY, BH)}
+${this._svgPct(CX, TY + BH / 2 + 6, label ?? `${pct.toFixed(0)}%`, 18)}
 </svg>`;
   }
 
@@ -2135,7 +2479,19 @@ ${/* Always white, never --primary-text-color: this figure is drawn on top of
    than truncating to "12.6 k...". */
 .body.cols .mv{font-size:12px;letter-spacing:-.2px}
 .body.cols .ml{font-size:8px;letter-spacing:.3px}
+/* An IBC is nearly cubic: in the 100 px column it floated with dead space
+   above and below, so its column is widened to match the row height. */
+.body.cols.ibc{grid-template-columns:min(130px,36%) 1fr}
 .body.cols.solo .metrics{grid-template-columns:1fr;gap:6px;margin-bottom:0}
+/* Two tiles beside a full-height tank left the bottom of the column empty.
+   The stack takes the whole height and the tiles share it, which fills the
+   hole without making the card any taller. */
+.body.cols.solo .rcol .metrics{flex:1;align-content:stretch}
+/* With nothing but the tiles beside it, the drawing sizes itself from the
+   column width instead of the row height. Left at 100% the two sizes chase
+   each other and a wide drawing ends up centred in a row far taller than
+   itself, which is the dead space the widened column was meant to remove. */
+.body.cols.solo .tcol svg{height:auto}
 .body.cols.solo .metrics .metric{grid-column:auto}
 .body.cols.solo .metric{padding:8px 6px}
 .body.cols.solo .mv{font-size:15px}
@@ -2269,7 +2625,8 @@ ${/* Always white, never --primary-text-color: this figure is drawn on top of
   ${/* With neither chart nor settings the right column holds only the three
         tiles, which left a hole beside a full-height tank. Stacking them fills
         the column instead. */''}
-  <div class="body${tall?' cols':''}${tall && this._config.show_chart===false
+  <div class="body${tall?' cols':''}${tall && this._config.tank_shape==='ibc' ? ' ibc' : ''
+      }${tall && this._config.show_chart===false
       && this._config.show_settings===false ? ' solo' : ''}">
     ${/* No caption under the tank: it repeated the figure drawn on the tank,
           and rounded to one more decimal, so the two disagreed on screen,

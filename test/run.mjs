@@ -126,6 +126,7 @@ function makeDirect({ series = null, value = null, unit = '%',
                       capacity, capacity_unit, color_mode, warn, show_settings, layout,
                       show_chart, last_update, lastChangedH, lastReportedMin,
                       window, seriesStepDays, order, extra, names, format,
+                      shape, view,
                       entity = 'sensor.salt', present = true } = {}) {
   const cur    = value ?? (series ? series.at(-1) : null);
   const states = {};
@@ -147,7 +148,7 @@ function makeDirect({ series = null, value = null, unit = '%',
                 alert_threshold_percent: alert, name,
                 capacity, capacity_unit, color_mode, show_settings, layout,
                 show_chart, last_update, window, warn_threshold_percent: warn,
-                metrics_order: order });
+                metrics_order: order, tank_shape: shape, tank_view: view });
   Object.assign(states, extra || {});
   c._hass = { states, locale: { language: 'en' }, entities: names || {},
               ...(format ? { formatEntityState: format } : {}) };
@@ -830,5 +831,71 @@ const SERIES = [100, 96, 92, 88, 84, 80, 76, 72];
   check('une config sans effet sur la requête ne la relance pas',
     calls, before);
 }
+
+// ── Forme et vue du dessin ───────────────────────────────────────────────────
+// Trois formes, chacune de face ou en 3/4. Le défaut doit rester le dessin
+// livré jusqu'ici, sinon toutes les cartes déjà installées changent d'allure.
+{
+  const tankBox = h => [...h.matchAll(/viewBox="0 0 \d+ \d+"/g)]
+    .map(m => m[0]).filter(v => v !== 'viewBox="0 0 24 24"').pop();
+  const dr = o => makeDirect({ value: 55, full: 100, empty: 0, ...o }).html;
+
+  check('par défaut : le bidon de face, gabarit inchangé',
+    tankBox(dr({})), 'viewBox="0 0 86 140"');
+  check('bidon en 3/4',
+    tankBox(dr({ view: 'iso' })), 'viewBox="0 0 100 140"');
+  check('cuve IBC de face',
+    tankBox(dr({ shape: 'ibc' })), 'viewBox="0 0 100 112"');
+  check('cuve IBC en 3/4',
+    tankBox(dr({ shape: 'ibc', view: 'iso' })), 'viewBox="0 0 100 112"');
+  check('récupérateur de face',
+    tankBox(dr({ shape: 'barrel' })), 'viewBox="0 0 86 132"');
+  check('récupérateur en 3/4',
+    tankBox(dr({ shape: 'barrel', view: 'iso' })), 'viewBox="0 0 100 132"');
+  check('une forme inconnue retombe sur le bidon',
+    tankBox(dr({ shape: 'tonneau' })), 'viewBox="0 0 86 140"');
+  check('une vue inconnue retombe sur la face',
+    tankBox(dr({ shape: 'ibc', view: 'dessus' })), 'viewBox="0 0 100 112"');
+
+  // En 3/4 le liquide est un prisme translaté sous un masque : à vide il ne
+  // doit pas rester le fond du prisme au ras de la cuve.
+  const grad = h => (h.match(/fill="url\(#dtc-lg-/g) || []).length;
+  check('cuve vide en 3/4 : aucun liquide dessiné',
+    grad(dr({ value: 0, shape: 'ibc', view: 'iso' })), 0);
+  check('cuve à moitié : le liquide est là',
+    grad(dr({ shape: 'ibc', view: 'iso' })) > 0, true);
+
+  // Le voile blanc à 22 % sert deux fois : la surface du liquide, et le
+  // plafond quand la cuve est pleine. Un plafond à moitié couvert laissait
+  // une bande noire en travers du dessus.
+  const veil = h => (h.match(/rgba\(255,255,255,\.22\)/g) || []).length;
+  check('cuve pleine en 3/4 : le plafond est rempli',
+    veil(dr({ value: 100, shape: 'ibc', view: 'iso' })), 2);
+  check('cuve à moitié : le plafond reste vide',
+    veil(dr({ shape: 'ibc', view: 'iso' })), 1);
+
+  // Une IBC est presque cubique : dans la colonne de 100 px elle flottait
+  // avec du vide au-dessus et en dessous.
+  contains('disposition colonnes + IBC : la colonne du dessin s\'élargit',
+    dr({ shape: 'ibc', layout: 'columns' }), 'class="body cols ibc');
+  check('sans IBC la colonne garde sa largeur',
+    dr({ layout: 'columns' }).includes('class="body cols ibc'), false);
+  check('en lignes la classe ne sert pas',
+    dr({ shape: 'ibc' }).includes(' ibc'), false);
+
+  // Deux tuiles à côté d'une cuve pleine hauteur laissaient le bas de la
+  // colonne vide.
+  contains('les tuiles s\'étirent sur la hauteur de la cuve',
+    dr({}), '.body.cols.solo .rcol .metrics{flex:1');
+}
+
+const edShape = new Editor();
+edShape.setConfig({ pump_entity: 'switch.pump', tank_shape: 'ibc', tank_view: 'iso' });
+contains('éditeur : le sélecteur de forme existe',  markup(edShape), 'id="shape"');
+contains('éditeur : le sélecteur de vue existe',    markup(edShape), 'id="tview"');
+contains('éditeur : la forme configurée est cochée',
+  markup(edShape), '<option value="ibc" selected>');
+contains('éditeur : la vue configurée est cochée',
+  markup(edShape), '<option value="iso" selected>');
 
 report();
