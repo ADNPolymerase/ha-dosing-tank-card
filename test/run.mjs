@@ -887,6 +887,11 @@ const SERIES = [100, 96, 92, 88, 84, 80, 76, 72];
   // colonne vide.
   contains('les tuiles s\'étirent sur la hauteur de la cuve',
     dr({}), '.body.cols.solo .rcol .metrics{flex:1');
+
+  // Sans graphe ni réglages il n'y a pas de colonne haute à côté : le plancher
+  // de 150 px n'ajoutait plus que du gris sous les tuiles qui l'atteignent.
+  contains('seul avec ses tuiles, le dessin n\'est plus tenu à 150 px',
+    dr({}), '.body.cols.solo .tcol{min-height:0}');
 }
 
 const edShape = new Editor();

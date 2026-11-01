@@ -2492,6 +2492,11 @@ ${this._svgPct(CX, TY + BH / 2 + 6, label ?? `${pct.toFixed(0)}%`, 18)}
    each other and a wide drawing ends up centred in a row far taller than
    itself, which is the dead space the widened column was meant to remove. */
 .body.cols.solo .tcol svg{height:auto}
+/* The 150 px floor keeps the tank worth looking at beside a tall right
+   column. With neither chart nor settings there is no tall column: on a
+   phone an IBC measures 113 px and the floor was adding 37 px of grey to
+   the tiles that stretch to meet it. */
+.body.cols.solo .tcol{min-height:0}
 .body.cols.solo .metrics .metric{grid-column:auto}
 .body.cols.solo .metric{padding:8px 6px}
 .body.cols.solo .mv{font-size:15px}
