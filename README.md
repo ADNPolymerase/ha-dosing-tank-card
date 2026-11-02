@@ -114,6 +114,7 @@ liquid_color: "#3b82f6"
 | `color_mode` | `string` | | `"fixed"` | `"level"` colours the tank by fill instead of using `liquid_color` |
 | `warn_threshold_percent` | `number` | | `50` | Amber below this, red below `alert_threshold_percent`. Only used by `color_mode: level` |
 | `alert_threshold_percent` | `number` | | `20` | Alert threshold (%) |
+| `show_alert` | `boolean` | | `true` | `false` switches the low level alert off entirely: no banner, and nothing turns red, not the liquid and not the quantity left. For a tank that empties and refills on its own, like rainwater, where there is nothing to refill. There is a tick box for it in the visual editor |
 | `tank_shape` | `string` | | `"can"` | The drawing: `can` is the jerrycan the card has always shown, `ibc` a caged IBC tank on its pallet, `barrel` a cylindrical water butt. A selector sits in the visual editor |
 | `tank_view` | `string` | | `"face"` | `"iso"` draws the tank from a three quarter angle instead of head on, with the surface of the liquid visible in perspective. The default keeps the flat drawing, so an existing card is untouched |
 | `layout` | `string` | | `"rows"` | `"columns"` gives the tank the height of the card and moves the three metric tiles beside it. A selector for it sits in the visual editor |

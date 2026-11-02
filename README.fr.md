@@ -114,6 +114,7 @@ liquid_color: "#3b82f6"
 | `color_mode` | `string` | | `"fixed"` | `"level"` colore le bidon selon le remplissage au lieu d'utiliser `liquid_color` |
 | `warn_threshold_percent` | `number` | | `50` | Orange en dessous, rouge sous `alert_threshold_percent`. Utilisé uniquement par `color_mode: level` |
 | `alert_threshold_percent` | `number` | | `20` | Seuil d'alerte (%) |
+| `show_alert` | `boolean` | | `true` | `false` coupe entièrement l'alerte de niveau bas : plus de bandeau, et plus rien ne passe au rouge, ni le liquide ni la quantité restante. Pour une cuve qui se vide et se remplit toute seule, de l'eau de pluie par exemple, où il n'y a rien à recharger. Une case à cocher existe pour ça dans l'éditeur visuel |
 | `tank_shape` | `string` | | `"can"` | Le dessin : `can` le bidon que la carte a toujours affiché, `ibc` une cuve IBC en cage sur sa palette, `barrel` un récupérateur cylindrique. Un sélecteur existe dans l'éditeur visuel |
 | `tank_view` | `string` | | `"face"` | `"iso"` dessine la cuve en 3/4 plutôt que de face, avec la surface du liquide visible en perspective. Le défaut garde le dessin à plat, donc une carte déjà installée ne bouge pas |
 | `layout` | `string` | | `"rows"` | `"columns"` donne au bidon la hauteur de la carte et déplace les trois tuiles à côté. Un sélecteur existe pour ça dans l'éditeur visuel |

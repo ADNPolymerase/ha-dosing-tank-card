@@ -31,6 +31,8 @@
  * Config — both modes:
  *   tank_shape: "ibc"          # can (default) / ibc / barrel
  *   tank_view: "iso"           # face (default) / iso, three-quarter view
+ *   show_alert: false          # turn the low-level alert off entirely: no
+ *                              # banner, and nothing turns red. Default true.
  *   color_mode: "level"        # green / amber / red by fill instead of
  *   warn_threshold_percent: 50 # liquid_color. Amber below this, red below
  *                              # alert_threshold_percent. Default is "fixed".
@@ -78,6 +80,7 @@ const DTL = {
     edColorMode:'Color mode', edColorFixed:'Fixed color', edColorLevel:'By level',
     edWarn:'Warning threshold (%)',
     edShowSettings:'Show the settings block',
+    edShowAlert:'Low level alert',
     edLayout:'Layout', edLayoutRows:'Metrics on top', edLayoutCols:'Tank on the side',
     edShape:'Shape', edShapeCan:'Jerrycan', edShapeIbc:'IBC tank', edShapeBarrel:'Water butt',
     edView:'View', edViewFace:'Front', edViewIso:'Three-quarter',
@@ -125,6 +128,7 @@ const DTL = {
     edColorMode:'Mode couleur', edColorFixed:'Couleur fixe', edColorLevel:'Par palier',
     edWarn:"Seuil d'avertissement (%)",
     edShowSettings:'Afficher le bloc Paramètres',
+    edShowAlert:'Alerte de niveau bas',
     edLayout:'Disposition', edLayoutRows:'Métriques en haut', edLayoutCols:'Bidon sur le côté',
     edShape:'Forme', edShapeCan:'Bidon', edShapeIbc:'Cuve IBC', edShapeBarrel:'Récupérateur',
     edView:'Vue', edViewFace:'De face', edViewIso:'3/4',
@@ -172,6 +176,7 @@ const DTL = {
     edColorMode:'Modo de color', edColorFixed:'Color fijo', edColorLevel:'Por nivel',
     edWarn:'Umbral de aviso (%)',
     edShowSettings:'Mostrar el bloque de ajustes',
+    edShowAlert:'Alerta de nivel bajo',
     edLayout:'Disposición', edLayoutRows:'Métricas arriba', edLayoutCols:'Depósito al lado',
     edShape:'Forma', edShapeCan:'Bidón', edShapeIbc:'Depósito IBC', edShapeBarrel:'Depósito cilíndrico',
     edView:'Vista', edViewFace:'Frontal', edViewIso:'Tres cuartos',
@@ -219,6 +224,7 @@ const DTL = {
     edColorMode:'Режим цвета', edColorFixed:'Фиксированный цвет', edColorLevel:'По уровню',
     edWarn:'Порог предупреждения (%)',
     edShowSettings:'Показывать блок настроек',
+    edShowAlert:'Оповещение о низком уровне',
     edLayout:'Расположение', edLayoutRows:'Метрики сверху', edLayoutCols:'Бак сбоку',
     edShape:'Форма', edShapeCan:'Канистра', edShapeIbc:'IBC-контейнер', edShapeBarrel:'Бочка',
     edView:'Вид', edViewFace:'Спереди', edViewIso:'В три четверти',
@@ -266,6 +272,7 @@ const DTL = {
     edColorMode:'Farbmodus', edColorFixed:'Feste Farbe', edColorLevel:'Nach Füllstand',
     edWarn:'Warnschwelle (%)',
     edShowSettings:'Einstellungsblock anzeigen',
+    edShowAlert:'Warnung bei niedrigem Stand',
     edLayout:'Anordnung', edLayoutRows:'Kennzahlen oben', edLayoutCols:'Tank an der Seite',
     edShape:'Form', edShapeCan:'Kanister', edShapeIbc:'IBC-Container', edShapeBarrel:'Regentonne',
     edView:'Ansicht', edViewFace:'Vorderansicht', edViewIso:'Schrägansicht',
@@ -313,6 +320,7 @@ const DTL = {
     edColorMode:'Modalità colore', edColorFixed:'Colore fisso', edColorLevel:'Per livello',
     edWarn:'Soglia di avviso (%)',
     edShowSettings:'Mostra il blocco impostazioni',
+    edShowAlert:'Avviso di livello basso',
     edLayout:'Disposizione', edLayoutRows:'Metriche in alto', edLayoutCols:'Serbatoio di lato',
     edShape:'Forma', edShapeCan:'Tanica', edShapeIbc:'Cisterna IBC', edShapeBarrel:'Cisterna cilindrica',
     edView:'Vista', edViewFace:'Frontale', edViewIso:'Tre quarti',
@@ -360,6 +368,7 @@ const DTL = {
     edColorMode:'Kleurmodus', edColorFixed:'Vaste kleur', edColorLevel:'Per niveau',
     edWarn:'Waarschuwingsdrempel (%)',
     edShowSettings:'Instellingenblok tonen',
+    edShowAlert:'Waarschuwing bij laag niveau',
     edLayout:'Indeling', edLayoutRows:'Metrieken bovenaan', edLayoutCols:'Tank aan de zijkant',
     edShape:'Vorm', edShapeCan:'Jerrycan', edShapeIbc:'IBC-tank', edShapeBarrel:'Regenton',
     edView:'Aanzicht', edViewFace:'Vooraanzicht', edViewIso:'Driekwart',
@@ -407,6 +416,7 @@ const DTL = {
     edColorMode:'Färgläge', edColorFixed:'Fast färg', edColorLevel:'Efter nivå',
     edWarn:'Varningströskel (%)',
     edShowSettings:'Visa inställningsblocket',
+    edShowAlert:'Larm vid låg nivå',
     edLayout:'Layout', edLayoutRows:'Mätvärden överst', edLayoutCols:'Tank vid sidan',
     edShape:'Form', edShapeCan:'Dunk', edShapeIbc:'IBC-tank', edShapeBarrel:'Regntunna',
     edView:'Vy', edViewFace:'Framifrån', edViewIso:'Snedifrån',
@@ -454,6 +464,7 @@ const DTL = {
     edColorMode:'Fargemodus', edColorFixed:'Fast farge', edColorLevel:'Etter nivå',
     edWarn:'Varselgrense (%)',
     edShowSettings:'Vis innstillingsblokken',
+    edShowAlert:'Varsel ved lavt nivå',
     edLayout:'Oppsett', edLayoutRows:'Måltall øverst', edLayoutCols:'Tank på siden',
     edShape:'Form', edShapeCan:'Kanne', edShapeIbc:'IBC-tank', edShapeBarrel:'Regntønne',
     edView:'Visning', edViewFace:'Forfra', edViewIso:'Skrått',
@@ -501,6 +512,7 @@ const DTL = {
     edColorMode:'Farvetilstand', edColorFixed:'Fast farve', edColorLevel:'Efter niveau',
     edWarn:'Advarselsgrænse (%)',
     edShowSettings:'Vis indstillingsblokken',
+    edShowAlert:'Advarsel ved lavt niveau',
     edLayout:'Layout', edLayoutRows:'Måltal øverst', edLayoutCols:'Tank i siden',
     edShape:'Form', edShapeCan:'Dunk', edShapeIbc:'IBC-tank', edShapeBarrel:'Regntønde',
     edView:'Visning', edViewFace:'Forfra', edViewIso:'Skråt',
@@ -548,6 +560,7 @@ const DTL = {
     edColorMode:'Tryb koloru', edColorFixed:'Stały kolor', edColorLevel:'Wg poziomu',
     edWarn:'Próg ostrzeżenia (%)',
     edShowSettings:'Pokaż blok ustawień',
+    edShowAlert:'Alert niskiego poziomu',
     edLayout:'Układ', edLayoutRows:'Metryki u góry', edLayoutCols:'Zbiornik z boku',
     edShape:'Kształt', edShapeCan:'Kanister', edShapeIbc:'Zbiornik IBC', edShapeBarrel:'Beczka',
     edView:'Widok', edViewFace:'Z przodu', edViewIso:'Ukośny',
@@ -725,6 +738,14 @@ class DosingTankCardEditor extends HTMLElement {
     if (box) box.checked = c.show_settings !== false;
     const chartBox = this.shadowRoot.getElementById('showchart');
     if (chartBox) chartBox.checked = c.show_chart !== false;
+    const alertBox = this.shadowRoot.getElementById('showalert');
+    if (alertBox) alertBox.checked = c.show_alert !== false;
+    // The threshold field follows the checkbox: _syncFields runs on every
+    // config echo, and only the values are refreshed, never the markup.
+    const alertOff = c.show_alert === false;
+    const alertInput = this.shadowRoot.getElementById('alert');
+    if (alertInput) alertInput.disabled = alertOff;
+    this.shadowRoot.getElementById('alert-field')?.classList.toggle('off', alertOff);
 
     this._syncOrder();
 
@@ -864,6 +885,10 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
 .check{display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;
   color:var(--primary-text-color,#e1e1e1)}
 .check input{width:16px;height:16px;margin:0;cursor:pointer;accent-color:var(--primary-color,#03a9f4)}
+/* A threshold means nothing while its alert is off, so the field is dimmed and
+   disabled rather than left sitting there accepting values nobody reads. */
+.field.off{opacity:.45}
+.field.off input:disabled{cursor:not-allowed}
 </style>
 <div class="form">
   <div class="field">
@@ -929,10 +954,14 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
         far more than it is worth. Filled in after the markup is written. */''}
   <div class="field" id="morder"></div>
   <div class="field" id="addtile"></div>
+  <label class="check">
+    <input type="checkbox" id="showalert"${c.show_alert===false?'':' checked'}>
+    ${T.edShowAlert}
+  </label>
   <div class="grid2">
-    <div class="field">
+    <div class="field${c.show_alert===false?' off':''}" id="alert-field">
       <label>${T.edAlert}</label>
-      <input type="number" id="alert" min="0" max="100" step="1" value="${c.alert_threshold_percent??20}">
+      <input type="number" id="alert" min="0" max="100" step="1" value="${c.alert_threshold_percent??20}"${c.show_alert===false?' disabled':''}>
     </div>
     <div class="field">
       <label>${T.edLang}</label>
@@ -1170,6 +1199,8 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
       this._fire({ ...this._config, show_settings: e.target.checked ? undefined : false }));
     this.shadowRoot.getElementById('showchart')?.addEventListener('change', e =>
       this._fire({ ...this._config, show_chart: e.target.checked ? undefined : false }));
+    this.shadowRoot.getElementById('showalert')?.addEventListener('change', e =>
+      this._fire({ ...this._config, show_alert: e.target.checked ? undefined : false }));
 
     // Color sync
     const cp = this.shadowRoot.getElementById('cpick');
@@ -1247,6 +1278,7 @@ class DosingTankCard extends HTMLElement {
       flow_rate_ml_per_min:    Number(config.flow_rate_ml_per_min) || 15,
       tank_volume_liters:      Number(config.tank_volume_liters) || 5,
       alert_threshold_percent: Number(config.alert_threshold_percent) || 20,
+      show_alert:              config.show_alert !== false,
       reset_entity:            config.reset_entity || null,
       flow_entity:             config.flow_entity || null,
       sync_entity:             config.sync_entity || null,
@@ -1819,7 +1851,7 @@ class DosingTankCard extends HTMLElement {
     return `
           <div class="cfgr"><span class="l">${T.levelSource}</span><span class="v">${_esc(name)}</span></div>
           <div class="cfgr"><span class="l">${T.levelRange}</span><span class="v">${_esc(rng)}</span></div>
-          <div class="cfgr"><span class="l">${T.alertAt}</span><span class="v">${this._config.alert_threshold_percent}%</span></div>
+          ${this._config.show_alert === false ? '' : `<div class="cfgr"><span class="l">${T.alertAt}</span><span class="v">${this._config.alert_threshold_percent}%</span></div>`}
           <div class="cfgr"><span class="l">${T.lastUpdate}</span><span class="v">${_esc(upd)}</span></div>`;
   }
 
@@ -2344,7 +2376,12 @@ ${this._svgPct(CX, TY + BH / 2 + 6, label ?? `${pct.toFixed(0)}%`, 18)}
     const hasPct  = direct ? lvl?.pct != null : true;
     const pct     = direct ? (lvl?.pct ?? 0)
                            : Math.max(0, Math.min(100, (remaining / tankMl) * 100));
-    const isAlert = hasPct && pct <= this._config.alert_threshold_percent;
+    // show_alert: false switches the whole low-level alert off. Gating isAlert
+    // here is enough to cover all three of its effects at once: the banner,
+    // the red liquid, and the red quantity tile. In color_mode 'level' the
+    // scale then stops at amber, which is the point: nothing turns red.
+    const isAlert = this._config.show_alert !== false
+      && hasPct && pct <= this._config.alert_threshold_percent;
 
     // What is wrong in direct mode, if anything — checked in order of severity.
     const directWarn = !direct ? null
@@ -2678,7 +2715,7 @@ ${this._svgPct(CX, TY + BH / 2 + 6, label ?? `${pct.toFixed(0)}%`, 18)}
           ${direct?this._directSettings(T,lvlState,lvlRange,this._levelUnit()):`
           <div class="cfgr"><span class="l">${T.flowRate}</span><span class="v">${this._currentFlow()} mL/min</span></div>
           <div class="cfgr"><span class="l">${T.tankSize}</span><span class="v">${this._config.tank_volume_liters} L</span></div>
-          <div class="cfgr"><span class="l">${T.alertAt}</span><span class="v">${this._config.alert_threshold_percent}%</span></div>
+          ${this._config.show_alert === false ? '' : `<div class="cfgr"><span class="l">${T.alertAt}</span><span class="v">${this._config.alert_threshold_percent}%</span></div>`}
           <div class="cfgr"><span class="l">${T.totalUsed}</span><span class="v">${this._fmtVol(consumedMl)}</span></div>`}
         </div>
       </div>`}

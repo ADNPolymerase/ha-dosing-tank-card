@@ -126,7 +126,7 @@ function makeDirect({ series = null, value = null, unit = '%',
                       capacity, capacity_unit, color_mode, warn, show_settings, layout,
                       show_chart, last_update, lastChangedH, lastReportedMin,
                       window, seriesStepDays, order, extra, names, format,
-                      shape, view,
+                      shape, view, showAlert,
                       entity = 'sensor.salt', present = true } = {}) {
   const cur    = value ?? (series ? series.at(-1) : null);
   const states = {};
@@ -148,7 +148,8 @@ function makeDirect({ series = null, value = null, unit = '%',
                 alert_threshold_percent: alert, name,
                 capacity, capacity_unit, color_mode, show_settings, layout,
                 show_chart, last_update, window, warn_threshold_percent: warn,
-                metrics_order: order, tank_shape: shape, tank_view: view });
+                metrics_order: order, tank_shape: shape, tank_view: view,
+                show_alert: showAlert });
   Object.assign(states, extra || {});
   c._hass = { states, locale: { language: 'en' }, entities: names || {},
               ...(format ? { formatEntityState: format } : {}) };
@@ -902,5 +903,67 @@ contains('éditeur : la forme configurée est cochée',
   markup(edShape), '<option value="ibc" selected>');
 contains('éditeur : la vue configurée est cochée',
   markup(edShape), '<option value="iso" selected>');
+
+// ── Alerte de niveau bas, coupable ───────────────────────────────────────────
+// Une cuve de pluie se vide et se remplit toute seule : « rechargez dès que
+// possible » n'a aucun sens dessus. show_alert: false doit tout couper d'un
+// coup, bandeau ET rouge, sinon la cuve reste alarmante une fois le bandeau
+// parti.
+{
+  const dr = o => makeDirect({ full: 100, empty: 0, alert: 20, ...o }).html;
+  // Le CSS contient lui aussi #ef4444 et #f59e0b : la seule lecture fiable de
+  // la couleur du liquide est le dégradé lui-même.
+  const stops = h => {
+    const m = h.match(/<linearGradient id="dtc-lg-[^"]*"[^>]*>\s*<stop offset="0%" stop-color="([^"]+)"\/><stop offset="100%" stop-color="([^"]+)"/);
+    return m ? m[1] : null;
+  };
+
+  check('sous le seuil, le bandeau est là par défaut',
+    dr({ value: 10 }).includes('class="warn alert"'), true);
+  check('alerte coupée : plus de bandeau',
+    dr({ value: 10, showAlert: false }).includes('class="warn alert"'), false);
+  check('au-dessus du seuil il n\'y a de toute façon pas de bandeau',
+    dr({ value: 55 }).includes('class="warn alert"'), false);
+
+  check('sous le seuil, le liquide passe au rouge',
+    stops(dr({ value: 10 })), '#ef4444');
+  check('alerte coupée : le liquide garde sa couleur',
+    stops(dr({ value: 10, showAlert: false })), '#3b82f6');
+
+  check('sous le seuil, la quantité restante est en rouge',
+    dr({ value: 10 }).includes('class="mv alert"'), true);
+  check('alerte coupée : la quantité reste neutre',
+    dr({ value: 10, showAlert: false }).includes('class="mv alert"'), false);
+
+  // En mode couleur « niveau » l'utilisateur a choisi une échelle : alerte
+  // coupée, elle s'arrête à l'ambre au lieu de finir en rouge.
+  check('mode niveau : rouge sous le seuil d\'alerte',
+    stops(dr({ value: 10, color_mode: 'level', warn: 50 })), '#ef4444');
+  check('mode niveau, alerte coupée : ambre et pas rouge',
+    stops(dr({ value: 10, color_mode: 'level', warn: 50, showAlert: false })), '#f59e0b');
+  check('mode niveau : vert au-dessus du seuil d\'avertissement',
+    stops(dr({ value: 80, color_mode: 'level', warn: 50, showAlert: false })), '#22c55e');
+
+  // Le seuil n'a plus rien à dire une fois l'alerte coupée.
+  check('le bloc Paramètres annonce le seuil par défaut',
+    dr({ value: 55, show_settings: true }).includes('Alert at'), true);
+  check('alerte coupée : la ligne du seuil disparaît',
+    dr({ value: 55, show_settings: true, showAlert: false }).includes('Alert at'), false);
+}
+
+const edAlert = new Editor();
+edAlert.setConfig({ pump_entity: 'switch.pump' });
+contains('éditeur : la case de l\'alerte existe', markup(edAlert), 'id="showalert"');
+check('éditeur : cochée par défaut',
+  /id="showalert" checked/.test(markup(edAlert)), true);
+check('éditeur : le seuil est actif par défaut',
+  markup(edAlert).includes('id="alert" min="0" max="100" step="1" value="20">'), true);
+
+const edAlertOff = new Editor();
+edAlertOff.setConfig({ pump_entity: 'switch.pump', show_alert: false });
+check('éditeur : décochée quand l\'alerte est coupée',
+  /id="showalert" checked/.test(markup(edAlertOff)), false);
+contains('éditeur : le champ du seuil est désactivé', markup(edAlertOff), 'disabled>');
+contains('éditeur : et grisé', markup(edAlertOff), 'class="field off" id="alert-field"');
 
 report();
