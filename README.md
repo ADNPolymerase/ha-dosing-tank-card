@@ -1,5 +1,7 @@
 # Dosing Tank Card
 
+<a href="https://github.com/ADNPolymerase/ha-dosing-tank-card/blob/main/README.fr.md"><img src="https://raw.githubusercontent.com/ADNPolymerase/ha-dosing-tank-card/main/docs/lang-fr.svg" alt="Lire en français" height="60"></a>
+
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-blue.svg)](https://github.com/hacs/default)
 [![GitHub Release](https://badgen.net/github/release/ADNPolymerase/ha-dosing-tank-card)](https://github.com/ADNPolymerase/ha-dosing-tank-card/releases)
 [![Validate](https://github.com/ADNPolymerase/ha-dosing-tank-card/actions/workflows/hacs.yml/badge.svg)](https://github.com/ADNPolymerase/ha-dosing-tank-card/actions/workflows/hacs.yml)
@@ -14,8 +16,6 @@ A Lovelace card to track the level of a tank. Two modes:
 
 - **Pump runtime**: chlorine, pH−, pH+, flocculant, algaecide, or any product injected by a pump at a constant flow rate. The card counts the pump and converts it to millilitres.
 - **Direct level**: a water-softener salt tank, an ESP32 probe on a drum, or anything whose level is already reported by a sensor. The card reads it and adds a consumption history and a runs-out-in estimate on top.
-
-> 🇫🇷 [Lire en français](README.fr.md)
 
 ![Screenshot](https://raw.githubusercontent.com/ADNPolymerase/ha-dosing-tank-card/main/docs/screenshot.png)
 

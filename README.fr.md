@@ -1,5 +1,7 @@
 # Dosing Tank Card
 
+<a href="https://github.com/ADNPolymerase/ha-dosing-tank-card/blob/main/README.md"><img src="https://raw.githubusercontent.com/ADNPolymerase/ha-dosing-tank-card/main/docs/lang-en.svg" alt="Read in English" height="60"></a>
+
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-blue.svg)](https://github.com/hacs/default)
 [![GitHub Release](https://badgen.net/github/release/ADNPolymerase/ha-dosing-tank-card)](https://github.com/ADNPolymerase/ha-dosing-tank-card/releases)
 [![Validate](https://github.com/ADNPolymerase/ha-dosing-tank-card/actions/workflows/hacs.yml/badge.svg)](https://github.com/ADNPolymerase/ha-dosing-tank-card/actions/workflows/hacs.yml)
@@ -14,8 +16,6 @@ Une carte Lovelace pour suivre le niveau d'une cuve. Deux modes :
 
 - **Temps de pompe** : chlore, pH−, pH+, floculant, algicide, ou tout produit injecté par une pompe à débit constant. La carte compte la pompe et convertit en millilitres.
 - **Niveau direct** : un bac à sel d'adoucisseur, une sonde ESP32 sur un bidon, ou tout ce dont le niveau est déjà remonté par un capteur. La carte le lit et y ajoute un historique de consommation et une estimation d'autonomie.
-
-> 🇬🇧 [Read in English](README.md)
 
 ![Capture d'écran](https://raw.githubusercontent.com/ADNPolymerase/ha-dosing-tank-card/main/docs/screenshot.fr.png)
 
