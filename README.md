@@ -28,6 +28,7 @@ A Lovelace card to track the level of a tank. Two modes:
 - **Counts in the background**: runtime is reconciled from the HA history API, so nothing is lost while no browser tab is open. No automation required.
 - **Collapsible adjustment panel** with Add/Remove/Reset controls, hidden by default.
 - **Or no pump at all**: point it at a level sensor instead and it shows the level, the 7-day consumption and how long the tank will last.
+- **Winter storage**: a tank put away keeps nothing but its drawing, under the snow. No alert, no warning about a sensor that stopped answering, no chart.
 - **Multilingual** (11 languages: EN, FR, ES, DE, IT, NL, SV, NO, DA, PL, RU, auto-detected from HA), dark-mode ready, responsive, zero dependencies.
 
 ---
@@ -117,6 +118,9 @@ liquid_color: "#3b82f6"
 | `show_alert` | `boolean` | | `true` | `false` switches the low level alert off entirely: no banner, and nothing turns red, not the liquid and not the quantity left. For a tank that empties and refills on its own, like rainwater, where there is nothing to refill. There is a tick box for it in the visual editor |
 | `tank_shape` | `string` | | `"can"` | The drawing: `can` is the jerrycan the card has always shown, `ibc` a caged IBC tank on its pallet, `barrel` a cylindrical water butt. A selector sits in the visual editor |
 | `tank_view` | `string` | | `"face"` | `"iso"` draws the tank from a three quarter angle instead of head on, with the surface of the liquid visible in perspective. The default keeps the flat drawing, so an existing card is untouched |
+| `winter` | `boolean` | | `false` | Winter storage: the card is kept to its drawing, under the snow. The alert, the warnings, the metric tiles, the chart, the Settings block, the last-update line and the adjustment panel all go away. There is a tick box for it in the visual editor |
+| `winter_entity` | `string` | | | The same, driven by an entity instead of by hand: `on` puts the tank away, and so does a state holding a word for winter in any of the card's languages (`Winter storage`, `Hivernage`, `Zimowanie`…). Works in both modes |
+| `winter_volume` | `boolean` | | `false` | Keeps one line under the drawing in winter: what is left in the tank. Nothing is printed when the level is no longer known, rather than a dash that would say nothing |
 | `layout` | `string` | | `"rows"` | `"columns"` gives the tank the height of the card and moves the three metric tiles beside it. A selector for it sits in the visual editor |
 | `metrics_order` | `list` | | _auto_ | Which metric tiles to draw, and in which order, dragged into place in the visual editor. Direct level: `remaining`, `average`, `consumption`, `autonomy`. Pump runtime: `remaining`, `today`, `pump7d`. **An entity id draws that entity instead**, rendered by Home Assistant itself, so a text state arrives translated; the tile opens the entity when tapped, and keeps its place showing `—` when the sensor drops. **What is left out is hidden**, an empty list drops the row entirely, and anything past the sixth tile is ignored. The row wraps rather than shrinks: three to a row, two beside a full-height tank, and a five stretches its last two so they do not leave a hole. Omit the option and the card keeps the arrangement it has always drawn |
 | `window` | `number` | ² | `7` | `7`, `28` or `84` days, offered as 1, 4 and 12 weeks. Always seven bars, of one, four or twelve days each. It drives the chart, the consumption tile and the autonomy together. **Your recorder must hold that much history**: it purges at 10 days by default, and the card then falls back to the span it really covered, says so under the chart, and divides by that instead of by the window |
@@ -181,6 +185,32 @@ That average deliberately ignores days when the level went **up**: a refill hide
 | Algaecide | Green | `#22c55e` |
 
 **Or colour by level instead.** `color_mode: level` ignores `liquid_color` and paints the tank green above `warn_threshold_percent` (50 by default), amber below it, red below `alert_threshold_percent` (20). Off by default, because `liquid_color` is what tells a chlorine tank from a pH− one at a glance. Works in both modes.
+
+---
+
+## Winter storage
+
+A tank put away for the winter is emptied, left open, its pump unplugged and its level sensor switched off. The card then has nothing left to say, and says it loudly: a warning that the sensor no longer answers, empty tiles, a chart with no data. Tick **Winter storage** and it keeps nothing but its drawing, under the snow.
+
+![Winter storage](https://raw.githubusercontent.com/ADNPolymerase/ha-dosing-tank-card/main/docs/winter.png)
+
+What goes away: the low-level alert, the warnings about a sensor or a counter that no longer answers, the metric tiles, the chart, the Settings block, the last-update line and the adjustment panel. What stays: the tank, the snow on it, and a badge saying why. The drawing grows with the card, so it still fills a wall tablet.
+
+```yaml
+type: custom:dosing-tank-card
+level_entity: sensor.rain_tank
+winter: true
+```
+
+**Driven by an entity** rather than by hand, so the card follows the season on its own:
+
+```yaml
+winter_entity: input_boolean.tank_winter
+```
+
+Anything that reads `on` puts the tank away, and so does a state holding a word for winter in any of the card's languages, which is what an `input_select` or a status sensor usually holds: `Winter storage`, `Hivernage`, `Vinterlagring`, `Zimowanie`…
+
+**`winter_volume: true`** adds back one line under the drawing: what is left in the tank. A wintered tank whose sensor still answers then keeps its quantity, and one whose sensor is gone shows nothing at all.
 
 
 ---

@@ -28,6 +28,7 @@ Une carte Lovelace pour suivre le niveau d'une cuve. Deux modes :
 - **Comptage en arrière-plan** : le temps de marche est reconstitué depuis l'API d'historique HA, donc rien n'est perdu quand aucun onglet n'est ouvert. Aucune automatisation nécessaire.
 - **Panneau d'ajustement repliable** avec Ajouter/Retirer/Réinitialiser, masqué par défaut.
 - **Ou pas de pompe du tout** : pointez-la sur un capteur de niveau et elle affiche le niveau, la consommation sur 7 jours et l'autonomie restante.
+- **Hivernage** : une cuve rangée ne garde que son dessin, sous la neige. Plus d'alerte, plus d'avertissement sur un capteur qui ne répond plus, plus de graphe.
 - **Multilingue** (11 langues : FR, EN, ES, DE, IT, NL, SV, NO, DA, PL, RU, auto-détectée depuis HA), mode sombre, responsive, zéro dépendance.
 
 ---
@@ -117,6 +118,9 @@ liquid_color: "#3b82f6"
 | `show_alert` | `boolean` | | `true` | `false` coupe entièrement l'alerte de niveau bas : plus de bandeau, et plus rien ne passe au rouge, ni le liquide ni la quantité restante. Pour une cuve qui se vide et se remplit toute seule, de l'eau de pluie par exemple, où il n'y a rien à recharger. Une case à cocher existe pour ça dans l'éditeur visuel |
 | `tank_shape` | `string` | | `"can"` | Le dessin : `can` le bidon que la carte a toujours affiché, `ibc` une cuve IBC en cage sur sa palette, `barrel` un récupérateur cylindrique. Un sélecteur existe dans l'éditeur visuel |
 | `tank_view` | `string` | | `"face"` | `"iso"` dessine la cuve en 3/4 plutôt que de face, avec la surface du liquide visible en perspective. Le défaut garde le dessin à plat, donc une carte déjà installée ne bouge pas |
+| `winter` | `boolean` | | `false` | Hivernage : la carte ne garde que son dessin, sous la neige. L'alerte, les avertissements, les tuiles, le graphe, le bloc Paramètres, la ligne de dernière mise à jour et le panneau de correction disparaissent. Une case existe pour ça dans l'éditeur visuel |
+| `winter_entity` | `string` | | | La même chose, pilotée par une entité plutôt qu'à la main : `on` range la cuve, et un état qui contient le mot de la saison dans l'une des langues de la carte aussi (`Hivernage`, `Winter storage`, `Zimowanie`…). Fonctionne dans les deux modes |
+| `winter_volume` | `boolean` | | `false` | Garde une ligne sous le dessin en hiver : ce qu'il reste dans la cuve. Rien n'est écrit quand le niveau n'est plus connu, plutôt qu'un tiret qui ne dirait rien |
 | `layout` | `string` | | `"rows"` | `"columns"` donne au bidon la hauteur de la carte et déplace les trois tuiles à côté. Un sélecteur existe pour ça dans l'éditeur visuel |
 | `metrics_order` | `list` | | _auto_ | Quelles tuiles dessiner, et dans quel ordre, à glisser dans l'éditeur visuel. Niveau direct : `remaining`, `average`, `consumption`, `autonomy`. Temps de pompe : `remaining`, `today`, `pump7d`. **Un identifiant d'entité affiche cette entité**, rendue par Home Assistant lui-même, donc un état textuel arrive traduit ; la tuile ouvre la fiche au clic, et garde sa place avec un `—` si le capteur décroche. **Ce qui n'y figure pas est masqué**, une liste vide supprime la rangée, et tout ce qui dépasse la sixième tuile est ignoré. La rangée passe à la ligne plutôt que de rétrécir : trois par ligne, deux à côté d'un bidon pleine hauteur, et une cinquième étire les deux dernières pour ne pas laisser de trou. Sans cette option, la carte garde la disposition qu'elle a toujours eue |
 | `window` | `number` | ² | `7` | `7`, `28` ou `84` jours, proposés en 1, 4 et 12 semaines. Toujours sept barres, de un, quatre ou douze jours. Elle pilote ensemble le graphe, la tuile de consommation et l'autonomie. **Encore faut-il que votre recorder garde autant d'historique** : il purge à 10 jours par défaut, et la carte retombe alors sur la durée réellement couverte, le signale sous le graphe, et divise par elle plutôt que par la fenêtre |
@@ -181,6 +185,32 @@ Cette moyenne ignore délibérément les journées où le niveau est **monté** 
 | Algicide | Vert | `#22c55e` |
 
 **Ou colorer selon le niveau.** `color_mode: level` ignore `liquid_color` et peint le bidon en vert au-dessus de `warn_threshold_percent` (50 par défaut), en orange en dessous, en rouge sous `alert_threshold_percent` (20). Désactivé par défaut, parce que `liquid_color` est ce qui distingue un bidon de chlore d'un bidon de pH− au premier coup d'œil. Fonctionne dans les deux modes.
+
+---
+
+## Hivernage
+
+Une cuve rangée pour l'hiver est vidée, laissée ouverte, sa pompe débranchée et son capteur de niveau éteint. La carte n'a alors plus rien à dire, et le dit bruyamment : un avertissement sur le capteur qui ne répond plus, des tuiles vides, un graphe sans données. Cochez **Hivernage** et elle ne garde que son dessin, sous la neige.
+
+![Hivernage](https://raw.githubusercontent.com/ADNPolymerase/ha-dosing-tank-card/main/docs/winter.fr.png)
+
+Ce qui disparaît : l'alerte de niveau bas, les avertissements sur un capteur ou un compteur qui ne répond plus, les tuiles, le graphe, le bloc Paramètres, la ligne de dernière mise à jour et le panneau de correction. Ce qui reste : la cuve, la neige dessus, et une pastille qui dit pourquoi. Le dessin grandit avec la carte, de quoi occuper une tablette murale.
+
+```yaml
+type: custom:dosing-tank-card
+level_entity: sensor.cuve_eau_pluie
+winter: true
+```
+
+**Pilotée par une entité** plutôt qu'à la main, pour que la carte suive la saison toute seule :
+
+```yaml
+winter_entity: input_boolean.cuve_hivernage
+```
+
+Tout ce qui vaut `on` range la cuve, et un état qui contient le mot de la saison dans l'une des langues de la carte aussi, ce que contient en général un `input_select` ou un capteur d'état : `Hivernage`, `Winter storage`, `Vinterlagring`, `Zimowanie`…
+
+**`winter_volume: true`** remet une ligne sous le dessin : ce qu'il reste dans la cuve. Une cuve hivernée dont le capteur répond encore garde donc sa quantité, et celle dont le capteur est éteint n'affiche rien.
 
 
 ---

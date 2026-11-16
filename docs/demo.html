@@ -25,16 +25,18 @@
 
   Query params:
     lang=en|fr|…        card language
-    mode=direct|pump|all
+    mode=direct|pump|all|winter|before
     theme=light|dark    Home Assistant's two default palettes
     colors=fixed|level  color_mode on every card
     adjust=1            open the adjustment panel (pump mode)
     caption=0           drop the labels above the cards
     width=<px>          card column width, default 330
+    stack=1             stack the cards in one column instead of a row
 -->
 <style>
   body { margin:0; padding:20px; font-family:Roboto,system-ui,sans-serif; }
   #wrap { display:flex; gap:18px; align-items:flex-start; }
+  #wrap.stack { flex-direction:column; }
   .cap { font-size:11px; text-transform:uppercase; letter-spacing:.7px;
          margin:0 0 8px 2px; }
   /* Home Assistant's defaults, so the card can be checked in both. */
@@ -64,6 +66,7 @@ const DAY  = 86400000;
 const now  = Date.now();
 
 document.body.className = theme === 'light' ? 'light' : 'dark';
+if (p.get('stack') === '1') document.getElementById('wrap').className = 'stack';
 
 const CAP = {
   fr: { pct:'Capteur en %', inv:'Sonde inversée', pump:'Mode temps de pompe' },
@@ -113,6 +116,40 @@ if (mode === 'direct' || mode === 'all') {
           friendly_name: lang === 'fr' ? 'pH− distance surface' : 'pH− surface distance' },
         last_changed: new Date(now - 3 * 3600000).toISOString() } },
     history([9, 11, 13, 15, 18, 20, 21, 23]));
+}
+
+/* Winter storage (#3): the six drawings under the snow. A rainwater tank
+   put away is empty and open, its pump unplugged and its level sensor silent,
+   so the card is kept to its drawing. */
+if (mode === 'winter') {
+  for (const [shape, view] of [['can', 'face'], ['can', 'iso'], ['ibc', 'face'],
+                               ['ibc', 'iso'], ['barrel', 'face'], ['barrel', 'iso']])
+    add(`${shape} / ${view}`,
+      { level_entity: 'sensor.rain_tank', level_full: 100, level_empty: 0,
+        name: lang === 'fr' ? 'Cuve eau de pluie' : 'Rainwater tank',
+        tank_shape: shape, tank_view: view, winter: true },
+      { 'sensor.rain_tank': { state: 'unavailable', attributes: {},
+          last_changed: new Date(now - 20 * DAY).toISOString() } },
+      history([]));
+}
+
+// The same tank before and after, which is what the issue asked for, plus the
+// one line the option adds back when the level is still known.
+if (mode === 'before') {
+  const silent = { 'sensor.rain_tank': { state: 'unavailable', attributes: {},
+    last_changed: new Date(now - 20 * DAY).toISOString() } };
+  const reading = { 'sensor.rain_tank': { state: '40',
+    attributes: { unit_of_measurement: '%' },
+    last_changed: new Date(now - 20 * DAY).toISOString() } };
+  const base = { level_entity: 'sensor.rain_tank', level_full: 100, level_empty: 0,
+    name: lang === 'fr' ? 'Cuve eau de pluie' : 'Rainwater tank',
+    tank_shape: 'barrel', tank_view: 'iso', layout: 'columns' };
+  add(lang === 'fr' ? 'Avant' : 'Before', base, silent, history([]));
+  add(lang === 'fr' ? 'Hivernage' : 'Winter storage',
+    { ...base, winter: true }, silent, history([]));
+  add(lang === 'fr' ? 'Hivernage + quantité' : 'Winter + quantity',
+    { ...base, winter: true, winter_volume: true, capacity: 500, capacity_unit: 'L' },
+    reading, history([40]));
 }
 
 if (mode === 'pump' || mode === 'all') {

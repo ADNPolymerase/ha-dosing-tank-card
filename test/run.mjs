@@ -28,6 +28,7 @@ const T0   = freezeClock('2026-08-12T12:00:00Z'); // midday, so day buckets are
 function makeCard({ pumpOn = true, onSinceMin = 30, lastFetchMin = null,
                     todayMl = 0, sync = true, reset = true, showSettings, showChart,
                     lastUpdate, pumpChangedH = 0, lastRunH, order,
+                    winter, winterEntity, winterVolume, extra,
                     counterAgeDays = 30, name = 'Chlorine' } = {}) {
   const states = {
     'switch.pump': { state: pumpOn ? 'on' : 'off',
@@ -46,8 +47,10 @@ function makeCard({ pumpOn = true, onSinceMin = 30, lastFetchMin = null,
     sync_entity : sync  ? 'input_datetime.sync'   : undefined,
     flow_rate_ml_per_min: FLOW, tank_volume_liters: 5, name,
     show_settings: showSettings, show_chart: showChart, last_update: lastUpdate,
-    metrics_order: order,
+    metrics_order: order, winter, winter_entity: winterEntity,
+    winter_volume: winterVolume,
   });
+  Object.assign(states, extra || {});
   c._hass             = { states, locale: { language: 'en' } };
   c._pumpOnSince      = pumpOn ? new Date(now() - onSinceMin * 60000) : null;
   c._lastHistoryFetch = lastFetchMin === null ? 0 : now() - lastFetchMin * 60000;
@@ -127,6 +130,7 @@ function makeDirect({ series = null, value = null, unit = '%',
                       show_chart, last_update, lastChangedH, lastReportedMin,
                       window, seriesStepDays, order, extra, names, format,
                       shape, view, showAlert,
+                      winter, winterEntity, winterVolume,
                       entity = 'sensor.salt', present = true } = {}) {
   const cur    = value ?? (series ? series.at(-1) : null);
   const states = {};
@@ -149,7 +153,8 @@ function makeDirect({ series = null, value = null, unit = '%',
                 capacity, capacity_unit, color_mode, show_settings, layout,
                 show_chart, last_update, window, warn_threshold_percent: warn,
                 metrics_order: order, tank_shape: shape, tank_view: view,
-                show_alert: showAlert });
+                show_alert: showAlert, winter, winter_entity: winterEntity,
+                winter_volume: winterVolume });
   Object.assign(states, extra || {});
   c._hass = { states, locale: { language: 'en' }, entities: names || {},
               ...(format ? { formatEntityState: format } : {}) };
@@ -965,5 +970,185 @@ check('éditeur : décochée quand l\'alerte est coupée',
   /id="showalert" checked/.test(markup(edAlertOff)), false);
 contains('éditeur : le champ du seuil est désactivé', markup(edAlertOff), 'disabled>');
 contains('éditeur : et grisé', markup(edAlertOff), 'class="field off" id="alert-field"');
+
+// ── Hivernage (#3) ───────────────────────────────────────────────────────────
+// Une cuve rangée pour l'hiver ne garde que son dessin, sous la neige : plus
+// de niveau à surveiller, plus de pompe à compter.
+{
+  const wn = o => makeDirect({ value: 55, full: 100, empty: 0, ...o }).html;
+
+  // Ce qui disparaît. Le dessin, lui, reste.
+  const off = wn({ show_settings: true, show_chart: true, layout: 'columns' });
+  const on  = wn({ show_settings: true, show_chart: true, layout: 'columns',
+                   winter: true });
+  check('hors hiver : le graphe est là',   off.includes('class="bars'), true);
+  check('hiver : le graphe disparaît',     on.includes('class="bars'),  false);
+  check('hors hiver : les paramètres sont là', off.includes('Settings'), true);
+  check('hiver : les paramètres disparaissent', on.includes('Settings'), false);
+  check('hors hiver : les tuiles sont là', off.includes('class="metrics'), true);
+  check('hiver : les tuiles disparaissent', on.includes('class="metrics'), false);
+  check('hiver : la colonne de droite n\'est plus rendue',
+    on.includes('class="rcol"'), false);
+  check('hiver : le dessin reste',         on.includes('</svg>'), true);
+  contains('hiver : une seule colonne centrée', on, 'class="body wnt"');
+  check('hiver : la disposition en colonnes est neutralisée',
+    on.includes('class="body wnt cols"'), false);
+
+  // Le bandeau : l'état remplace la pastille ON / OFF.
+  contains('hiver : la pastille annonce l\'hivernage', on, 'badge badge-winter');
+  contains('hiver : et le dit en clair', on, 'Winter storage');
+  check('hiver : la pastille de la pompe laisse la place',
+    makeCard({ winter: true }).includes('badge badge-on'), false);
+
+  // La jauge : plus de pourcentage dessiné sur la cuve, puisque plus personne
+  // ne la surveille.
+  check('hors hiver : le pourcentage est dessiné',
+    /stroke-linejoin="round">55%<\/text>/.test(off), true);
+  check('hiver : le pourcentage disparaît du dessin',
+    /stroke-linejoin="round">55%<\/text>/.test(on), false);
+
+  check('hiver : et pas de texte vide laissé sur le dessin',
+    /<text[^>]*><\/text>/.test(on), false);
+
+  // Le message de création d'aide se tait aussi : il n'y a plus de bouton.
+  {
+    const c = new Card();
+    c.setConfig({ pump_entity: 'switch.pump', winter: true });
+    c._hass = { states: { 'switch.pump': { state: 'off' } }, locale: { language: 'en' } };
+    c._helperNotice = ['input_number.consumed'];
+    c._dailyStats = c._emptyDays();
+    c._render();
+    check('hiver : le message de création d\'aide se tait',
+      markup(c).includes('class="warn created"'), false);
+  }
+
+  // L'alerte de niveau bas n'a plus lieu d'être sur une cuve vidée exprès.
+  const low = wn({ value: 5, alert: 20 });
+  check('hors hiver : l\'alerte de niveau bas s\'affiche',
+    low.includes('class="warn alert"'), true);
+  check('hiver : l\'alerte de niveau bas se tait',
+    wn({ value: 5, alert: 20, winter: true }).includes('class="warn alert"'), false);
+
+  // Et surtout : le capteur qui ne répond plus, le motif même de la demande.
+  const gone = makeDirect({ present: true, value: null, full: 100, empty: 0 }).html;
+  check('hors hiver : le capteur muet est signalé',
+    gone.includes('class="warn missing"'), true);
+  check('hiver : le capteur muet ne l\'est plus',
+    makeDirect({ present: true, value: null, full: 100, empty: 0, winter: true })
+      .html.includes('class="warn missing"'), false);
+  // Mode pompe : ni avertissement de compteur, ni panneau de correction.
+  const pumpOff = makeCard({ reset: false });
+  check('hors hiver : le compteur manquant est signalé',
+    pumpOff.includes('class="warn missing"'), true);
+  check('hiver : le compteur manquant ne l\'est plus',
+    makeCard({ reset: false, winter: true }).includes('class="warn missing"'), false);
+  check('hors hiver : le panneau de correction est là',
+    makeCard().includes('class="footer"'), true);
+  check('hiver : le panneau de correction disparaît',
+    makeCard({ winter: true }).includes('class="footer"'), false);
+
+  // La neige : une congère par arête, et des flocons qui tombent.
+  contains('hiver : la neige est dessinée', on, 'class="dtc-snow"');
+  contains('hiver : et des flocons tombent', on, 'class="dtc-fl"');
+  check('hors hiver : pas un flocon', off.includes('class="dtc-fl"'), false);
+  // Chaque forme a ses propres congères, dans ses propres coordonnées.
+  const flakes = h => (h.match(/class="dtc-fl"/g) || []).length;
+  const snow   = h => (h.match(/class="dtc-snow"/g) || []).length;
+  const snowl = h => (h.match(/class="dtc-snowl"/g) || []).length;
+  check('bidon de face : bouchon, corps et socle', snow(wn({ winter: true })), 3);
+  check('bidon de trois quarts : deux coiffes et une congère',
+    snow(wn({ winter: true, view: 'iso' })), 3);
+  check('cuve IBC de face : trois congères et les trois barres',
+    snow(wn({ winter: true, shape: 'ibc' })), 6);
+  check('IBC de trois quarts : une coiffe, deux congères, trois barres',
+    snow(wn({ winter: true, shape: 'ibc', view: 'iso' })), 6);
+  check('tonneau de face : collerette, bouchon, socle et quatre nervures',
+    snow(wn({ winter: true, shape: 'barrel' })), 7);
+  check('tonneau de trois quarts : deux coiffes et la lèvre du col',
+    snow(wn({ winter: true, shape: 'barrel', view: 'iso' })), 3);
+  check('et quatre nervures courbes, tracées et non remplies',
+    snowl(wn({ winter: true, shape: 'barrel', view: 'iso' })), 4);
+  check('les nervures courbes n\'existent que là',
+    snowl(wn({ winter: true, shape: 'ibc' })), 0);
+  check('quatorze flocons quelle que soit la forme',
+    flakes(wn({ winter: true, shape: 'barrel', view: 'iso' })), 14);
+  /* La forme d'une congère : une crête irrégulière, un dessous qui déborde
+     sous l'arête, et un nombre de bosses qui suit la largeur. Sans ça c'est
+     un bandeau blanc à bords ronds. */
+  const dAttrs = h => [...h.matchAll(/class="dtc-snow" d="([^"]+)"/g)].map(m => m[1]);
+  const qys    = d => [...d.matchAll(/Q[-\d.]+,([-\d.]+)/g)].map(m => Number(m[1]));
+  {
+    // Bidon de face, dans l'ordre du tableau : bouchon, épaule, socle.
+    const [cap, body] = dAttrs(wn({ winter: true }));
+    check('congère du bouchon, étroite : trois bosses',
+      (cap.match(/Q/g) || []).length, 3 * 2);
+    check('congère de l\'épaule, large : six bosses',
+      (body.match(/Q/g) || []).length, 6 * 2);
+    check('crête irrégulière, pas une rangée de bosses identiques',
+      new Set(qys(body).slice(0, 6)).size > 1, true);
+    check('et un dessous qui passe sous l\'arête (y = 22)',
+      Math.max(...qys(body)) > 23.5, true);
+  }
+  // Les flocons tombent sur toute la hauteur du dessin, pas sur 140 px fixes.
+  contains('la chute suit la hauteur du tonneau',
+    wn({ winter: true, shape: 'barrel', view: 'iso' }), '--fy:142px');
+  contains('et celle de l\'IBC, plus courte',
+    wn({ winter: true, shape: 'ibc' }), '--fy:122px');
+
+  // La quantité, en option : une ligne sous la cuve, et rien quand le niveau
+  // est inconnu : un tiret ne dirait rien.
+  check('hiver : pas de quantité par défaut',
+    wn({ winter: true, capacity: 1000, capacity_unit: 'L' })
+      .includes('class="tpct"'), false);
+  contains('hiver : la quantité quand on la demande',
+    wn({ winter: true, winterVolume: true, capacity: 1000, capacity_unit: 'L' }),
+    '550 L');
+  check('hiver : capteur muet, pas de ligne de quantité',
+    makeDirect({ present: true, value: null, full: 100, empty: 0,
+                 winter: true, winterVolume: true }).html.includes('class="tpct"'),
+    false);
+  contains('hiver en mode pompe : la quantité restante',
+    makeCard({ winter: true, winterVolume: true }), '5.00 L');
+
+  // L'entité qui range la cuve : marche / arrêt, ou le mot de la saison.
+  const byEnt = (state, lang) => makeDirect({
+    value: 55, full: 100, empty: 0, winterEntity: 'input_boolean.wnt',
+    extra: { 'input_boolean.wnt': { state, attributes: {} } },
+  }).html.includes('badge badge-winter');
+  check('entité on → hivernage',            byEnt('on'), true);
+  check('entité off → saison normale',      byEnt('off'), false);
+  check('entité indisponible → saison normale', byEnt('unavailable'), false);
+  check('entité inconnue → saison normale', byEnt('unknown'), false);
+  check('un select qui dit Hivernage',      byEnt('Hivernage'), true);
+  check('ou Winter storage',                byEnt('Winter storage'), true);
+  check('ou Vinterlagring',                 byEnt('Vinterlagring'), true);
+  check('ou Zimowanie',                     byEnt('Zimowanie'), true);
+  check('mais pas Été',                     byEnt('Été'), false);
+  check('entité absente de hass → saison normale', makeDirect({
+    value: 55, full: 100, empty: 0, winterEntity: 'input_boolean.absent',
+  }).html.includes('badge badge-winter'), false);
+  // La case cochée gagne, même sans entité.
+  check('case cochée sans entité',
+    wn({ winter: true }).includes('badge badge-winter'), true);
+}
+
+// L'éditeur : les deux cases et le sélecteur d'entité, dans les deux modes.
+for (const [mode, cfg] of [['pompe', { pump_entity: 'switch.pump' }],
+                           ['niveau', { level_entity: 'sensor.salt' }]]) {
+  const ed = new Editor();
+  ed.setConfig(cfg);
+  const h = markup(ed);
+  contains(`éditeur (${mode}) : la case d'hivernage existe`, h, 'id="wnt"');
+  contains(`éditeur (${mode}) : la case de la quantité existe`, h, 'id="wntvol"');
+  contains(`éditeur (${mode}) : l'emplacement du sélecteur existe`, h, 'id="winter-wrap"');
+  check(`éditeur (${mode}) : décochées par défaut`,
+    /id="wnt" checked/.test(h) || /id="wntvol" checked/.test(h), false);
+}
+const edWnt = new Editor();
+edWnt.setConfig({ pump_entity: 'switch.pump', winter: true, winter_volume: true });
+check('éditeur : cochée quand l\'hivernage est demandé',
+  /id="wnt" checked/.test(markup(edWnt)), true);
+check('éditeur : et la quantité aussi',
+  /id="wntvol" checked/.test(markup(edWnt)), true);
 
 report();

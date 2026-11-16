@@ -36,6 +36,10 @@
  *   color_mode: "level"        # green / amber / red by fill instead of
  *   warn_threshold_percent: 50 # liquid_color. Amber below this, red below
  *                              # alert_threshold_percent. Default is "fixed".
+ *   winter: true               # winter storage: nothing but the tank, under
+ *                              # the snow. No level, no alert, no chart.
+ *   winter_entity: input_boolean.tank_winter   # same, driven by an entity
+ *   winter_volume: true        # keep the quantity under the tank in winter
  */
 
 // ── i18n ─────────────────────────────────────────────────────────────────────
@@ -85,6 +89,8 @@ const DTL = {
     edShape:'Shape', edShapeCan:'Jerrycan', edShapeIbc:'IBC tank', edShapeBarrel:'Water butt',
     edView:'View', edViewFace:'Front', edViewIso:'Three-quarter',
     edShowChart:'Show the daily chart', edLastUpdate:'Last update',
+    winter:'Winter storage', edWinter:'Winter storage',
+    edWinterEnt:'Winter storage switch', edWinterVol:'Keep the quantity shown',
     edLuOff:'Not shown', edLuChanged:'Last level change', edLuReported:'Last sensor report',
     luPrefix:'Updated',
     edLuInjection:'Last injection', edLuPumpReported:'Last pump report', luInjPrefix:'Last injection',
@@ -133,6 +139,8 @@ const DTL = {
     edShape:'Forme', edShapeCan:'Bidon', edShapeIbc:'Cuve IBC', edShapeBarrel:'Récupérateur',
     edView:'Vue', edViewFace:'De face', edViewIso:'3/4',
     edShowChart:'Afficher le graphe journalier', edLastUpdate:'Dernière MAJ',
+    winter:'Hivernage', edWinter:'Hivernage',
+    edWinterEnt:'Interrupteur d\'hivernage', edWinterVol:'Garder la quantité affichée',
     edLuOff:'Masquée', edLuChanged:'Dernier changement de niveau', edLuReported:'Dernière réponse du capteur',
     luPrefix:'MAJ',
     edLuInjection:'Dernière injection', edLuPumpReported:'Dernière réponse de la pompe', luInjPrefix:'Dernière injection',
@@ -181,6 +189,8 @@ const DTL = {
     edShape:'Forma', edShapeCan:'Bidón', edShapeIbc:'Depósito IBC', edShapeBarrel:'Depósito cilíndrico',
     edView:'Vista', edViewFace:'Frontal', edViewIso:'Tres cuartos',
     edShowChart:'Mostrar el gráfico diario', edLastUpdate:'Última act.',
+    winter:'Invernaje', edWinter:'Invernaje',
+    edWinterEnt:'Interruptor de invernaje', edWinterVol:'Mantener la cantidad visible',
     edLuOff:'Oculta', edLuChanged:'Último cambio de nivel', edLuReported:'Última respuesta del sensor',
     luPrefix:'Act.',
     edLuInjection:'Última inyección', edLuPumpReported:'Última respuesta de la bomba', luInjPrefix:'Última inyección',
@@ -229,6 +239,8 @@ const DTL = {
     edShape:'Форма', edShapeCan:'Канистра', edShapeIbc:'IBC-контейнер', edShapeBarrel:'Бочка',
     edView:'Вид', edViewFace:'Спереди', edViewIso:'В три четверти',
     edShowChart:'Показывать суточный график', edLastUpdate:'Обновлено',
+    winter:'Консервация на зиму', edWinter:'Консервация на зиму',
+    edWinterEnt:'Переключатель консервации', edWinterVol:'Показывать объём',
     edLuOff:'Скрыто', edLuChanged:'Последнее изменение уровня', edLuReported:'Последний ответ датчика',
     luPrefix:'Обновлено',
     edLuInjection:'Последняя дозировка', edLuPumpReported:'Последний ответ насоса', luInjPrefix:'Последняя дозировка',
@@ -277,6 +289,8 @@ const DTL = {
     edShape:'Form', edShapeCan:'Kanister', edShapeIbc:'IBC-Container', edShapeBarrel:'Regentonne',
     edView:'Ansicht', edViewFace:'Vorderansicht', edViewIso:'Schrägansicht',
     edShowChart:'Tagesdiagramm anzeigen', edLastUpdate:'Zuletzt akt.',
+    winter:'Winterpause', edWinter:'Winterpause',
+    edWinterEnt:'Schalter für die Winterpause', edWinterVol:'Menge weiter anzeigen',
     edLuOff:'Ausgeblendet', edLuChanged:'Letzte Füllstandsänderung', edLuReported:'Letzte Sensormeldung',
     luPrefix:'Akt.',
     edLuInjection:'Letzte Dosierung', edLuPumpReported:'Letzte Pumpenmeldung', luInjPrefix:'Letzte Dosierung',
@@ -325,6 +339,8 @@ const DTL = {
     edShape:'Forma', edShapeCan:'Tanica', edShapeIbc:'Cisterna IBC', edShapeBarrel:'Cisterna cilindrica',
     edView:'Vista', edViewFace:'Frontale', edViewIso:'Tre quarti',
     edShowChart:'Mostra il grafico giornaliero', edLastUpdate:'Ultimo agg.',
+    winter:'Rimessaggio invernale', edWinter:'Rimessaggio invernale',
+    edWinterEnt:'Interruttore di rimessaggio', edWinterVol:'Mostra ancora la quantità',
     edLuOff:'Nascosto', edLuChanged:'Ultima variazione di livello', edLuReported:'Ultima risposta del sensore',
     luPrefix:'Agg.',
     edLuInjection:'Ultima iniezione', edLuPumpReported:'Ultima risposta della pompa', luInjPrefix:'Ultima iniezione',
@@ -373,6 +389,8 @@ const DTL = {
     edShape:'Vorm', edShapeCan:'Jerrycan', edShapeIbc:'IBC-tank', edShapeBarrel:'Regenton',
     edView:'Aanzicht', edViewFace:'Vooraanzicht', edViewIso:'Driekwart',
     edShowChart:'Dagelijkse grafiek tonen', edLastUpdate:'Laatste update',
+    winter:'Winterstop', edWinter:'Winterstop',
+    edWinterEnt:'Schakelaar winterstop', edWinterVol:'Hoeveelheid blijven tonen',
     edLuOff:'Verborgen', edLuChanged:'Laatste niveauwijziging', edLuReported:'Laatste sensorbericht',
     luPrefix:'Bijgewerkt',
     edLuInjection:'Laatste injectie', edLuPumpReported:'Laatste pompbericht', luInjPrefix:'Laatste injectie',
@@ -421,6 +439,8 @@ const DTL = {
     edShape:'Form', edShapeCan:'Dunk', edShapeIbc:'IBC-tank', edShapeBarrel:'Regntunna',
     edView:'Vy', edViewFace:'Framifrån', edViewIso:'Snedifrån',
     edShowChart:'Visa dagsdiagrammet', edLastUpdate:'Senast uppdaterad',
+    winter:'Vinterförvaring', edWinter:'Vinterförvaring',
+    edWinterEnt:'Brytare för vinterförvaring', edWinterVol:'Visa mängden ändå',
     edLuOff:'Dold', edLuChanged:'Senaste nivåändring', edLuReported:'Senaste givarsvar',
     luPrefix:'Uppdaterad',
     edLuInjection:'Senaste dosering', edLuPumpReported:'Senaste pumpsvar', luInjPrefix:'Senaste dosering',
@@ -469,6 +489,8 @@ const DTL = {
     edShape:'Form', edShapeCan:'Kanne', edShapeIbc:'IBC-tank', edShapeBarrel:'Regntønne',
     edView:'Visning', edViewFace:'Forfra', edViewIso:'Skrått',
     edShowChart:'Vis daglig graf', edLastUpdate:'Sist oppdatert',
+    winter:'Vinterlagring', edWinter:'Vinterlagring',
+    edWinterEnt:'Bryter for vinterlagring', edWinterVol:'Vis mengden likevel',
     edLuOff:'Skjult', edLuChanged:'Siste nivåendring', edLuReported:'Siste sensorsvar',
     luPrefix:'Oppdatert',
     edLuInjection:'Siste dosering', edLuPumpReported:'Siste pumpesvar', luInjPrefix:'Siste dosering',
@@ -517,6 +539,8 @@ const DTL = {
     edShape:'Form', edShapeCan:'Dunk', edShapeIbc:'IBC-tank', edShapeBarrel:'Regntønde',
     edView:'Visning', edViewFace:'Forfra', edViewIso:'Skråt',
     edShowChart:'Vis dagligt diagram', edLastUpdate:'Sidst opdateret',
+    winter:'Vinteropbevaring', edWinter:'Vinteropbevaring',
+    edWinterEnt:'Kontakt til vinteropbevaring', edWinterVol:'Vis stadig mængden',
     edLuOff:'Skjult', edLuChanged:'Seneste niveauændring', edLuReported:'Seneste sensorsvar',
     luPrefix:'Opdateret',
     edLuInjection:'Seneste dosering', edLuPumpReported:'Seneste pumpesvar', luInjPrefix:'Seneste dosering',
@@ -565,6 +589,8 @@ const DTL = {
     edShape:'Kształt', edShapeCan:'Kanister', edShapeIbc:'Zbiornik IBC', edShapeBarrel:'Beczka',
     edView:'Widok', edViewFace:'Z przodu', edViewIso:'Ukośny',
     edShowChart:'Pokaż wykres dzienny', edLastUpdate:'Ostatnia akt.',
+    winter:'Zimowanie', edWinter:'Zimowanie',
+    edWinterEnt:'Przełącznik zimowania', edWinterVol:'Pokazuj ilość',
     edLuOff:'Ukryte', edLuChanged:'Ostatnia zmiana poziomu', edLuReported:'Ostatnia odpowiedź czujnika',
     luPrefix:'Akt.',
     edLuInjection:'Ostatnie dozowanie', edLuPumpReported:'Ostatnia odpowiedź pompy', luInjPrefix:'Ostatnie dozowanie',
@@ -607,6 +633,37 @@ const DTC_TILES = {
 // "Régénération" in two. Wrapping removes that, and what a sixth tile costs is
 // card height, not legibility.
 const DTC_MAX_TILES = 6;
+
+/* Winter (#3): where the snow settles on each drawing, in that shape's own
+   viewBox coordinates. `drifts` are banks lying on a horizontal edge, as
+   [x1, x2, y] and a height; they go on the lid, on the top of the body, on
+   every ledge that would catch snow, and on the thin bars and ribs, which is
+   what spreads the fall over the whole tank instead of capping it. `caps` is
+   the snow on a face a three quarter angle shows, `rims` the lip hanging over
+   the front of a round opening, and `arcs` the snow caught on a curved rib. */
+const DTC_SNOW = {
+  'can/face': { w: 86, h: 140,
+    drifts: [[28, 58, 3, 3], [3, 83, 22, 6], [11, 75, 125, 2.5]] },
+  'can/iso': { w: 100, h: 140,
+    caps: [{ poly: [[10, 48], [62, 48], [81, 35], [29, 35]] }, { ell: [62.5, 33.5, 9, 5] }],
+    drifts: [[10, 62, 48, 5]] },
+  'ibc/face': { w: 100, h: 112,
+    drifts: [[39, 61, 9, 3.5], [7, 93, 16, 5], [5, 95, 82, 2.5],
+             [9, 91, 32.5, 2], [9, 91, 49, 2], [9, 91, 65.5, 2]] },
+  'ibc/iso': { w: 100, h: 112,
+    caps: [{ poly: [[8, 22], [68, 22], [87, 9], [27, 9]] }],
+    drifts: [[8, 68, 22, 5], [5, 70, 81, 2.5],
+             [11, 65, 36.8, 2], [11, 65, 51.5, 2], [11, 65, 66.2, 2]] },
+  'barrel/face': { w: 86, h: 132,
+    caps: [{ ell: [43, 26, 34, 5] }],
+    drifts: [[30, 56, 14, 3.5], [16, 70, 110, 2.5],
+             [11, 75, 41.2, 2], [11, 75, 58.4, 2], [11, 75, 75.6, 2], [11, 75, 92.8, 2]] },
+  'barrel/iso': { w: 100, h: 132,
+    caps: [{ ell: [48, 26, 30, 11] }, { ell: [48, 22, 13, 5] }],
+    rims: [[48, 26, 30, 11, 3.4]],
+    arcs: [[48, 42.8, 22, 8], [48, 59.6, 22, 8],
+           [48, 76.4, 22, 8], [48, 93.2, 22, 8]] },
+};
 
 // A tile key is either one of the above or an entity to read. Nothing else in
 // a Lovelace config looks like domain.object_id, so the dot is enough to tell
@@ -740,6 +797,10 @@ class DosingTankCardEditor extends HTMLElement {
     if (chartBox) chartBox.checked = c.show_chart !== false;
     const alertBox = this.shadowRoot.getElementById('showalert');
     if (alertBox) alertBox.checked = c.show_alert !== false;
+    const wntBox = this.shadowRoot.getElementById('wnt');
+    if (wntBox) wntBox.checked = c.winter === true;
+    const wntVolBox = this.shadowRoot.getElementById('wntvol');
+    if (wntVolBox) wntVolBox.checked = c.winter_volume === true;
     // The threshold field follows the checkbox: _syncFields runs on every
     // config echo, and only the values are refreshed, never the markup.
     const alertOff = c.show_alert === false;
@@ -749,10 +810,11 @@ class DosingTankCardEditor extends HTMLElement {
 
     this._syncOrder();
 
-    const keys = this._mode === 'direct'
+    const keys = { 'winter-wrap': 'winter_entity',
+      ...(this._mode === 'direct'
       ? { 'level-wrap': 'level_entity' }
       : { 'pump-wrap': 'pump_entity',  'reset-wrap': 'reset_entity',
-          'flow-wrap': 'flow_entity',  'sync-wrap':  'sync_entity' };
+          'flow-wrap': 'flow_entity',  'sync-wrap':  'sync_entity' }) };
     for (const [wrapId, key] of Object.entries(keys)) {
       const el = this.shadowRoot.getElementById(wrapId)
         ?.querySelector('ha-entity-picker, input');
@@ -1025,6 +1087,18 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
     <input type="checkbox" id="showchart"${c.show_chart===false?'':' checked'}>
     ${T.edShowChart}
   </label>
+  ${/* Winter storage (#3): the card kept to its drawing, under the snow. The
+        tick box is the manual way, the picker the automatic one, and they are
+        offered in both modes: a pump is put away for the winter too. */''}
+  <label class="check">
+    <input type="checkbox" id="wnt"${c.winter?' checked':''}>
+    ${T.edWinter}
+  </label>
+  <div class="field" id="winter-wrap"></div>
+  <label class="check">
+    <input type="checkbox" id="wntvol"${c.winter_volume?' checked':''}>
+    ${T.edWinterVol}
+  </label>
   <div class="field">
     <label>${T.edLastUpdate}</label>
     <select id="lastup">
@@ -1089,6 +1163,9 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
         ?.addEventListener('click', () => this._createHelper());
       this._syncCreateRow();
     }
+
+    // Both modes: the entity that puts the tank away for the winter (#3).
+    makePicker('winter-wrap', 'winter_entity', T.edWinterEnt);
 
     // Mode switch. Leaving direct mode clears the level keys, otherwise the
     // card would keep reading the sensor whatever the editor shows.
@@ -1201,6 +1278,10 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
       this._fire({ ...this._config, show_chart: e.target.checked ? undefined : false }));
     this.shadowRoot.getElementById('showalert')?.addEventListener('change', e =>
       this._fire({ ...this._config, show_alert: e.target.checked ? undefined : false }));
+    this.shadowRoot.getElementById('wnt')?.addEventListener('change', e =>
+      this._fire({ ...this._config, winter: e.target.checked ? true : undefined }));
+    this.shadowRoot.getElementById('wntvol')?.addEventListener('change', e =>
+      this._fire({ ...this._config, winter_volume: e.target.checked ? true : undefined }));
 
     // Color sync
     const cp = this.shadowRoot.getElementById('cpick');
@@ -1324,6 +1405,15 @@ class DosingTankCard extends HTMLElement {
       metrics_order:           Array.isArray(config.metrics_order)
                                  ? config.metrics_order.map(String) : null,
       warn_threshold_percent:  Number(config.warn_threshold_percent) || 50,
+      // Winter storage (#3): a tank put away keeps nothing but its drawing,
+      // under the snow. There is no level to watch and no pump to count, so
+      // the alert, the warnings, the chart, the settings and the adjustment
+      // panel all go away with it. Ticked here, or driven by an entity.
+      winter:                  config.winter === true,
+      winter_entity:           config.winter_entity || null,
+      // A wintered tank that still reports a level can keep its quantity,
+      // printed as one line under the drawing.
+      winter_volume:           config.winter_volume === true,
       name:                    config.name || 'Dosing Tank',
       liquid_color:            config.liquid_color || '#3b82f6',
       language:                config.language || null,
@@ -1342,6 +1432,24 @@ class DosingTankCard extends HTMLElement {
   }
 
   get _isDirect() { return !!this._config.level_entity; }
+
+  /* A tank put away for the winter (#3): ticked in the card, or switched on
+     from an entity whose state says so. `on` and its friends count, and so
+     does the word for winter in each of the languages the card speaks, which
+     is what an input_select or a status sensor usually holds. */
+  _isWinter() {
+    const cfg = this._config;
+    if (!cfg) return false;
+    if (cfg.winter === true) return true;
+    if (!cfg.winter_entity) return false;
+    const s = this._hass?.states?.[cfg.winter_entity];
+    if (!s) return false;
+    /* No guard against unknown or unavailable: neither is `on` and neither
+       holds a word for winter, so both already read as the normal season. */
+    const v = String(s.state).trim().toLowerCase();
+    if (['on', 'true', '1', 'yes'].includes(v)) return true;
+    return /winter|hiver|vinter|invern|zimow|zima|\u0437\u0438\u043c/.test(v);
+  }
 
   _levelState() {
     return this._config.level_entity
@@ -1990,13 +2098,93 @@ class DosingTankCard extends HTMLElement {
   /* Six drawings: three shapes, each from the front or from a three quarter
      angle. The front views are the original geometry, so a card that does not
      set the options keeps exactly the drawing it had. */
+  /* A bank of snow lying on a horizontal edge. Its crest is uneven and its
+     underside hangs over the edge in lobes, which is what tells settled snow
+     from a white stripe. The jitter comes from a hash of the position, so a
+     given tank always draws the same drift rather than reshuffling on every
+     render. */
+  _snowDrift(x1, x2, y, h = 6) {
+    const w = x2 - x1, n = Math.max(3, Math.round(w / 13)), step = w / n;
+    const f = v => v.toFixed(1);
+    const r = i => { const v = Math.sin((i + 1) * 12.9898 + (x1 + y) * .137) * 43758.5453;
+                     return v - Math.floor(v); };
+    const base = y + 1.2;
+    let d = `M${f(x1)},${f(base)}`;
+    for (let i = 0; i < n; i++) {
+      const a = x1 + i * step, b = a + step;
+      const peak = y - h * (.5 + .7 * r(i));
+      const end  = i === n - 1 ? base : y - h * (.1 + .4 * r(i + 31));
+      d += ` Q${f(a + step / 2)},${f(peak)} ${f(b)},${f(end)}`;
+    }
+    // Back along the underside, dipping below the edge where the snow hangs.
+    for (let i = n - 1; i >= 0; i--) {
+      const a = x1 + i * step;
+      d += ` Q${f(a + step / 2)},${f(base + h * .5 * r(i + 67))} ${f(a)},${f(base)}`;
+    }
+    return `<path class="dtc-snow" d="${d} Z"/>`;
+  }
+
+  // Snow on a face a three quarter angle shows: the lid of a box, the rim of
+  // a barrel. Filling the face is what reads as snow settled on top of it.
+  _snowCap(c) {
+    if (c.ell) {
+      const [cx, cy, rx, ry] = c.ell;
+      return `<ellipse class="dtc-snow" cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}"/>`;
+    }
+    return `<path class="dtc-snow" d="${this._roundPoly(c.poly, 2)}"/>`;
+  }
+
+  /* The lip hanging over the front of a round opening: the crescent between
+     the rim itself and a deeper arc below it. Without it the snow filling a
+     barrel's mouth reads as a flat white lid. */
+  _snowRim(cx, cy, rx, ry, lip) {
+    return `<path class="dtc-snow" d="M${cx - rx},${cy} a${rx},${ry} 0 0 0 ${2 * rx},0`
+         + ` a${rx},${(ry + lip).toFixed(1)} 0 0 1 ${-2 * rx},0 Z"/>`;
+  }
+
+  // Snow caught along a curved rib, drawn a hair above it.
+  _snowArc(cx, cy, rx, ry) {
+    return `<path class="dtc-snowl" d="M${cx - rx},${cy - .8} a${rx},${ry} 0 0 0 ${2 * rx},0"/>`;
+  }
+
+  /* Flakes falling across the whole drawing. Each one carries its own size,
+     duration and a negative delay, so they are already spread down the card
+     on the first frame instead of starting as one line at the top, and the
+     golden ratio spaces them across the width without clumping. */
+  _snowFlakes(W, H) {
+    return Array.from({ length: 14 }, (_, i) => {
+      const cx = (4 + ((i * .6180339887) % 1) * (W - 8)).toFixed(1);
+      return `<circle class="dtc-fl" cx="${cx}" cy="-4" r="${(.6 + (i % 4) * .22).toFixed(2)}"
+  style="--fy:${H + 10}px;--fd:${(3.6 + (i % 7) * .45).toFixed(1)}s;--f0:${(-((i * .83) % 5)).toFixed(2)}s"/>`;
+    }).join('');
+  }
+
+  _svgSnow(key) {
+    const s = DTC_SNOW[key];
+    if (!s) return '';
+    const g = [
+      ...(s.caps   || []).map(c => this._snowCap(c)),
+      ...(s.rims   || []).map(r => this._snowRim(...r)),
+      ...(s.drifts || []).map(d => this._snowDrift(...d)),
+      ...(s.arcs   || []).map(a => this._snowArc(...a)),
+    ].join('');
+    return `<g>${g}${this._snowFlakes(s.w, s.h)}</g>`;
+  }
+
   _svgTank(pct, base, light, label, fill) {
     const shape = this._config.tank_shape ?? 'can';
     const iso   = (this._config.tank_view ?? 'face') === 'iso';
     const a = [pct, base, light, label, fill];
-    if (shape === 'ibc')    return iso ? this._svgIbcIso(...a)    : this._svgIbcFace(...a);
-    if (shape === 'barrel') return iso ? this._svgBarrelIso(...a) : this._svgBarrelFace(...a);
-    return iso ? this._svgCanIso(...a) : this._svgCanFace(...a);
+    const svg = shape === 'ibc'    ? (iso ? this._svgIbcIso(...a)    : this._svgIbcFace(...a))
+              : shape === 'barrel' ? (iso ? this._svgBarrelIso(...a) : this._svgBarrelFace(...a))
+              :                      (iso ? this._svgCanIso(...a)    : this._svgCanFace(...a));
+    /* Winter (#3): the snow goes on last, over the finished drawing, so the
+       six shapes keep the geometry they had and the drifts live in one place.
+       Dropped in before the closing tag rather than threaded through each of
+       them. */
+    if (!this._isWinter()) return svg;
+    const cut = svg.lastIndexOf('</svg>');
+    return svg.slice(0, cut) + this._svgSnow(`${shape}/${iso ? 'iso' : 'face'}`) + svg.slice(cut);
   }
 
   /* `fill` lets the drawing take the height its column is given instead of
@@ -2016,6 +2204,8 @@ class DosingTankCard extends HTMLElement {
      the tank, not on the card surface. The halo is what carries it over both
      the liquid and the empty part, in any theme. */
   _svgPct(x, y, label, size) {
+    // Wintered, the tank carries no gauge reading: nothing is watching it.
+    if (!label) return '';
     return `<text x="${x}" y="${y}" text-anchor="middle" font-size="${size}" font-weight="700"
   fill="#fff" paint-order="stroke" stroke="rgba(0,0,0,.75)" stroke-width="1.8"
   stroke-linejoin="round">${label}</text>`;
@@ -2352,6 +2542,11 @@ ${this._svgPct(CX, TY + BH / 2 + 6, label ?? `${pct.toFixed(0)}%`, 18)}
 
     const T      = this._t();
     const direct = this._isDirect;
+    /* Winter storage (#3): the card is kept to its drawing. A wintered tank
+       has no level to watch and no pump to count, so the alert, the warnings
+       about a sensor that no longer answers, the chart, the settings and the
+       adjustment panel are all beside the point and go away together. */
+    const winter = this._isWinter();
 
     // Direct-level mode reads everything off one sensor; pump mode keeps its
     // counter/watermark chain. Only pct / isAlert / base / light are shared.
@@ -2380,11 +2575,11 @@ ${this._svgPct(CX, TY + BH / 2 + 6, label ?? `${pct.toFixed(0)}%`, 18)}
     // here is enough to cover all three of its effects at once: the banner,
     // the red liquid, and the red quantity tile. In color_mode 'level' the
     // scale then stops at amber, which is the point: nothing turns red.
-    const isAlert = this._config.show_alert !== false
+    const isAlert = !winter && this._config.show_alert !== false
       && hasPct && pct <= this._config.alert_threshold_percent;
 
     // What is wrong in direct mode, if anything — checked in order of severity.
-    const directWarn = !direct ? null
+    const directWarn = (!direct || winter) ? null
       : !lvlState        ? T.sensorMissing
       : lvl === null     ? T.sensorUnavailable
       : lvl.pct === null ? T.rangeMissing
@@ -2395,7 +2590,7 @@ ${this._svgPct(CX, TY + BH / 2 + 6, label ?? `${pct.toFixed(0)}%`, 18)}
     // watermark is only raised when the counter looks genuinely stalled.
     const counterMoved = !!resetState?.last_changed &&
       Date.now() - new Date(resetState.last_changed).getTime() < 7 * 86400000;
-    const showHelperWarn = !direct && (!resetState || (!syncState && !counterMoved));
+    const showHelperWarn = !direct && !winter && (!resetState || (!syncState && !counterMoved));
     const showAlert      = isAlert && (direct ? !!lvl : !!resetState);
 
 
@@ -2421,10 +2616,19 @@ ${this._svgPct(CX, TY + BH / 2 + 6, label ?? `${pct.toFixed(0)}%`, 18)}
 
     // The metrics row is placed by the layout, so it is built once here and
     // dropped into whichever column the arrangement calls for.
-    const tall = this._config.layout === 'columns';
+    const tall = !winter && this._config.layout === 'columns';
     const subLeft  = direct && tall ? this._remainingCaption(T, lvl, lvlScale) : '';
-    const subRight = this._lastUpdateLine(T);
-    const metricsHtml = direct
+    const subRight = winter ? '' : this._lastUpdateLine(T);
+    /* The one thing a wintered card may keep besides the drawing: what is
+       left in the tank, as a single line under it. Left out when the level is
+       not known rather than printed as a dash, which would say nothing. */
+    const winterQty = (winter && this._config.winter_volume)
+      ? (direct
+          ? (lvl?.pct != null && lvlScale
+              ? this._fmtLevel(lvl.pct / 100 * lvlScale.factor, lvlScale.unit) : null)
+          : `${(remaining / 1000).toFixed(2)} L`)
+      : null;
+    const metricsHtml = winter ? '' : direct
       ? this._directMetrics(T, lvl, lvlStats, isAlert, lvlScale, tall)
       : this._metricsHtml(
           this._tileOrder('pump', ['remaining', 'today', 'pump7d']), {
@@ -2454,6 +2658,7 @@ ${this._svgPct(CX, TY + BH / 2 + 6, label ?? `${pct.toFixed(0)}%`, 18)}
 .badge{font-size:10px;font-weight:700;padding:3px 10px;border-radius:999px;letter-spacing:.5px}
 .badge-on {background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.35)}
 .badge-off{background:rgba(148,163,184,.08);color:var(--secondary-text-color,#888);border:1px solid rgba(148,163,184,.2)}
+.badge-winter{background:rgba(125,211,252,.14);color:#7dd3fc;border:1px solid rgba(125,211,252,.35)}
 .warn{border-radius:8px;padding:8px 12px;font-size:12px;display:flex;align-items:center;gap:7px;margin-bottom:12px}
 .warn.alert  {background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);color:#ef4444}
 .warn.missing{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);color:#f59e0b;flex-wrap:wrap;gap:6px}
@@ -2537,6 +2742,28 @@ ${this._svgPct(CX, TY + BH / 2 + 6, label ?? `${pct.toFixed(0)}%`, 18)}
 .body.cols.solo .metrics .metric{grid-column:auto}
 .body.cols.solo .metric{padding:8px 6px}
 .body.cols.solo .mv{font-size:15px}
+/* Winter (#3): nothing beside the tank, so the row becomes one centred
+   column instead of leaving the right two thirds of the card empty. */
+.body.wnt{grid-template-columns:1fr;justify-items:center}
+/* Alone on the row, the drawing grows with the card rather than sitting at
+   its natural 130 px in the middle of a wall tablet. Capped so it stays a
+   card and not a poster. */
+.body.wnt .tcol svg{width:auto;height:clamp(132px,26cqw,220px)}
+/* White on a pale tank in a light theme needs the outline to carry it, or
+   the drift reads as a reflection rather than as snow; the shadow under it
+   is what gives the bank its thickness. */
+.dtc-snow{fill:#f8fcfe;stroke:#a8cde4;stroke-width:.7;stroke-linejoin:round;
+  filter:drop-shadow(0 .9px .7px rgba(92,136,168,.5))}
+.dtc-snowl{fill:none;stroke:#eef7fc;stroke-width:1.5;stroke-linecap:round;
+  filter:drop-shadow(0 .9px .7px rgba(92,136,168,.5))}
+.dtc-fl{fill:#fff;stroke:#a8cde4;stroke-width:.35;
+  animation:dtc-fall var(--fd,4s) linear var(--f0,0s) infinite}
+/* Flakes sway as they fall rather than dropping on a rail. */
+@keyframes dtc-fall{0%{transform:translate(0,0);opacity:0}10%{opacity:.95}
+  35%{transform:translate(3px,calc(var(--fy,140px)*.35))}
+  65%{transform:translate(-2.5px,calc(var(--fy,140px)*.65))}
+  100%{transform:translate(2px,var(--fy,140px));opacity:.15}}
+@media (prefers-reduced-motion:reduce){.dtc-fl{animation:none;opacity:.6}}
 .tcol{display:flex;flex-direction:column;align-items:center;gap:5px}
 .tpct{font-size:11px;color:var(--secondary-text-color,#888)}
 .subline{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
@@ -2637,7 +2864,8 @@ ${this._svgPct(CX, TY + BH / 2 + 6, label ?? `${pct.toFixed(0)}%`, 18)}
       </svg>
       ${_esc(this._config.name)}
     </div>
-    ${direct?'':`<div class="badge ${isPumpOn?'badge-on':'badge-off'}">
+    ${winter?`<div class="badge badge-winter">❄ ${T.winter}</div>`
+      :direct?'':`<div class="badge ${isPumpOn?'badge-on':'badge-off'}">
       ${isPumpOn?`● ${T.on}`:`○ ${T.off}`}
     </div>`}
   </div>
@@ -2652,7 +2880,7 @@ ${this._svgPct(CX, TY + BH / 2 + 6, label ?? `${pct.toFixed(0)}%`, 18)}
     <span>⚠️ ${directWarn}${this._config.level_entity && !lvlState
       ? ': <strong>'+_esc(this._config.level_entity)+'</strong>' : ''}</span>
   </div>`:''}
-  ${this._helperNotice?.length?`<div class="warn created">
+  ${!winter&&this._helperNotice?.length?`<div class="warn created">
     <span>✅ ${T.helperCreated(_esc(this._helperNotice.join(', ')))}</span>
     <span>${T.saveInEditor}</span>
   </div>`:''}
@@ -2667,7 +2895,7 @@ ${this._svgPct(CX, TY + BH / 2 + 6, label ?? `${pct.toFixed(0)}%`, 18)}
   ${/* With neither chart nor settings the right column holds only the three
         tiles, which left a hole beside a full-height tank. Stacking them fills
         the column instead. */''}
-  <div class="body${tall?' cols':''}${tall && this._config.tank_shape==='ibc' ? ' ibc' : ''
+  <div class="body${winter?' wnt':''}${tall?' cols':''}${tall && this._config.tank_shape==='ibc' ? ' ibc' : ''
       }${tall && this._config.show_chart===false
       && this._config.show_settings===false ? ' solo' : ''}">
     ${/* No caption under the tank: it repeated the figure drawn on the tank,
@@ -2676,9 +2904,10 @@ ${this._svgPct(CX, TY + BH / 2 + 6, label ?? `${pct.toFixed(0)}%`, 18)}
           metric tile, in litres or kilos, which says more than a decimal
           of a percentage. */''}
     <div class="tcol">
-      ${this._svgTank(pct, base, light, hasPct ? `${pct.toFixed(0)}%` : '—', tall)}
+      ${this._svgTank(pct, base, light, winter ? '' : hasPct ? `${pct.toFixed(0)}%` : '—', tall)}
+      ${winterQty?`<span class="tpct">${_esc(T.remaining)} · ${_esc(winterQty)}</span>`:''}
     </div>
-    <div class="rcol">
+    ${winter?'':`<div class="rcol">
       ${tall?metricsHtml:''}
       ${/* A softener regenerates every couple of weeks, so a day-by-day chart
             says very little there. Shown by default all the same. */''}
@@ -2719,7 +2948,7 @@ ${this._svgPct(CX, TY + BH / 2 + 6, label ?? `${pct.toFixed(0)}%`, 18)}
           <div class="cfgr"><span class="l">${T.totalUsed}</span><span class="v">${this._fmtVol(consumedMl)}</span></div>`}
         </div>
       </div>`}
-    </div>
+    </div>`}
   </div>
 
   ${/* One line under the body: what is left on the left, under the tank, and
@@ -2729,7 +2958,7 @@ ${this._svgPct(CX, TY + BH / 2 + 6, label ?? `${pct.toFixed(0)}%`, 18)}
     <span class="tpct">${subRight}</span>
   </div>`:''}
 
-  ${direct?'':`<div class="footer">
+  ${direct||winter?'':`<div class="footer">
     <button class="btn${this._showAdjust?' open':''}" id="dtc-adj-toggle">
       ✏️ ${T.adjust} ${this._showAdjust?'▲':'▼'}
     </button>
