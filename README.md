@@ -121,6 +121,7 @@ liquid_color: "#3b82f6"
 | `winter` | `boolean` | | `false` | Winter storage: the card is kept to its drawing, under the snow. The alert, the warnings, the metric tiles, the chart, the Settings block, the last-update line and the adjustment panel all go away. There is a tick box for it in the visual editor |
 | `winter_entity` | `string` | | | The same, driven by an entity instead of by hand: `on` puts the tank away, and so does a state holding a word for winter in any of the card's languages (`Winter storage`, `Hivernage`, `Zimowanie`…). Works in both modes |
 | `winter_volume` | `boolean` | | `false` | Keeps one line under the drawing in winter: what is left in the tank. Nothing is printed when the level is no longer known, rather than a dash that would say nothing |
+| `winter_snowfall` | `boolean` | | `true` | `false` leaves out the falling flakes. The snow lying on the tank stays, and the card stops repainting altogether |
 | `layout` | `string` | | `"rows"` | `"columns"` gives the tank the height of the card and moves the three metric tiles beside it. A selector for it sits in the visual editor |
 | `metrics_order` | `list` | | _auto_ | Which metric tiles to draw, and in which order, dragged into place in the visual editor. Direct level: `remaining`, `average`, `consumption`, `autonomy`. Pump runtime: `remaining`, `today`, `pump7d`. **An entity id draws that entity instead**, rendered by Home Assistant itself, so a text state arrives translated; the tile opens the entity when tapped, and keeps its place showing `—` when the sensor drops. **What is left out is hidden**, an empty list drops the row entirely, and anything past the sixth tile is ignored. The row wraps rather than shrinks: three to a row, two beside a full-height tank, and a five stretches its last two so they do not leave a hole. Omit the option and the card keeps the arrangement it has always drawn |
 | `window` | `number` | ² | `7` | `7`, `28` or `84` days, offered as 1, 4 and 12 weeks. Always seven bars, of one, four or twelve days each. It drives the chart, the consumption tile and the autonomy together. **Your recorder must hold that much history**: it purges at 10 days by default, and the card then falls back to the span it really covered, says so under the chart, and divides by that instead of by the window |
@@ -211,6 +212,8 @@ winter_entity: input_boolean.tank_winter
 Anything that reads `on` puts the tank away, and so does a state holding a word for winter in any of the card's languages, which is what an `input_select` or a status sensor usually holds: `Winter storage`, `Hivernage`, `Vinterlagring`, `Zimowanie`…
 
 **`winter_volume: true`** adds back one line under the drawing: what is left in the tank. A wintered tank whose sensor still answers then keeps its quantity, and one whose sensor is gone shows nothing at all.
+
+**`winter_snowfall: false`** leaves the flakes out. They are the only animation a wintered card runs, so the card then stops repainting altogether, which a weak wall tablet will thank you for. The snow lying on the tank stays. A tablet set to reduced motion already freezes them without any of this.
 
 
 ---

@@ -121,6 +121,7 @@ liquid_color: "#3b82f6"
 | `winter` | `boolean` | | `false` | Hivernage : la carte ne garde que son dessin, sous la neige. L'alerte, les avertissements, les tuiles, le graphe, le bloc Paramètres, la ligne de dernière mise à jour et le panneau de correction disparaissent. Une case existe pour ça dans l'éditeur visuel |
 | `winter_entity` | `string` | | | La même chose, pilotée par une entité plutôt qu'à la main : `on` range la cuve, et un état qui contient le mot de la saison dans l'une des langues de la carte aussi (`Hivernage`, `Winter storage`, `Zimowanie`…). Fonctionne dans les deux modes |
 | `winter_volume` | `boolean` | | `false` | Garde une ligne sous le dessin en hiver : ce qu'il reste dans la cuve. Rien n'est écrit quand le niveau n'est plus connu, plutôt qu'un tiret qui ne dirait rien |
+| `winter_snowfall` | `boolean` | | `true` | `false` enlève les flocons qui tombent. La neige posée sur la cuve reste, et la carte ne se redessine plus du tout |
 | `layout` | `string` | | `"rows"` | `"columns"` donne au bidon la hauteur de la carte et déplace les trois tuiles à côté. Un sélecteur existe pour ça dans l'éditeur visuel |
 | `metrics_order` | `list` | | _auto_ | Quelles tuiles dessiner, et dans quel ordre, à glisser dans l'éditeur visuel. Niveau direct : `remaining`, `average`, `consumption`, `autonomy`. Temps de pompe : `remaining`, `today`, `pump7d`. **Un identifiant d'entité affiche cette entité**, rendue par Home Assistant lui-même, donc un état textuel arrive traduit ; la tuile ouvre la fiche au clic, et garde sa place avec un `—` si le capteur décroche. **Ce qui n'y figure pas est masqué**, une liste vide supprime la rangée, et tout ce qui dépasse la sixième tuile est ignoré. La rangée passe à la ligne plutôt que de rétrécir : trois par ligne, deux à côté d'un bidon pleine hauteur, et une cinquième étire les deux dernières pour ne pas laisser de trou. Sans cette option, la carte garde la disposition qu'elle a toujours eue |
 | `window` | `number` | ² | `7` | `7`, `28` ou `84` jours, proposés en 1, 4 et 12 semaines. Toujours sept barres, de un, quatre ou douze jours. Elle pilote ensemble le graphe, la tuile de consommation et l'autonomie. **Encore faut-il que votre recorder garde autant d'historique** : il purge à 10 jours par défaut, et la carte retombe alors sur la durée réellement couverte, le signale sous le graphe, et divise par elle plutôt que par la fenêtre |
@@ -211,6 +212,8 @@ winter_entity: input_boolean.cuve_hivernage
 Tout ce qui vaut `on` range la cuve, et un état qui contient le mot de la saison dans l'une des langues de la carte aussi, ce que contient en général un `input_select` ou un capteur d'état : `Hivernage`, `Winter storage`, `Vinterlagring`, `Zimowanie`…
 
 **`winter_volume: true`** remet une ligne sous le dessin : ce qu'il reste dans la cuve. Une cuve hivernée dont le capteur répond encore garde donc sa quantité, et celle dont le capteur est éteint n'affiche rien.
+
+**`winter_snowfall: false`** enlève les flocons. Ils sont la seule animation que la carte hivernée fasse tourner : coupés, elle ne se redessine plus du tout, ce dont une tablette murale un peu faible vous remerciera. La neige posée sur la cuve reste. Une tablette réglée en mouvement réduit les fige déjà sans rien configurer.
 
 
 ---

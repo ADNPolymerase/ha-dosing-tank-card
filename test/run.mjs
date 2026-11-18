@@ -28,7 +28,7 @@ const T0   = freezeClock('2026-08-12T12:00:00Z'); // midday, so day buckets are
 function makeCard({ pumpOn = true, onSinceMin = 30, lastFetchMin = null,
                     todayMl = 0, sync = true, reset = true, showSettings, showChart,
                     lastUpdate, pumpChangedH = 0, lastRunH, order,
-                    winter, winterEntity, winterVolume, extra,
+                    winter, winterEntity, winterVolume, winterSnowfall, extra,
                     counterAgeDays = 30, name = 'Chlorine' } = {}) {
   const states = {
     'switch.pump': { state: pumpOn ? 'on' : 'off',
@@ -48,7 +48,7 @@ function makeCard({ pumpOn = true, onSinceMin = 30, lastFetchMin = null,
     flow_rate_ml_per_min: FLOW, tank_volume_liters: 5, name,
     show_settings: showSettings, show_chart: showChart, last_update: lastUpdate,
     metrics_order: order, winter, winter_entity: winterEntity,
-    winter_volume: winterVolume,
+    winter_volume: winterVolume, winter_snowfall: winterSnowfall,
   });
   Object.assign(states, extra || {});
   c._hass             = { states, locale: { language: 'en' } };
@@ -130,7 +130,7 @@ function makeDirect({ series = null, value = null, unit = '%',
                       show_chart, last_update, lastChangedH, lastReportedMin,
                       window, seriesStepDays, order, extra, names, format,
                       shape, view, showAlert,
-                      winter, winterEntity, winterVolume,
+                      winter, winterEntity, winterVolume, winterSnowfall,
                       entity = 'sensor.salt', present = true } = {}) {
   const cur    = value ?? (series ? series.at(-1) : null);
   const states = {};
@@ -154,7 +154,7 @@ function makeDirect({ series = null, value = null, unit = '%',
                 show_chart, last_update, window, warn_threshold_percent: warn,
                 metrics_order: order, tank_shape: shape, tank_view: view,
                 show_alert: showAlert, winter, winter_entity: winterEntity,
-                winter_volume: winterVolume });
+                winter_volume: winterVolume, winter_snowfall: winterSnowfall });
   Object.assign(states, extra || {});
   c._hass = { states, locale: { language: 'en' }, entities: names || {},
               ...(format ? { formatEntityState: format } : {}) };
@@ -1130,6 +1130,41 @@ contains('éditeur : et grisé', markup(edAlertOff), 'class="field off" id="aler
   // La case cochée gagne, même sans entité.
   check('case cochée sans entité',
     wn({ winter: true }).includes('badge badge-winter'), true);
+
+  // ── Hivernage sans les flocons (#120) ──────────────────────────────────────
+  // Une tablette murale faible n'encaisse pas une animation continue. Les
+  // flocons sont la seule animation que la carte hivernée fasse tourner :
+  // coupés, elle ne se redessine plus jamais. La neige posée, elle, reste.
+  const noSnow = wn({ winter: true, winterSnowfall: false });
+  check('flocons coupés : plus un seul', flakes(noSnow), 0);
+  check('flocons coupés : la neige posée reste',
+    snow(noSnow), snow(wn({ winter: true })));
+  check('rien d\'autre ne bouge : aucune classe animée dans le rendu',
+    /class="dtc-(fl)"/.test(noSnow), false);
+  check('par défaut : les quatorze flocons tombent',
+    flakes(wn({ winter: true })), 14);
+  check('demandés explicitement : ils tombent aussi',
+    flakes(wn({ winter: true, winterSnowfall: true })), 14);
+  // Les quatre autres formes se coupent pareil, la neige posée intacte.
+  for (const [label, o] of [['bidon de trois quarts', { view: 'iso' }],
+                            ['cuve IBC', { shape: 'ibc' }],
+                            ['IBC de trois quarts', { shape: 'ibc', view: 'iso' }],
+                            ['tonneau', { shape: 'barrel' }],
+                            ['tonneau de trois quarts', { shape: 'barrel', view: 'iso' }]]) {
+    const h = wn({ winter: true, winterSnowfall: false, ...o });
+    check(`${label} : flocons coupés`, flakes(h), 0);
+    check(`${label} : neige posée gardée`,
+      snow(h), snow(wn({ winter: true, ...o })));
+  }
+  // En mode pompe aussi.
+  check('mode pompe : flocons coupés',
+    flakes(makeCard({ winter: true, winterSnowfall: false })), 0);
+  check('mode pompe : et présents sinon',
+    flakes(makeCard({ winter: true })), 14);
+  // Hors hiver le réglage n'a rien à retirer : il n'y avait pas de neige.
+  const summer = wn({ winterSnowfall: false });
+  check('hors hiver : pas de neige posée', snow(summer), 0);
+  check('hors hiver : pas de flocon', flakes(summer), 0);
 }
 
 // L'éditeur : les deux cases et le sélecteur d'entité, dans les deux modes.
@@ -1140,6 +1175,9 @@ for (const [mode, cfg] of [['pompe', { pump_entity: 'switch.pump' }],
   const h = markup(ed);
   contains(`éditeur (${mode}) : la case d'hivernage existe`, h, 'id="wnt"');
   contains(`éditeur (${mode}) : la case de la quantité existe`, h, 'id="wntvol"');
+  contains(`éditeur (${mode}) : la case des flocons existe`, h, 'id="snowfall"');
+  check(`éditeur (${mode}) : les flocons cochés par défaut`,
+    /id="snowfall" checked/.test(h), true);
   contains(`éditeur (${mode}) : l'emplacement du sélecteur existe`, h, 'id="winter-wrap"');
   check(`éditeur (${mode}) : décochées par défaut`,
     /id="wnt" checked/.test(h) || /id="wntvol" checked/.test(h), false);
@@ -1150,5 +1188,34 @@ check('éditeur : cochée quand l\'hivernage est demandé',
   /id="wnt" checked/.test(markup(edWnt)), true);
 check('éditeur : et la quantité aussi',
   /id="wntvol" checked/.test(markup(edWnt)), true);
+const edSnow = new Editor();
+edSnow.setConfig({ pump_entity: 'switch.pump', winter: true, winter_snowfall: false });
+check('éditeur : la case des flocons se décoche',
+  /id="snowfall" checked/.test(markup(edSnow)), false);
+
+// La case des flocons se recoche et s'écrit. Le stub ne rend pas d'élément :
+// on en prête un, qui retient l'écouteur pour pouvoir le déclencher.
+{
+  const box = { checked: null, _on: null,
+                addEventListener: (_t, fn) => { box._on = fn; } };
+  const e = new Editor();
+  e.shadowRoot.getElementById = id => (id === 'snowfall' ? box : null);
+  e.setConfig({ pump_entity: 'switch.pump', winter: true, winter_snowfall: false });
+  // Le deuxième appel est l'écho de la configuration : le balisage n'est pas
+  // reconstruit, seules les valeurs sont rafraîchies.
+  e.setConfig({ pump_entity: 'switch.pump', winter: true, winter_snowfall: false });
+  check('éditeur : la case suit une configuration sans flocons', box.checked, false);
+  e.setConfig({ pump_entity: 'switch.pump', winter: true });
+  check('éditeur : et se recoche quand ils reviennent', box.checked, true);
+
+  box._on({ target: { checked: false } });
+  check('éditeur : décocher écrit false',
+    e.events.at(-1)?.detail?.config?.winter_snowfall, false);
+  box._on({ target: { checked: true } });
+  // undefined, comme les autres options de cette carte : ce que Home Assistant
+  // laisse tomber en écrivant le YAML, donc rien dans la configuration.
+  check('éditeur : recocher n\'écrit rien, c\'est le défaut',
+    e.events.at(-1)?.detail?.config?.winter_snowfall, undefined);
+}
 
 report();

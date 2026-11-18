@@ -40,6 +40,8 @@
  *                              # the snow. No level, no alert, no chart.
  *   winter_entity: input_boolean.tank_winter   # same, driven by an entity
  *   winter_volume: true        # keep the quantity under the tank in winter
+ *   winter_snowfall: false     # winter without the falling flakes: the snow
+ *                              # stays on the tank, nothing moves any more
  */
 
 // ── i18n ─────────────────────────────────────────────────────────────────────
@@ -90,7 +92,7 @@ const DTL = {
     edView:'View', edViewFace:'Front', edViewIso:'Three-quarter',
     edShowChart:'Show the daily chart', edLastUpdate:'Last update',
     winter:'Winter storage', edWinter:'Winter storage',
-    edWinterEnt:'Winter storage switch', edWinterVol:'Keep the quantity shown',
+    edWinterEnt:'Winter storage switch', edWinterVol:'Keep the quantity shown', edSnowfall:'Falling snow',
     edLuOff:'Not shown', edLuChanged:'Last level change', edLuReported:'Last sensor report',
     luPrefix:'Updated',
     edLuInjection:'Last injection', edLuPumpReported:'Last pump report', luInjPrefix:'Last injection',
@@ -140,7 +142,7 @@ const DTL = {
     edView:'Vue', edViewFace:'De face', edViewIso:'3/4',
     edShowChart:'Afficher le graphe journalier', edLastUpdate:'Dernière MAJ',
     winter:'Hivernage', edWinter:'Hivernage',
-    edWinterEnt:'Interrupteur d\'hivernage', edWinterVol:'Garder la quantité affichée',
+    edWinterEnt:'Interrupteur d\'hivernage', edWinterVol:'Garder la quantité affichée', edSnowfall:'Neige qui tombe',
     edLuOff:'Masquée', edLuChanged:'Dernier changement de niveau', edLuReported:'Dernière réponse du capteur',
     luPrefix:'MAJ',
     edLuInjection:'Dernière injection', edLuPumpReported:'Dernière réponse de la pompe', luInjPrefix:'Dernière injection',
@@ -190,7 +192,7 @@ const DTL = {
     edView:'Vista', edViewFace:'Frontal', edViewIso:'Tres cuartos',
     edShowChart:'Mostrar el gráfico diario', edLastUpdate:'Última act.',
     winter:'Invernaje', edWinter:'Invernaje',
-    edWinterEnt:'Interruptor de invernaje', edWinterVol:'Mantener la cantidad visible',
+    edWinterEnt:'Interruptor de invernaje', edWinterVol:'Mantener la cantidad visible', edSnowfall:'Nieve que cae',
     edLuOff:'Oculta', edLuChanged:'Último cambio de nivel', edLuReported:'Última respuesta del sensor',
     luPrefix:'Act.',
     edLuInjection:'Última inyección', edLuPumpReported:'Última respuesta de la bomba', luInjPrefix:'Última inyección',
@@ -240,7 +242,7 @@ const DTL = {
     edView:'Вид', edViewFace:'Спереди', edViewIso:'В три четверти',
     edShowChart:'Показывать суточный график', edLastUpdate:'Обновлено',
     winter:'Консервация на зиму', edWinter:'Консервация на зиму',
-    edWinterEnt:'Переключатель консервации', edWinterVol:'Показывать объём',
+    edWinterEnt:'Переключатель консервации', edWinterVol:'Показывать объём', edSnowfall:'Падающий снег',
     edLuOff:'Скрыто', edLuChanged:'Последнее изменение уровня', edLuReported:'Последний ответ датчика',
     luPrefix:'Обновлено',
     edLuInjection:'Последняя дозировка', edLuPumpReported:'Последний ответ насоса', luInjPrefix:'Последняя дозировка',
@@ -290,7 +292,7 @@ const DTL = {
     edView:'Ansicht', edViewFace:'Vorderansicht', edViewIso:'Schrägansicht',
     edShowChart:'Tagesdiagramm anzeigen', edLastUpdate:'Zuletzt akt.',
     winter:'Winterpause', edWinter:'Winterpause',
-    edWinterEnt:'Schalter für die Winterpause', edWinterVol:'Menge weiter anzeigen',
+    edWinterEnt:'Schalter für die Winterpause', edWinterVol:'Menge weiter anzeigen', edSnowfall:'Fallender Schnee',
     edLuOff:'Ausgeblendet', edLuChanged:'Letzte Füllstandsänderung', edLuReported:'Letzte Sensormeldung',
     luPrefix:'Akt.',
     edLuInjection:'Letzte Dosierung', edLuPumpReported:'Letzte Pumpenmeldung', luInjPrefix:'Letzte Dosierung',
@@ -340,7 +342,7 @@ const DTL = {
     edView:'Vista', edViewFace:'Frontale', edViewIso:'Tre quarti',
     edShowChart:'Mostra il grafico giornaliero', edLastUpdate:'Ultimo agg.',
     winter:'Rimessaggio invernale', edWinter:'Rimessaggio invernale',
-    edWinterEnt:'Interruttore di rimessaggio', edWinterVol:'Mostra ancora la quantità',
+    edWinterEnt:'Interruttore di rimessaggio', edWinterVol:'Mostra ancora la quantità', edSnowfall:'Neve che cade',
     edLuOff:'Nascosto', edLuChanged:'Ultima variazione di livello', edLuReported:'Ultima risposta del sensore',
     luPrefix:'Agg.',
     edLuInjection:'Ultima iniezione', edLuPumpReported:'Ultima risposta della pompa', luInjPrefix:'Ultima iniezione',
@@ -390,7 +392,7 @@ const DTL = {
     edView:'Aanzicht', edViewFace:'Vooraanzicht', edViewIso:'Driekwart',
     edShowChart:'Dagelijkse grafiek tonen', edLastUpdate:'Laatste update',
     winter:'Winterstop', edWinter:'Winterstop',
-    edWinterEnt:'Schakelaar winterstop', edWinterVol:'Hoeveelheid blijven tonen',
+    edWinterEnt:'Schakelaar winterstop', edWinterVol:'Hoeveelheid blijven tonen', edSnowfall:'Vallende sneeuw',
     edLuOff:'Verborgen', edLuChanged:'Laatste niveauwijziging', edLuReported:'Laatste sensorbericht',
     luPrefix:'Bijgewerkt',
     edLuInjection:'Laatste injectie', edLuPumpReported:'Laatste pompbericht', luInjPrefix:'Laatste injectie',
@@ -440,7 +442,7 @@ const DTL = {
     edView:'Vy', edViewFace:'Framifrån', edViewIso:'Snedifrån',
     edShowChart:'Visa dagsdiagrammet', edLastUpdate:'Senast uppdaterad',
     winter:'Vinterförvaring', edWinter:'Vinterförvaring',
-    edWinterEnt:'Brytare för vinterförvaring', edWinterVol:'Visa mängden ändå',
+    edWinterEnt:'Brytare för vinterförvaring', edWinterVol:'Visa mängden ändå', edSnowfall:'Fallande snö',
     edLuOff:'Dold', edLuChanged:'Senaste nivåändring', edLuReported:'Senaste givarsvar',
     luPrefix:'Uppdaterad',
     edLuInjection:'Senaste dosering', edLuPumpReported:'Senaste pumpsvar', luInjPrefix:'Senaste dosering',
@@ -490,7 +492,7 @@ const DTL = {
     edView:'Visning', edViewFace:'Forfra', edViewIso:'Skrått',
     edShowChart:'Vis daglig graf', edLastUpdate:'Sist oppdatert',
     winter:'Vinterlagring', edWinter:'Vinterlagring',
-    edWinterEnt:'Bryter for vinterlagring', edWinterVol:'Vis mengden likevel',
+    edWinterEnt:'Bryter for vinterlagring', edWinterVol:'Vis mengden likevel', edSnowfall:'Fallende snø',
     edLuOff:'Skjult', edLuChanged:'Siste nivåendring', edLuReported:'Siste sensorsvar',
     luPrefix:'Oppdatert',
     edLuInjection:'Siste dosering', edLuPumpReported:'Siste pumpesvar', luInjPrefix:'Siste dosering',
@@ -540,7 +542,7 @@ const DTL = {
     edView:'Visning', edViewFace:'Forfra', edViewIso:'Skråt',
     edShowChart:'Vis dagligt diagram', edLastUpdate:'Sidst opdateret',
     winter:'Vinteropbevaring', edWinter:'Vinteropbevaring',
-    edWinterEnt:'Kontakt til vinteropbevaring', edWinterVol:'Vis stadig mængden',
+    edWinterEnt:'Kontakt til vinteropbevaring', edWinterVol:'Vis stadig mængden', edSnowfall:'Faldende sne',
     edLuOff:'Skjult', edLuChanged:'Seneste niveauændring', edLuReported:'Seneste sensorsvar',
     luPrefix:'Opdateret',
     edLuInjection:'Seneste dosering', edLuPumpReported:'Seneste pumpesvar', luInjPrefix:'Seneste dosering',
@@ -590,7 +592,7 @@ const DTL = {
     edView:'Widok', edViewFace:'Z przodu', edViewIso:'Ukośny',
     edShowChart:'Pokaż wykres dzienny', edLastUpdate:'Ostatnia akt.',
     winter:'Zimowanie', edWinter:'Zimowanie',
-    edWinterEnt:'Przełącznik zimowania', edWinterVol:'Pokazuj ilość',
+    edWinterEnt:'Przełącznik zimowania', edWinterVol:'Pokazuj ilość', edSnowfall:'Padający śnieg',
     edLuOff:'Ukryte', edLuChanged:'Ostatnia zmiana poziomu', edLuReported:'Ostatnia odpowiedź czujnika',
     luPrefix:'Akt.',
     edLuInjection:'Ostatnie dozowanie', edLuPumpReported:'Ostatnia odpowiedź pompy', luInjPrefix:'Ostatnie dozowanie',
@@ -801,6 +803,8 @@ class DosingTankCardEditor extends HTMLElement {
     if (wntBox) wntBox.checked = c.winter === true;
     const wntVolBox = this.shadowRoot.getElementById('wntvol');
     if (wntVolBox) wntVolBox.checked = c.winter_volume === true;
+    const wntSnowBox = this.shadowRoot.getElementById('snowfall');
+    if (wntSnowBox) wntSnowBox.checked = c.winter_snowfall !== false;
     // The threshold field follows the checkbox: _syncFields runs on every
     // config echo, and only the values are refreshed, never the markup.
     const alertOff = c.show_alert === false;
@@ -1099,6 +1103,10 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
     <input type="checkbox" id="wntvol"${c.winter_volume?' checked':''}>
     ${T.edWinterVol}
   </label>
+  <label class="check">
+    <input type="checkbox" id="snowfall"${c.winter_snowfall===false?'':' checked'}>
+    ${T.edSnowfall}
+  </label>
   <div class="field">
     <label>${T.edLastUpdate}</label>
     <select id="lastup">
@@ -1282,6 +1290,8 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
       this._fire({ ...this._config, winter: e.target.checked ? true : undefined }));
     this.shadowRoot.getElementById('wntvol')?.addEventListener('change', e =>
       this._fire({ ...this._config, winter_volume: e.target.checked ? true : undefined }));
+    this.shadowRoot.getElementById('snowfall')?.addEventListener('change', e =>
+      this._fire({ ...this._config, winter_snowfall: e.target.checked ? undefined : false }));
 
     // Color sync
     const cp = this.shadowRoot.getElementById('cpick');
@@ -1414,6 +1424,9 @@ class DosingTankCard extends HTMLElement {
       // A wintered tank that still reports a level can keep its quantity,
       // printed as one line under the drawing.
       winter_volume:           config.winter_volume === true,
+      // Falling flakes are on by default, and a weak wall tablet can do
+      // without them (#120). Only false is ever written down.
+      winter_snowfall:         config.winter_snowfall !== false,
       name:                    config.name || 'Dosing Tank',
       liquid_color:            config.liquid_color || '#3b82f6',
       language:                config.language || null,
@@ -2168,7 +2181,11 @@ class DosingTankCard extends HTMLElement {
       ...(s.drifts || []).map(d => this._snowDrift(...d)),
       ...(s.arcs   || []).map(a => this._snowArc(...a)),
     ].join('');
-    return `<g>${g}${this._snowFlakes(s.w, s.h)}</g>`;
+    /* The flakes are the only animation a wintered card still runs, so
+       leaving them out means it never repaints again (#120). The snow
+       already lying on the tank is static and stays. */
+    const fl = this._config.winter_snowfall === false ? '' : this._snowFlakes(s.w, s.h);
+    return `<g>${g}${fl}</g>`;
   }
 
   _svgTank(pct, base, light, label, fill) {

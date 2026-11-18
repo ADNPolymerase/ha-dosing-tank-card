@@ -25,7 +25,7 @@
 
   Query params:
     lang=en|fr|…        card language
-    mode=direct|pump|all|winter|before
+    mode=direct|pump|all|winter|before|snowfall
     theme=light|dark    Home Assistant's two default palettes
     colors=fixed|level  color_mode on every card
     adjust=1            open the adjustment panel (pump mode)
@@ -150,6 +150,22 @@ if (mode === 'before') {
   add(lang === 'fr' ? 'Hivernage + quantité' : 'Winter + quantity',
     { ...base, winter: true, winter_volume: true, capacity: 500, capacity_unit: 'L' },
     reading, history([40]));
+}
+
+/* Winter without the falling flakes (#120): a weak wall tablet does not have
+   to repaint a card for ever. The snow already lying on the tank stays. */
+if (mode === 'snowfall') {
+  const silent = { 'sensor.rain_tank': { state: 'unavailable', attributes: {},
+    last_changed: new Date(now - 20 * DAY).toISOString() } };
+  const base = { level_entity: 'sensor.rain_tank', level_full: 100, level_empty: 0,
+    name: lang === 'fr' ? 'Cuve eau de pluie' : 'Rainwater tank',
+    tank_view: 'iso', winter: true };
+  for (const shape of ['can', 'ibc', 'barrel']) {
+    add(lang === 'fr' ? 'Avec la neige' : 'With the snowfall',
+      { ...base, tank_shape: shape }, silent, history([]));
+    add(lang === 'fr' ? 'Sans' : 'Without',
+      { ...base, tank_shape: shape, winter_snowfall: false }, silent, history([]));
+  }
 }
 
 if (mode === 'pump' || mode === 'all') {
