@@ -215,6 +215,8 @@ Anything that reads `on` puts the tank away, and so does a state holding a word 
 
 **`winter_snowfall: false`** leaves the flakes out. They are the only animation a wintered card runs, so the card then stops repainting altogether, which a weak wall tablet will thank you for. The snow lying on the tank stays. A tablet set to reduced motion already freezes them without any of this.
 
+![With and without the falling snow](https://raw.githubusercontent.com/ADNPolymerase/ha-dosing-tank-card/main/docs/snowfall.gif)
+
 
 ---
 

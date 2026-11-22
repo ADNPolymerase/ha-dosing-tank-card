@@ -880,6 +880,39 @@ const SERIES = [100, 96, 92, 88, 84, 80, 76, 72];
   check('cuve à moitié : le plafond reste vide',
     veil(dr({ shape: 'ibc', view: 'iso' })), 1);
 
+  /* De face, le liquide glisse sous la découpe au lieu de s'étirer : c'est
+     ce qui garde à la bande claire de la surface la même épaisseur à tous
+     les niveaux. */
+  for (const shape of ['can', 'ibc', 'barrel']) {
+    const h = dr({ shape });
+    contains(`${shape} de face : le liquide glisse`, h, 'translateY(');
+    check(`${shape} de face : il ne s'étire plus`, h.includes('scaleY('), false);
+    check(`${shape} de face, vide : aucun liquide dessiné`,
+      grad(dr({ shape, value: 0 })), 0);
+  }
+  // Le niveau se lit en relief : les quarts et les huitièmes. L'IBC n'a que
+  // les huitièmes, ses barres tombent déjà sur les quarts.
+  const marks = h => (h.match(/stroke-opacity="\.78"/g) || []).length;
+  check('bidon : sept graduations', marks(dr({})), 7);
+  check('récupérateur 3/4 : sept graduations', marks(dr({ shape: 'barrel', view: 'iso' })), 7);
+  check('IBC : quatre graduations entre les barres', marks(dr({ shape: 'ibc' })), 4);
+  // Les bouchons prennent la couleur du liquide.
+  {
+    const h = dr({});
+    const base = (h.match(/<linearGradient id="dtc-lg-[^"]*"[^>]*>\s*<stop offset="0%" stop-color="([^"]+)"/) || [])[1];
+    contains('le bouchon du bidon a la couleur du liquide', h, `rx="2.6" fill="${base}"`);
+    contains('celui de l\'IBC aussi', dr({ shape: 'ibc' }), `rx="2.6" fill="${base}"`);
+  }
+  // Chaque dessin garde des identifiants propres à la carte : deux cartes
+  // sur la même page ne se volent ni dégradé ni découpe.
+  for (const [shape, view] of [['can', 'face'], ['can', 'iso'], ['ibc', 'face'],
+                               ['ibc', 'iso'], ['barrel', 'face'], ['barrel', 'iso']]) {
+    const h = dr({ shape, view });
+    const ids = [...h.matchAll(/id="(dtc-[a-z]+)-([a-z0-9]+)"/g)].map(m => m[2]);
+    check(`${shape} ${view} : tous les identifiants portent le suffixe de la carte`,
+      ids.length > 3 && new Set(ids).size === 1, true);
+  }
+
   // Une IBC est presque cubique : dans la colonne de 100 px elle flottait
   // avec du vide au-dessus et en dessous.
   contains('disposition colonnes + IBC : la colonne du dessin s\'élargit',
@@ -1055,17 +1088,18 @@ contains('éditeur : et grisé', markup(edAlertOff), 'class="field off" id="aler
   const flakes = h => (h.match(/class="dtc-fl"/g) || []).length;
   const snow   = h => (h.match(/class="dtc-snow"/g) || []).length;
   const snowl = h => (h.match(/class="dtc-snowl"/g) || []).length;
-  check('bidon de face : bouchon, corps et socle', snow(wn({ winter: true })), 3);
-  check('bidon de trois quarts : deux coiffes et une congère',
-    snow(wn({ winter: true, view: 'iso' })), 3);
+  check('bidon de face : bouchon, poignée, creux, étiquette et pied',
+    snow(wn({ winter: true })), 5);
+  check('bidon de trois quarts : le dessus, le bouchon et trois congères',
+    snow(wn({ winter: true, view: 'iso' })), 5);
   check('cuve IBC de face : trois congères et les trois barres',
     snow(wn({ winter: true, shape: 'ibc' })), 6);
-  check('IBC de trois quarts : une coiffe, deux congères, trois barres',
-    snow(wn({ winter: true, shape: 'ibc', view: 'iso' })), 6);
-  check('tonneau de face : collerette, bouchon, socle et quatre nervures',
-    snow(wn({ winter: true, shape: 'barrel' })), 7);
-  check('tonneau de trois quarts : deux coiffes et la lèvre du col',
-    snow(wn({ winter: true, shape: 'barrel', view: 'iso' })), 3);
+  check('IBC de trois quarts : le dessus, le bouchon, deux congères, trois barres',
+    snow(wn({ winter: true, shape: 'ibc', view: 'iso' })), 7);
+  check('tonneau de face : trappe, rebord, nervures coupées au robinet, sol',
+    snow(wn({ winter: true, shape: 'barrel' })), 9);
+  check('tonneau de trois quarts : le dessus, la trappe, la lèvre et le sol',
+    snow(wn({ winter: true, shape: 'barrel', view: 'iso' })), 4);
   check('et quatre nervures courbes, tracées et non remplies',
     snowl(wn({ winter: true, shape: 'barrel', view: 'iso' })), 4);
   check('les nervures courbes n\'existent que là',
@@ -1078,22 +1112,43 @@ contains('éditeur : et grisé', markup(edAlertOff), 'class="field off" id="aler
   const dAttrs = h => [...h.matchAll(/class="dtc-snow" d="([^"]+)"/g)].map(m => m[1]);
   const qys    = d => [...d.matchAll(/Q[-\d.]+,([-\d.]+)/g)].map(m => Number(m[1]));
   {
-    // Bidon de face, dans l'ordre du tableau : bouchon, épaule, socle.
-    const [cap, body] = dAttrs(wn({ winter: true }));
+    // Bidon de face, dans l'ordre du tableau : le bouchon d'abord, le pied
+    // en dernier.
+    const all = dAttrs(wn({ winter: true }));
+    const cap = all[0], body = all.at(-1);
     check('congère du bouchon, étroite : trois bosses',
       (cap.match(/Q/g) || []).length, 3 * 2);
-    check('congère de l\'épaule, large : six bosses',
+    check('congère du pied, large : six bosses',
       (body.match(/Q/g) || []).length, 6 * 2);
     check('crête irrégulière, pas une rangée de bosses identiques',
       new Set(qys(body).slice(0, 6)).size > 1, true);
-    check('et un dessous qui passe sous l\'arête (y = 22)',
-      Math.max(...qys(body)) > 23.5, true);
+    check('et un dessous qui passe sous l\'arête (y = 121,4)',
+      Math.max(...qys(body)) > 122.9, true);
   }
   // Les flocons tombent sur toute la hauteur du dessin, pas sur 140 px fixes.
   contains('la chute suit la hauteur du tonneau',
     wn({ winter: true, shape: 'barrel', view: 'iso' }), '--fy:142px');
   contains('et celle de l\'IBC, plus courte',
     wn({ winter: true, shape: 'ibc' }), '--fy:122px');
+
+  /* La neige posée sur un dessus passe sous ce qui s'y dresse : la poignée
+     et le bouchon du bidon, la cage de l'IBC, la trappe du récupérateur.
+     Posée par-dessus, elle les enterrait. */
+  const before = (h, a, b) => h.indexOf(a) >= 0 && h.indexOf(a) < h.indexOf(b);
+  check('bidon 3/4 : la neige du dessus est sous le bouchon',
+    before(wn({ winter: true, view: 'iso' }), 'class="dtc-snow"', 'url(#dtc-cy-'), true);
+  check('IBC 3/4 : la neige du dessus est sous la cage',
+    before(wn({ winter: true, shape: 'ibc', view: 'iso' }), 'class="dtc-snow"', 'stroke="#7b848c"'), true);
+  check('récupérateur 3/4 : la neige du dessus est sous la trappe',
+    before(wn({ winter: true, shape: 'barrel', view: 'iso' }), 'class="dtc-snow"', 'fill="#5c5c5c"'), true);
+  check('de face, toute la neige vient par-dessus le dessin',
+    before(wn({ winter: true }), 'url(#dtc-cy-', 'class="dtc-snow"'), true);
+  for (const [shape, view] of [['can', 'iso'], ['ibc', 'iso'], ['barrel', 'iso'], ['can', 'face']]) {
+    check(`${shape} ${view} : le repère de la neige ne reste pas dans le dessin`,
+      wn({ winter: true, shape, view }).includes('dtc-under'), false);
+    check(`${shape} ${view} : ni hors hiver`,
+      wn({ shape, view }).includes('dtc-under'), false);
+  }
 
   // La quantité, en option : une ligne sous la cuve, et rien quand le niveau
   // est inconnu : un tiret ne dirait rien.

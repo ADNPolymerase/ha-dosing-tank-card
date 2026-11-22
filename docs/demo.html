@@ -32,6 +32,11 @@
     caption=0           drop the labels above the cards
     width=<px>          card column width, default 330
     stack=1             stack the cards in one column instead of a row
+    phase=<ms>          pin every animation to that offset, for GIF frames
+
+  CSS animations do not advance under --virtual-time-budget, so a GIF taken by
+  waiting between frames comes out static. docs/snowfall.gif (and .fr) is made
+  by tools/snowfall_gif.py, one capture per ?phase=, assembled with Pillow.
 -->
 <style>
   body { margin:0; padding:20px; font-family:Roboto,system-ui,sans-serif; }
@@ -161,7 +166,7 @@ if (mode === 'snowfall') {
     name: lang === 'fr' ? 'Cuve eau de pluie' : 'Rainwater tank',
     tank_view: 'iso', winter: true };
   for (const shape of ['can', 'ibc', 'barrel']) {
-    add(lang === 'fr' ? 'Avec la neige' : 'With the snowfall',
+    add(lang === 'fr' ? 'Neige qui tombe' : 'Falling snow',
       { ...base, tank_shape: shape }, silent, history([]));
     add(lang === 'fr' ? 'Sans' : 'Without',
       { ...base, tank_shape: shape, winter_snowfall: false }, silent, history([]));
@@ -195,5 +200,21 @@ if (mode === 'pump' || mode === 'all') {
       'input_datetime.sync': {
         state: 'x', attributes: { timestamp: Math.floor(now / 1000) } } },
     pumpHist);
+}
+
+/* ?phase=<ms>: every animation paused at that offset, so each GIF frame is
+   taken at a chosen point of the flakes' fall. Set again a little later in
+   case a card redraws, which starts its animations over. */
+const phase = p.get('phase');
+if (phase !== null) {
+  const freeze = () => {
+    for (const el of document.querySelectorAll('dosing-tank-card'))
+      for (const a of el.shadowRoot?.getAnimations() ?? []) {
+        a.pause();
+        a.currentTime = Number(phase);
+      }
+  };
+  requestAnimationFrame(freeze);
+  setTimeout(freeze, 800);
 }
 </script>

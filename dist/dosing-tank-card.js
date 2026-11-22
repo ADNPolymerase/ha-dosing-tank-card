@@ -642,30 +642,46 @@ const DTC_MAX_TILES = 6;
    every ledge that would catch snow, and on the thin bars and ribs, which is
    what spreads the fall over the whole tank instead of capping it. `caps` is
    the snow on a face a three quarter angle shows, `rims` the lip hanging over
-   the front of a round opening, and `arcs` the snow caught on a curved rib. */
+   the front of a round opening, and `arcs` the snow caught on a curved rib.
+   `under` holds the snow that goes beneath the parts standing on a top. */
 const DTC_SNOW = {
   'can/face': { w: 86, h: 140,
-    drifts: [[28, 58, 3, 3], [3, 83, 22, 6], [11, 75, 125, 2.5]] },
+    drifts: [[58, 75, 6.5, 2.6], [17, 49, 12, 3.4], [20.5, 45.5, 30, 3],
+             [23, 71, 111, 2], [7, 79, 121.4, 1.8]] },
   'can/iso': { w: 100, h: 140,
-    caps: [{ poly: [[10, 48], [62, 48], [81, 35], [29, 35]] }, { ell: [62.5, 33.5, 9, 5] }],
-    drifts: [[10, 62, 48, 5]] },
+    under: { caps: [{ poly: [[11, 47.5], [61, 47.5], [79, 35.5], [30, 35.5]] }] },
+    caps: [{ ell: [62.5, 31, 9, 5] }],
+    drifts: [[10, 62, 48, 5], [26, 45, 29.6, 2.4], [19.6, 55.6, 114, 1.8]] },
   'ibc/face': { w: 100, h: 112,
-    drifts: [[39, 61, 9, 3.5], [7, 93, 16, 5], [5, 95, 82, 2.5],
-             [9, 91, 32.5, 2], [9, 91, 49, 2], [9, 91, 65.5, 2]] },
+    drifts: [[41.5, 58.5, 4, 3.2], [7, 93, 14, 4.5], [9, 91, 31.5, 2],
+             [9, 91, 49, 2], [9, 91, 66.5, 2], [4, 96, 84.2, 2.6]] },
   'ibc/iso': { w: 100, h: 112,
-    caps: [{ poly: [[8, 22], [68, 22], [87, 9], [27, 9]] }],
-    drifts: [[8, 68, 22, 5], [5, 70, 81, 2.5],
-             [11, 65, 36.8, 2], [11, 65, 51.5, 2], [11, 65, 66.2, 2]] },
+    under: { caps: [{ poly: [[8, 22], [68, 22], [87, 9], [27, 9]] }] },
+    caps: [{ ell: [47.5, 9, 7, 3.4] }],
+    drifts: [[8, 68, 22, 5], [11, 65, 36.75, 2], [11, 65, 51.5, 2],
+             [11, 65, 66.25, 2], [5, 70, 81, 2.5]] },
   'barrel/face': { w: 86, h: 132,
-    caps: [{ ell: [43, 26, 34, 5] }],
-    drifts: [[30, 56, 14, 3.5], [16, 70, 110, 2.5],
-             [11, 75, 41.2, 2], [11, 75, 58.4, 2], [11, 75, 75.6, 2], [11, 75, 92.8, 2]] },
+    drifts: [[30.5, 55.5, 17.6, 3.2], [6, 30.5, 23, 3.6], [55.5, 80, 23, 3.6],
+             [10, 76, 44.5, 2], [10, 76, 61.3, 2], [10, 76, 78.1, 2],
+             [10, 50, 94.9, 2], [58, 76, 94.9, 2], [8, 78, 112, 3]] },
   'barrel/iso': { w: 100, h: 132,
-    caps: [{ ell: [48, 26, 30, 11] }, { ell: [48, 22, 13, 5] }],
-    rims: [[48, 26, 30, 11, 3.4]],
-    arcs: [[48, 42.8, 22, 8], [48, 59.6, 22, 8],
-           [48, 76.4, 22, 8], [48, 93.2, 22, 8]] },
+    under: { caps: [{ ell: [48, 28, 30, 11] }] },
+    caps: [{ ell: [48, 24.6, 15, 5.6] }],
+    rims: [[48, 28, 30, 11, 3.4]],
+    arcs: [[48, 44.1, 29, 10.6], [48, 60.5, 29, 10.6],
+           [48, 76.9, 29, 10.6], [48, 93.3, 29, 10.6]],
+    drifts: [[26, 70, 121.5, 2.8]] },
 };
+
+/* Snow lying on a top face has to go under what stands on that face, the
+   jerrycan's handle and cap, the IBC's cage and the butt's hatch, or it
+   buries them. The drawings mark that spot; everything else goes on last. */
+const DTC_UNDER = '<!--dtc-under-->';
+
+// Line colour of the six drawings: follows the theme, light or dark.
+const DTC_OL   = 'var(--secondary-text-color,#8a8a8a)';
+const DTC_EASE = 'transition:transform .9s cubic-bezier(.4,0,.2,1)';
+const _f2 = v => (+v).toFixed(2);
 
 // A tile key is either one of the above or an entity to read. Nothing else in
 // a Lovelace config looks like domain.object_id, so the dot is enough to tell
@@ -2172,15 +2188,19 @@ class DosingTankCard extends HTMLElement {
     }).join('');
   }
 
-  _svgSnow(key) {
-    const s = DTC_SNOW[key];
-    if (!s) return '';
-    const g = [
+  _svgSnowLayer(s) {
+    return [
       ...(s.caps   || []).map(c => this._snowCap(c)),
       ...(s.rims   || []).map(r => this._snowRim(...r)),
       ...(s.drifts || []).map(d => this._snowDrift(...d)),
       ...(s.arcs   || []).map(a => this._snowArc(...a)),
     ].join('');
+  }
+
+  _svgSnow(key) {
+    const s = DTC_SNOW[key];
+    if (!s) return '';
+    const g = this._svgSnowLayer(s);
     /* The flakes are the only animation a wintered card still runs, so
        leaving them out means it never repaints again (#120). The snow
        already lying on the tank is static and stays. */
@@ -2196,12 +2216,15 @@ class DosingTankCard extends HTMLElement {
               : shape === 'barrel' ? (iso ? this._svgBarrelIso(...a) : this._svgBarrelFace(...a))
               :                      (iso ? this._svgCanIso(...a)    : this._svgCanFace(...a));
     /* Winter (#3): the snow goes on last, over the finished drawing, so the
-       six shapes keep the geometry they had and the drifts live in one place.
-       Dropped in before the closing tag rather than threaded through each of
-       them. */
-    if (!this._isWinter()) return svg;
-    const cut = svg.lastIndexOf('</svg>');
-    return svg.slice(0, cut) + this._svgSnow(`${shape}/${iso ? 'iso' : 'face'}`) + svg.slice(cut);
+       drifts live in one place rather than threaded through each shape. The
+       one exception is the snow on a top face, dropped at the spot the
+       drawing marks so the parts standing on it stay above it. */
+    if (!this._isWinter()) return svg.replace(DTC_UNDER, '');
+    const key   = `${shape}/${iso ? 'iso' : 'face'}`;
+    const under = DTC_SNOW[key]?.under;
+    const out   = svg.replace(DTC_UNDER, under ? `<g>${this._svgSnowLayer(under)}</g>` : '');
+    const cut   = out.lastIndexOf('</svg>');
+    return out.slice(0, cut) + this._svgSnow(key) + out.slice(cut);
   }
 
   /* `fill` lets the drawing take the height its column is given instead of
@@ -2228,12 +2251,137 @@ class DosingTankCard extends HTMLElement {
   stroke-linejoin="round">${label}</text>`;
   }
 
-  _svgTicks(x1, x2, top, h) {
-    return [25, 50, 75].map(lv => {
-      const y = top + h - (lv / 100) * h;
-      return `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="var(--secondary-text-color,#8a8a8a)"
-  stroke-opacity=".5" stroke-width="1.5" stroke-linecap="round"/>`;
-    }).join('');
+  /* Shared paint for the six drawings. Gradients and flat greys only, no SVG
+     filter: a wall tablet repaints these on every level change. */
+  _tankDefs(u, base, light) {
+    return `${this._svgGrad(u, base, light)}
+  <linearGradient id="dtc-dp-${u}" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#fff" stop-opacity=".12"/>
+    <stop offset="12%" stop-color="#000" stop-opacity="0"/>
+    <stop offset="50%" stop-color="#000" stop-opacity=".17"/></linearGradient>
+  <linearGradient id="dtc-vo-${u}" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%" stop-color="#000" stop-opacity=".30"/>
+    <stop offset="16%" stop-color="#000" stop-opacity="0"/>
+    <stop offset="27%" stop-color="#fff" stop-opacity=".26"/>
+    <stop offset="40%" stop-color="#fff" stop-opacity="0"/>
+    <stop offset="78%" stop-color="#000" stop-opacity="0"/>
+    <stop offset="100%" stop-color="#000" stop-opacity=".30"/></linearGradient>
+  <linearGradient id="dtc-gb-${u}" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%" stop-color="#000" stop-opacity=".14"/>
+    <stop offset="7%" stop-color="#fff" stop-opacity=".22"/>
+    <stop offset="17%" stop-color="#fff" stop-opacity="0"/>
+    <stop offset="88%" stop-color="#000" stop-opacity="0"/>
+    <stop offset="100%" stop-color="#000" stop-opacity=".2"/></linearGradient>
+  <linearGradient id="dtc-cy-${u}" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%" stop-color="#000" stop-opacity=".38"/>
+    <stop offset="35%" stop-color="#fff" stop-opacity=".28"/>
+    <stop offset="55%" stop-color="#fff" stop-opacity="0"/>
+    <stop offset="100%" stop-color="#000" stop-opacity=".42"/></linearGradient>
+  <linearGradient id="dtc-br-${u}" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#f3d77e"/><stop offset="55%" stop-color="#c79b3b"/>
+    <stop offset="100%" stop-color="#8f6a22"/></linearGradient>
+  <radialGradient id="dtc-sh-${u}">
+    <stop offset="0%" stop-color="#000" stop-opacity=".32"/>
+    <stop offset="100%" stop-color="#000" stop-opacity="0"/></radialGradient>`;
+  }
+
+  // The soft patch of shade the tank stands on.
+  _tankShadow(u, cx, cy, rx, ry) {
+    return `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="url(#dtc-sh-${u})"/>`;
+  }
+
+  /* Molded graduation: majors at the quarters, minors in between. Each mark
+     is an embossed pair, dark under light, so it reads on the liquid and on
+     the empty plastic in either theme. `minorOnly` is for the IBC, whose
+     cage bars already sit on the quarters. */
+  _tankScale(x, top, h, len = 9, minorOnly = false) {
+    const f = v => v.toFixed(2);
+    let out = '';
+    for (const lv of [12.5, 25, 37.5, 50, 62.5, 75, 87.5]) {
+      const major = lv % 25 === 0;
+      if (minorOnly && major) continue;
+      const y = top + h - (lv / 100) * h, l = major ? len : len * .5;
+      out += `<path d="M${f(x)},${f(y + .7)} h${l}" stroke="#000" stroke-opacity=".35" stroke-width="1.3" stroke-linecap="round"/>
+<path d="M${f(x)},${f(y)} h${l}" stroke="#fff" stroke-opacity=".78" stroke-width="1.1" stroke-linecap="round"/>`;
+    }
+    return out;
+  }
+
+  /* Front-view liquid: a column twice the tank height that slides up under
+     the clip. Sliding rather than scaling is what lets the lit band on the
+     surface keep its thickness at every level. */
+  _liquidFace(u, X, Y, W, H, s, light) {
+    if (s <= 0) return '';
+    return `<g clip-path="url(#dtc-cp-${u})"><g style="transform:translateY(${((1 - s) * H).toFixed(2)}px);transition:transform .9s cubic-bezier(.4,0,.2,1)">
+  <rect x="${X}" y="${Y}" width="${W}" height="${2 * H}" fill="url(#dtc-lg-${u})"/>
+  <rect x="${X}" y="${Y}" width="${W}" height="${2 * H}" fill="url(#dtc-dp-${u})"/>
+  <rect x="${X}" y="${Y}" width="${W}" height="3.4" fill="${light}"/>
+  <rect x="${X}" y="${Y}" width="${W}" height="3.4" fill="#fff" fill-opacity=".28"/>
+  <rect x="${X}" y="${Y}" width="${W}" height="1" fill="#fff" fill-opacity=".55"/>
+</g></g>`;
+  }
+
+  // A knurled screw cap seen from the front, in the colour of the liquid.
+  _capFace(u, x, y, w, h, base) {
+    let k = '';
+    for (let xx = x + 2.2; xx < x + w - 1.5; xx += 2.4)
+      k += `<path d="M${xx.toFixed(2)},${y + 1.8} v${h - 3.6}" stroke="#000" stroke-opacity=".22" stroke-width=".9"/>`;
+    return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2.6" fill="${base}"/>
+<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2.6" fill="url(#dtc-cy-${u})"/>${k}
+<rect x="${x + 1.5}" y="${y + 1}" width="${w - 3}" height="1.6" rx=".8" fill="#fff" fill-opacity=".35"/>
+<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2.6" fill="none" stroke="#000" stroke-opacity=".3" stroke-width=".9"/>`;
+  }
+
+  // The same cap from three quarters: a short knurled cylinder.
+  _capIso(u, cx, cy, rx, ry, hh, base) {
+    const f = v => v.toFixed(2);
+    let k = '';
+    for (let i = 1; i < 8; i++) {
+      const a = Math.PI * i / 8, x = cx - rx * Math.cos(a), y = cy + ry * Math.sin(a);
+      k += `<path d="M${f(x)},${f(y - hh + .6)} v${hh - 1.2}" stroke="#000" stroke-opacity=".2" stroke-width=".8"/>`;
+    }
+    const side = `M${cx - rx},${cy - hh} V${cy} A${rx},${ry} 0 0 0 ${cx + rx},${cy} V${cy - hh} Z`;
+    return `<path d="${side}" fill="${base}"/><path d="${side}" fill="url(#dtc-cy-${u})"/>${k}
+<ellipse cx="${cx}" cy="${cy - hh}" rx="${rx}" ry="${ry}" fill="${base}"/>
+<ellipse cx="${cx}" cy="${cy - hh}" rx="${rx}" ry="${ry}" fill="#fff" fill-opacity=".22"/>
+<ellipse cx="${f(cx - rx * .25)}" cy="${f(cy - hh - ry * .2)}" rx="${f(rx * .45)}" ry="${f(ry * .35)}" fill="#fff" fill-opacity=".25"/>
+<path d="${side}" fill="none" stroke="#000" stroke-opacity=".3" stroke-width=".9"/>
+<ellipse cx="${cx}" cy="${cy - hh}" rx="${rx}" ry="${ry}" fill="none" stroke="#000" stroke-opacity=".3" stroke-width=".9"/>`;
+  }
+
+  // A galvanised cage tube: dark body, lit core, soft shadow under it.
+  _tube(d, w, lit = 'up') {
+    const off = lit === 'up' ? 'translate(0,-.45)' : 'translate(-.45,0)';
+    return `<path d="${d}" fill="none" stroke="#000" stroke-opacity=".22" stroke-width="${w + 2}" stroke-linecap="round" stroke-linejoin="round" transform="translate(.6,.9)"/>
+<path d="${d}" fill="none" stroke="#7b848c" stroke-width="${w + .8}" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="${d}" fill="none" stroke="#d3d8dc" stroke-width="${(w * .45).toFixed(2)}" stroke-linecap="round" stroke-linejoin="round" transform="${off}"/>`;
+  }
+
+  // The IBC's bottom outlet: a butterfly valve, yellow lever, capped spout.
+  _ibcValve(x, y) {
+    return `<rect x="${x}" y="${y}" width="12" height="7.5" rx="1.6" fill="#dfe3e6" stroke="#000" stroke-opacity=".28" stroke-width=".8"/>
+<rect x="${x + 1}" y="${y + 1}" width="10" height="1.4" rx=".7" fill="#fff" fill-opacity=".6"/>
+<rect x="${x + 11.5}" y="${y + 1.6}" width="5.5" height="4.6" rx="1" fill="#cfd4d8" stroke="#000" stroke-opacity=".28" stroke-width=".8"/>
+<rect x="${x + 16.5}" y="${y + 1}" width="3.2" height="5.8" rx="1" fill="#2c3136"/>
+<path d="M${x + 6},${y + .4} l-7.5,-4.6" stroke="#b58a00" stroke-width="3.4" stroke-linecap="round"/>
+<path d="M${x + 6},${y + .4} l-7.5,-4.6" stroke="#f5c518" stroke-width="2.2" stroke-linecap="round"/>
+<circle cx="${x + 6}" cy="${y + .6}" r="1.5" fill="#6f777e"/>`;
+  }
+
+  // The water butt's brass tap.
+  _brassTap(u, x, y) {
+    const g = `url(#dtc-br-${u})`;
+    return `<circle cx="${x}" cy="${y}" r="3.4" fill="${g}" stroke="#6e5113" stroke-width=".7"/>
+<path d="M${x + 1.5},${y - 1.6} h5.2 q2.3,0 2.3,2.3 v4 h-2.9 v-2.6 h-4.6 Z" fill="${g}" stroke="#6e5113" stroke-width=".7" stroke-linejoin="round"/>
+<rect x="${x - 1.6}" y="${y - 8.4}" width="3.2" height="6" rx="1.4" fill="${g}" stroke="#6e5113" stroke-width=".7"/>
+<rect x="${x - .9}" y="${y - 7.6}" width="1" height="4.2" rx=".5" fill="#fff" fill-opacity=".45"/>`;
+  }
+
+  /* Neutral plastic that follows the theme: the parts are solid greys and the
+     group is made translucent once, so where they overlap the alpha does not
+     pile up into a darker patch. */
+  _plastic(op, inner) {
+    return `<g opacity="${op}">${inner}</g>`;
   }
 
   /* A polygon with rounded corners. Drawing the three quarter box as one
@@ -2295,255 +2443,291 @@ class DosingTankCard extends HTMLElement {
     return { sil, side, top, front, shell, liquid, ceiling, clip, X2 };
   }
 
-  // ── Jerrycan, front ───────────────────────────────────────────────────────
-
+  // ── Jerrycan, front ────────────────────────────────────────────────────────
   _svgCanFace(pct, base, light, label, fill) {
-    const W = 86, H = 140, BX = 3, BY = 22, BW = 80, BH = 105, BR = 10,
-          NX = 28, NY = 3, NW = 30, NH = 18, NR = 6;
-    const s = Math.max(0, Math.min(1, pct / 100));
-    const u = this._uid;
+    const W = 86, H = 140, BX = 5, BY = 30, BW = 76, BH = 98, R = 11;
+    const s = Math.max(0, Math.min(1, pct / 100)), u = this._uid;
+    const handleFill = `M12,30 V21 Q12,12 21,12 H45 Q54,12 54,21 V30 Z
+      M20,30 V25 Q20,20.5 24.5,20.5 H41.5 Q46,20.5 46,25 V30 Z`;
+    const handleLine = `M12,30 V21 Q12,12 21,12 H45 Q54,12 54,21 V30 M20,30 V25 Q20,20.5 24.5,20.5 H41.5 Q46,20.5 46,25 V30`;
+    const body = `<rect x="${BX}" y="${BY}" width="${BW}" height="${BH}" rx="${R}"`;
     return `<svg ${this._svgSize(fill, W, H)} viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
-<defs>
-  <clipPath id="dtc-cp-${u}"><rect x="${BX}" y="${BY}" width="${BW}" height="${BH}" rx="${BR}"/></clipPath>
-  ${this._svgGrad(u, base, light)}
-  <linearGradient id="dtc-sh-${u}" x1="0" y1="0" x2="1" y2="0">
-    <stop offset="0%" stop-color="rgba(255,255,255,0)"/>
-    <stop offset="30%" stop-color="rgba(255,255,255,.12)"/>
-    <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
-  </linearGradient>
-</defs>
-<rect x="${NX}" y="${NY}" width="${NW}" height="${NH}" rx="${NR}"
-  fill="var(--secondary-background-color,#2a2a2a)"
-  stroke="var(--divider-color,rgba(255,255,255,.18))" stroke-width="1.5"/>
-<rect x="${NX + 4}" y="${NY + 5}" width="${NW - 8}" height="3" rx="1.5" fill="rgba(255,255,255,.08)"/>
-<rect x="${BX}" y="${BY}" width="${BW}" height="${BH}" rx="${BR}"
-  fill="rgba(0,0,0,.3)" stroke="var(--divider-color,rgba(255,255,255,.18))" stroke-width="1.5"/>
+<defs>${this._tankDefs(u, base, light)}
+  <clipPath id="dtc-cp-${u}">${body}/></clipPath></defs>
+${this._tankShadow(u, 43, 130, 40, 5)}
+${this._plastic(.42, `<path d="${handleFill}" fill-rule="evenodd" fill="#808080"/>
+  <path d="M15,30 V21.5 Q15,15 21.5,15 H44.5" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="1.6" stroke-linecap="round"/>
+  <rect x="60" y="21" width="13" height="10" fill="#808080"/>
+  <rect x="61.5" y="22" width="3" height="8" fill="#fff" fill-opacity=".5"/>`)}
+<path d="${handleLine}" fill="none" stroke="${DTC_OL}" stroke-opacity=".6" stroke-width="1.3"/>
+<path d="M60,30 V21 M73,30 V21" stroke="${DTC_OL}" stroke-opacity=".6" stroke-width="1.3"/>
+<rect x="58" y="19" width="17" height="3.4" rx="1.2" fill="${base}"/>
+<rect x="58" y="19" width="17" height="3.4" rx="1.2" fill="#000" fill-opacity=".3"/>
+${this._capFace(u, 57.5, 6.5, 18, 13.5, base)}
+${body} fill="#808080" fill-opacity=".16"/>
+${this._liquidFace(u, BX, BY, BW, BH, s, light)}
 <g clip-path="url(#dtc-cp-${u})">
-  <rect x="${BX}" y="${BY}" width="${BW}" height="${BH}" fill="url(#dtc-lg-${u})"
-    style="transform-box:fill-box;transform-origin:50% 100%;transform:scaleY(${s});transition:transform .9s cubic-bezier(.4,0,.2,1)"/>
+  <rect x="${BX}" y="${BY}" width="${BW}" height="${BH}" fill="url(#dtc-gb-${u})"/>
+  <rect x="21.6" y="47.8" width="52" height="64" rx="7" fill="none" stroke="#000" stroke-opacity=".22" stroke-width="1.3"/>
+  <rect x="21" y="47" width="52" height="64" rx="7" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="1.1"/>
+  <path d="M${BX},121.8 H${BX + BW}" stroke="#000" stroke-opacity=".2" stroke-width="1.3"/>
+  <path d="M${BX},121 H${BX + BW}" stroke="#fff" stroke-opacity=".18" stroke-width="1"/>
+  <path d="M${BX + 6},${BY + 2.2} H${BX + BW - 6}" stroke="#fff" stroke-opacity=".35" stroke-width="1.4" stroke-linecap="round"/>
 </g>
-<rect x="${BX}" y="${BY}" width="${BW}" height="${BH}" rx="${BR}" fill="url(#dtc-sh-${u})" pointer-events="none"/>
-<rect x="${BX + 5}" y="${BY + 6}" width="5" height="${BH - 12}" rx="2.5" fill="rgba(255,255,255,.07)" pointer-events="none"/>
-${this._svgTicks(BX + 2, BX + 14, BY, BH)}
-${this._svgPct(W / 2, BY + BH / 2 + 7, label ?? `${pct.toFixed(0)}%`, 19)}
-<rect x="${BX + 8}" y="${BY + BH - 2}" width="${BW - 16}" height="8" rx="4"
-  fill="var(--secondary-background-color,#2a2a2a)"
-  stroke="var(--divider-color,rgba(255,255,255,.12))" stroke-width="1.5"/>
+${body} fill="none" stroke="${DTC_OL}" stroke-opacity=".6" stroke-width="1.4"/>
+${this._tankScale(BX + 3.5, BY, BH, 9)}
+${this._svgPct(47, BY + BH / 2 + 7, label ?? `${pct.toFixed(0)}%`, 19)}
 </svg>`;
   }
 
-  // ── Jerrycan, three quarters ──────────────────────────────────────────────
-
+  // ── Jerrycan, three quarters ───────────────────────────────────────────────
   _svgCanIso(pct, base, light, label, fill) {
     const W = 100, H = 140, FX = 10, FY = 48, FW = 52, FH = 78, DX = 19, DY = -13, R = 8;
-    const s = Math.max(0, Math.min(1, pct / 100));
-    const u = this._uid;
-    const b = this._box34({ u, s, base, light, FX, FY, FW, FH, DX, DY, R });
-    const X2 = b.X2, shell = 'var(--secondary-background-color,#2a2a2a)',
-          edge = 'var(--divider-color,rgba(255,255,255,.18))';
-    const cx = X2 + DX * .5 - 9, cy = FY + DY * .5 - 1;
+    const s = Math.max(0, Math.min(1, pct / 100)), u = this._uid;
+    const b = this._box34({ u, s, base, light, FX, FY, FW, FH, DX, DY, R,
+      ef: 'rgba(128,128,128,.14)', es: 'rgba(128,128,128,.30)', et: 'rgba(128,128,128,.22)' });
+    const X2 = b.X2;
+    // Handle: the same bridge as the front view, extruded across the depth.
+    const prof = (t, holed = true) => {
+      const ox = DX * t, oy = DY * t, x0 = FX + 5 + ox, y0 = FY + oy;
+      const out = `M${_f2(x0)},${_f2(y0)} V${_f2(y0 - 9)} Q${_f2(x0)},${_f2(y0 - 14)} ${_f2(x0 + 5)},${_f2(y0 - 14)} H${_f2(x0 + 22)} Q${_f2(x0 + 27)},${_f2(y0 - 14)} ${_f2(x0 + 27)},${_f2(y0 - 9)} V${_f2(y0)} Z`;
+      const hole = `M${_f2(x0 + 6.5)},${_f2(y0)} V${_f2(y0 - 4)} Q${_f2(x0 + 6.5)},${_f2(y0 - 7)} ${_f2(x0 + 9.5)},${_f2(y0 - 7)} H${_f2(x0 + 17.5)} Q${_f2(x0 + 20.5)},${_f2(y0 - 7)} ${_f2(x0 + 20.5)},${_f2(y0 - 4)} V${_f2(y0)} Z`;
+      return holed ? out + ' ' + hole : out;
+    };
+    const t1 = .36, t2 = .6;
+    // Outer top contour of the bridge, sampled so it can be extruded.
+    const contour = t => {
+      const ox = DX * t, oy = DY * t, x0 = FX + 5 + ox, y0 = FY + oy, pts = [];
+      const q = (a, c, b) => { for (let i = 1; i <= 4; i++) { const k = i / 4, m = 1 - k;
+        pts.push([m * m * a[0] + 2 * m * k * c[0] + k * k * b[0], m * m * a[1] + 2 * m * k * c[1] + k * k * b[1]]); } };
+      pts.push([x0, y0 - 9]);
+      q([x0, y0 - 9], [x0, y0 - 14], [x0 + 5, y0 - 14]);
+      pts.push([x0 + 22, y0 - 14]);
+      q([x0 + 22, y0 - 14], [x0 + 27, y0 - 14], [x0 + 27, y0 - 9]);
+      return pts;
+    };
+    const cf = contour(t1), cb = contour(t2);
+    const topStrip = 'M' + [...cf, ...cb.reverse()].map(p => p.map(_f2).join(',')).join(' L') + ' Z';
+    const ef = [FX + 32 + DX * t1, FY + DY * t1], eb = [FX + 32 + DX * t2, FY + DY * t2];
+    const endFace = `M${_f2(ef[0])},${_f2(ef[1] - 9)} V${_f2(ef[1])} L${_f2(eb[0])},${_f2(eb[1])} V${_f2(eb[1] - 9)} Z`;
+    const cx = X2 + DX * .5 - 9, cy = FY + DY * .5;
+    // Recessed panels on the two visible faces.
+    const sp = (tt, y) => [X2 + DX * tt, y + DY * tt];
+    const sideP = [sp(.22, FY + 12), sp(.78, FY + 12), sp(.78, FY + FH - 12), sp(.22, FY + FH - 12)]
+      .map(p => p.map(_f2).join(',')).join(' ');
     return `<svg ${this._svgSize(fill, W, H)} viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
-<defs>${this._svgGrad(u, base, light)}${b.clip}</defs>
+<defs>${this._tankDefs(u, base, light)}${b.clip}</defs>
+${this._tankShadow(u, FX + FW / 2 + 9, FY + FH + 3, 46, 6)}
 ${b.shell}${b.liquid}${b.ceiling}
-<path d="${b.sil}" fill="none" stroke="${edge}" stroke-width="1.5" stroke-linejoin="round"/>
 <g clip-path="url(#dtc-cp-${u})">
-  <path d="M${X2},${FY} V${FY + FH}" stroke="${edge}" stroke-width="1.2"/>
-  <path d="M${FX},${FY} H${X2} L${X2 + DX},${FY + DY}" fill="none" stroke="${edge}" stroke-width="1.2"/>
-  <path d="M${FX + 7},${FY + FH * .34} H${X2 - 7}" stroke="rgba(0,0,0,.16)" stroke-width="2" stroke-linecap="round"/>
-  <path d="M${FX + 7},${FY + FH * .66} H${X2 - 7}" stroke="rgba(0,0,0,.16)" stroke-width="2" stroke-linecap="round"/>
+  <path d="${b.front}" fill="url(#dtc-gb-${u})"/>
+  <path d="${b.side}" fill="#000" fill-opacity=".10"/>
+  <path d="${b.top}" fill="#fff" fill-opacity=".08"/>
+  <rect x="${FX + 9.6}" y="${FY + 10.8}" width="${FW - 16}" height="${FH - 22}" rx="6" fill="none" stroke="#000" stroke-opacity=".22" stroke-width="1.2"/>
+  <rect x="${FX + 9}" y="${FY + 10}" width="${FW - 16}" height="${FH - 22}" rx="6" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="1"/>
+  <polygon points="${sideP}" fill="none" stroke="#000" stroke-opacity=".2" stroke-width="1.1" stroke-linejoin="round"/>
+  <path d="M${X2},${FY} V${FY + FH}" stroke="#fff" stroke-opacity=".28" stroke-width="1.2"/>
+  <path d="M${FX + 5},${FY + 2} H${X2 - 4}" stroke="#fff" stroke-opacity=".35" stroke-width="1.3" stroke-linecap="round"/>
 </g>
-<path d="M${cx - 9},${cy - 1} v-6 a9,5 0 0 1 18,0 v6 a9,5 0 0 1 -18,0 Z" fill="${shell}" stroke="${edge}" stroke-width="1.2"/>
-<ellipse cx="${cx}" cy="${cy - 7}" rx="9" ry="5" fill="${shell}" stroke="${edge}" stroke-width="1.2"/>
-<ellipse cx="${cx}" cy="${cy - 7}" rx="5" ry="2.7" fill="rgba(0,0,0,.16)"/>
-${this._svgTicks(FX + 4, FX + 14, FY, FH)}
-${this._svgPct(FX + FW / 2, FY + FH / 2 + 7, label ?? `${pct.toFixed(0)}%`, 18)}
+<path d="${b.sil}" fill="none" stroke="${DTC_OL}" stroke-opacity=".6" stroke-width="1.4" stroke-linejoin="round"/>
+<path d="M${FX + 3},${FY} H${X2} l${_f2(DX * .6)},${_f2(DY * .6)}" fill="none" stroke="${DTC_OL}" stroke-opacity=".45" stroke-width="1.1" stroke-linejoin="round"/>
+${DTC_UNDER}
+${this._plastic(.62, `<path d="${endFace}" fill="#6a6a6a"/>
+  <path d="${topStrip}" fill="#b4b4b4"/>
+  <path d="${prof(t1)}" fill-rule="evenodd" fill="#8c8c8c"/>
+  <path d="M${_f2(FX + 8 + DX * t1)},${_f2(FY + DY * t1)} V${_f2(FY - 9 + DY * t1)} Q${_f2(FX + 8 + DX * t1)},${_f2(FY - 11.5 + DY * t1)} ${_f2(FX + 11 + DX * t1)},${_f2(FY - 11.5 + DY * t1)} H${_f2(FX + 26 + DX * t1)}" fill="none" stroke="#fff" stroke-opacity=".75" stroke-width="1.3" stroke-linecap="round"/>`)}
+<path d="${prof(t1)}" fill="none" stroke="${DTC_OL}" stroke-opacity=".55" stroke-width="1.1" stroke-linejoin="round"/>
+<path d="${topStrip}" fill="none" stroke="${DTC_OL}" stroke-opacity=".4" stroke-width=".9" stroke-linejoin="round"/>
+${this._plastic(.45, `<path d="M${cx - 7.5},${cy} v-4 a7.5,4.2 0 0 1 15,0 v4 a7.5,4.2 0 0 1 -15,0 Z" fill="#808080"/>`)}
+${this._capIso(u, cx, cy - 3.5, 9, 5, 7, base)}
+${this._tankScale(FX + 3.5, FY, FH, 9)}
+${this._svgPct(FX + FW / 2 + 2, FY + FH / 2 + 7, label ?? `${pct.toFixed(0)}%`, 18)}
 </svg>`;
   }
 
-  // ── IBC tank, front ───────────────────────────────────────────────────────
-
+  // ── IBC, front ─────────────────────────────────────────────────────────────
   _svgIbcFace(pct, base, light, label, fill) {
-    const W = 100, H = 112, BX = 7, BY = 16, BW = 86, BH = 66, R = 3;
-    const s = Math.max(0, Math.min(1, pct / 100));
-    const u = this._uid;
-    const cage = 'rgba(150,158,166,.95)', rearC = 'rgba(128,136,144,.42)';
-    let rear = '';
-    for (let k = 1; k <= 3; k++) {
-      const y = BY + 3 + k * (BH - 6) / 4;
-      rear += `<line x1="${BX + 4}" y1="${y}" x2="${BX + BW - 4}" y2="${y}" stroke="${rearC}" stroke-width="1.8"/>`;
-    }
-    for (let k = 1; k <= 4; k++) {
-      const x = BX + 4 + k * (BW - 8) / 5;
-      rear += `<line x1="${x}" y1="${BY + 3}" x2="${x}" y2="${BY + BH - 3}" stroke="${rearC}" stroke-width="1.6"/>`;
-    }
-    let bars = '';
-    for (let k = 1; k <= 3; k++) {
-      const y = BY + k * BH / 4;
-      bars += `<line x1="${BX}" y1="${y}" x2="${BX + BW}" y2="${y}" stroke="${cage}" stroke-width="2.6"/>`;
-    }
-    for (let k = 1; k <= 4; k++) {
-      const x = BX + k * BW / 5;
-      bars += `<line x1="${x}" y1="${BY}" x2="${x}" y2="${BY + BH}" stroke="${cage}" stroke-width="2.2"/>`;
-    }
+    const W = 100, H = 112, CX0 = 6, CY0 = 14, CW = 88, CH = 70;       // cage
+    const BX = 10, BY = 17, BW = 80, BH = 65, R = 7;                      // bottle
+    const s = Math.max(0, Math.min(1, pct / 100)), u = this._uid;
+    const bottle = `<rect x="${BX}" y="${BY}" width="${BW}" height="${BH}" rx="${R}"`;
+    const vx = [1, 2, 3, 4].map(k => CX0 + k * CW / 5);
+    const hy = [1, 2, 3].map(k => CY0 + k * CH / 4);
+    const bays = [0, 1, 2, 3, 4].map(k => {
+      const x = CX0 + k * CW / 5;
+      return `<rect x="${_f2(x + 2)}" y="${BY}" width="${_f2(CW / 5 * .38)}" height="${BH}" fill="url(#dtc-bay-${u})"/>`;
+    }).join('');
+    let cage = '';
+    for (const x of vx) cage += this._tube(`M${_f2(x)},${CY0} V${CY0 + CH}`, 2.2, 'left');
+    for (const y of hy) cage += this._tube(`M${CX0},${_f2(y)} H${CX0 + CW}`, 2.4);
+    cage += this._tube(`M${CX0 + 3},${CY0} H${CX0 + CW - 3} Q${CX0 + CW},${CY0} ${CX0 + CW},${CY0 + 3} V${CY0 + CH} H${CX0} V${CY0 + 3} Q${CX0},${CY0} ${CX0 + 3},${CY0} Z`, 2.8);
     return `<svg ${this._svgSize(fill, W, H)} viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
-<defs><clipPath id="dtc-cp-${u}"><rect x="${BX}" y="${BY}" width="${BW}" height="${BH}" rx="${R}"/></clipPath>
-${this._svgGrad(u, base, light)}</defs>
-<rect x="${BX + 32}" y="${BY - 7}" width="22" height="7" rx="2" fill="#9aa1a8" stroke="rgba(0,0,0,.22)" stroke-width="1"/>
-<rect x="${BX}" y="${BY}" width="${BW}" height="${BH}" rx="${R}" fill="rgba(127,127,127,.10)"/>
-<g clip-path="url(#dtc-cp-${u})">${rear}</g>
-<g clip-path="url(#dtc-cp-${u})">
-  <rect x="${BX}" y="${BY}" width="${BW}" height="${BH}" fill="url(#dtc-lg-${u})"
-    style="transform-box:fill-box;transform-origin:50% 100%;transform:scaleY(${s});transition:transform .9s cubic-bezier(.4,0,.2,1)"/>
-</g>
-${bars}
-<rect x="${BX}" y="${BY}" width="${BW}" height="${BH}" rx="${R}" fill="none" stroke="${cage}" stroke-width="3"/>
-<rect x="${BX + 30}" y="${BY + BH - 8}" width="16" height="8" rx="2" fill="#3a3f44"/>
-<rect x="${BX + 45}" y="${BY + BH - 7}" width="10" height="5" rx="2" fill="#2f7fd8"/>
-<rect x="${BX - 2}" y="${BY + BH}" width="${BW + 4}" height="8" fill="#7d848b"/>
-${[0, 1, 2].map(i => `<rect x="${BX + 2 + i * 34}" y="${BY + BH + 8}" width="14" height="6" rx="1" fill="#50565b"/>`).join('')}
-${this._svgTicks(BX + 3, BX + 13, BY, BH)}
+<defs>${this._tankDefs(u, base, light)}
+  <clipPath id="dtc-cp-${u}">${bottle}/></clipPath>
+  <linearGradient id="dtc-bay-${u}" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%" stop-color="#fff" stop-opacity="0"/><stop offset="45%" stop-color="#fff" stop-opacity=".22"/>
+    <stop offset="100%" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>
+${this._tankShadow(u, 50, 101, 50, 4)}
+<rect x="3" y="85" width="94" height="4.6" rx=".8" fill="#c79e6a"/>
+<path d="M3,85.7 H97" stroke="#ecd0a2" stroke-width="1"/>
+${[26, 50, 74].map(x => `<path d="M${x},85 v4.6" stroke="#8a6238" stroke-opacity=".6" stroke-width=".7"/>`).join('')}
+${[4, 43.5, 83].map(x => `<rect x="${x}" y="89.6" width="13" height="6" fill="#a87c4c"/><rect x="${x}" y="89.6" width="13" height="1.4" fill="#000" fill-opacity=".22"/>`).join('')}
+<rect x="3" y="95.6" width="94" height="3" rx=".6" fill="#b88d59"/>
+<rect x="3" y="85" width="94" height="13.6" rx=".8" fill="none" stroke="#6d4b28" stroke-opacity=".45" stroke-width=".7"/>
+${bottle} fill="#c8cfd5" fill-opacity=".34"/>
+${this._liquidFace(u, BX, BY, BW, BH, s, light)}
+<g clip-path="url(#dtc-cp-${u})">${bays}
+  <rect x="${BX}" y="${BY + BH - 5}" width="${BW}" height="5" fill="#000" fill-opacity=".1"/></g>
+${bottle} fill="none" stroke="${DTC_OL}" stroke-opacity=".45" stroke-width="1"/>
+${this._tankScale(BX + 2.5, BY, BH, 7, true)}
+${this._capFace(u, 41, 4, 18, 10.5, base)}
+${cage}
+<rect x="11" y="18.5" width="9.5" height="10" rx="1" fill="#e9ecee" stroke="#000" stroke-opacity=".3" stroke-width=".6"/>
+${[21, 23.2, 25.4].map(y => `<path d="M12.6,${y} h6.3" stroke="#555" stroke-opacity=".5" stroke-width=".7"/>`).join('')}
+${this._ibcValve(44, 78)}
 ${this._svgPct(BX + BW / 2, BY + BH / 2 + 6, label ?? `${pct.toFixed(0)}%`, 18)}
 </svg>`;
   }
 
-  // ── IBC tank, three quarters ──────────────────────────────────────────────
-
+  // ── IBC, three quarters ────────────────────────────────────────────────────
   _svgIbcIso(pct, base, light, label, fill) {
-    const W = 100, H = 112, FX = 8, FY = 22, FW = 60, FH = 59, DX = 19, DY = -13, R = 3;
-    const s = Math.max(0, Math.min(1, pct / 100));
-    const u = this._uid;
-    /* The body is nearly transparent so the empty part reads as the card
-       surface, white on a light theme, and the cage keeps its contrast. */
+    const W = 100, H = 112, FX = 8, FY = 22, FW = 60, FH = 59, DX = 19, DY = -13, R = 4;
+    const s = Math.max(0, Math.min(1, pct / 100)), u = this._uid;
     const b = this._box34({ u, s, base, light, FX, FY, FW, FH, DX, DY, R,
-      ef: 'rgba(127,127,127,.10)', es: 'rgba(0,0,0,.16)', et: 'rgba(127,127,127,.10)' });
-    const X2 = b.X2, cage = 'rgba(150,158,166,.95)', cageD = 'rgba(104,112,120,.95)',
-          rearC = 'rgba(128,136,144,.45)';
-    let rear = `<path d="M${FX + DX},${FY + DY} V${FY + FH + DY} H${X2 + DX}" fill="none" stroke="${rearC}" stroke-width="2"/>`;
+      ef: 'rgba(200,207,213,.34)', es: 'rgba(150,158,165,.36)', et: 'rgba(210,216,221,.30)' });
+    const X2 = b.X2, BB = FY + FH;
+    const rearC = 'rgba(120,128,136,.35)';
+    let rear = `<path d="M${FX + DX},${FY + DY} V${BB + DY} H${X2 + DX}" fill="none" stroke="${rearC}" stroke-width="1.6"/>`;
     for (let k = 1; k <= 3; k++) {
       const y = FY + DY + k * FH / 4;
-      rear += `<path d="M${FX},${y - DY} L${FX + DX},${y} H${X2 + DX}" fill="none" stroke="${rearC}" stroke-width="1.8"/>`;
+      rear += `<path d="M${FX},${y - DY} L${FX + DX},${y} H${X2 + DX}" fill="none" stroke="${rearC}" stroke-width="1.4"/>`;
     }
-    for (let k = 1; k <= 3; k++) {
-      const x = FX + DX + k * FW / 4;
-      rear += `<line x1="${x}" y1="${FY + DY}" x2="${x}" y2="${FY + FH + DY}" stroke="${rearC}" stroke-width="1.6"/>`;
+    let cage = '';
+    for (let k = 1; k <= 3; k++) cage += this._tube(`M${_f2(FX + k * FW / 4)},${FY} V${BB}`, 2, 'left');
+    for (let k = 1; k <= 2; k++) {
+      const t = k / 3;
+      cage += this._tube(`M${_f2(X2 + DX * t)},${_f2(FY + DY * t)} V${_f2(BB + DY * t)}`, 1.8, 'left');
     }
-    let bars = '';
     for (let k = 1; k <= 3; k++) {
       const y = FY + k * FH / 4;
-      bars += `<path d="M${FX},${y} H${X2} l${DX},${DY}" fill="none" stroke="${cage}"
-    stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>`;
+      cage += this._tube(`M${FX},${_f2(y)} H${X2} l${DX},${DY}`, 2.2);
     }
-    for (let k = 1; k <= 3; k++) {
-      const x = FX + k * FW / 4;
-      bars += `<line x1="${x}" y1="${FY}" x2="${x}" y2="${FY + FH}" stroke="${cage}" stroke-width="2"/>`;
-    }
-    for (let k = 1; k <= 2; k++) {
-      const t = k / 3, x = X2 + DX * t;
-      bars += `<line x1="${x}" y1="${FY + DY * t}" x2="${x}" y2="${FY + FH + DY * t}" stroke="${cageD}" stroke-width="1.8"/>`;
-    }
+    for (const t of [1 / 3, 2 / 3])
+      cage += this._tube(`M${_f2(FX + FW * t)},${FY} l${DX},${DY}`, 1.8);
+    cage += this._tube(`M${FX},${BB} V${FY} H${X2} V${BB} Z M${X2},${FY} l${DX},${DY} V${BB + DY} L${X2},${BB} M${FX},${FY} l${DX},${DY} H${X2 + DX}`, 2.6);
+    const ccx = FX + FW / 2 + DX / 2, ccy = FY + DY / 2;
+    const deck = `M${FX - 3},${BB + 1} H${X2 + 3} l${DX},${DY} H${FX - 3 + DX} Z`;
     return `<svg ${this._svgSize(fill, W, H)} viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
-<defs>${this._svgGrad(u, base, light)}${b.clip}
+<defs>${this._tankDefs(u, base, light)}${b.clip}
   <mask id="dtc-pm-${u}" maskUnits="userSpaceOnUse" x="0" y="0" width="${W}" height="${H}">
-    <rect x="0" y="0" width="${W}" height="${H}" fill="#fff"/><path d="${b.sil}" fill="#000"/></mask>
-</defs>
-${/* The pallet is masked under the body: drawn on top it showed as a floor
-      through a full tank, drawn behind it showed through the empty shell. */''}
+    <rect x="0" y="0" width="${W}" height="${H}" fill="#fff"/><path d="${b.sil}" fill="#000"/></mask></defs>
+${this._tankShadow(u, 52, BB + 13, 50, 5)}
 <g mask="url(#dtc-pm-${u})">
-  <path d="M${FX - 3},${FY + FH} H${X2 + 2} l${DX},${DY} H${FX - 3 + DX} Z" fill="#9aa1a8"/>
-  <rect x="${FX - 3}" y="${FY + FH}" width="${FW + 5}" height="7" fill="#7d848b"/>
-  <path d="M${X2 + 2},${FY + FH} l${DX},${DY} v7 l${-DX},${-DY} Z" fill="#636a70"/>
-  ${[0, 1, 2].map(i => `<rect x="${FX - 2 + i * 26}" y="${FY + FH + 7}" width="13" height="5.5" rx="1" fill="#50565b"/>`).join('')}
+  <path d="${deck}" fill="#d5ae7a"/>
+  <rect x="${FX - 3}" y="${BB + 1}" width="${FW + 6}" height="4.4" fill="#c49a66"/>
+  <path d="M${X2 + 3},${BB + 1} l${DX},${DY} v4.4 l${-DX},${-DY} Z" fill="#a37a4a"/>
+  ${[0, 1, 2].map(i => `<rect x="${FX - 2 + i * 26.5}" y="${BB + 5.4}" width="12" height="5.4" fill="#a87c4c"/>`).join('')}
+  <path d="M${X2 + 3},${BB + 5.4} l${DX},${DY} v5.4 l${-DX},${-DY} Z" fill="#8a6238"/>
+  <rect x="${FX - 3}" y="${BB + 10.8}" width="${FW + 6}" height="2.6" fill="#b88d59"/>
 </g>
 ${b.shell}
 <g clip-path="url(#dtc-cp-${u})">${rear}</g>
 ${b.liquid}${b.ceiling}
-${bars}
-<path d="${b.sil}"   fill="none" stroke="${cage}" stroke-width="2.8" stroke-linejoin="round"/>
-<path d="${b.front}" fill="none" stroke="${cage}" stroke-width="2.4" stroke-linejoin="round"/>
-<path d="${b.top}"   fill="none" stroke="${cage}" stroke-width="2.4" stroke-linejoin="round"/>
-<path d="M${FX + 21},${FY - 2} h15 l6,-4 h-15 Z" fill="#9aa1a8" stroke="rgba(0,0,0,.22)" stroke-width="1"/>
-<rect x="${FX + 21}" y="${FY + FH - 8}" width="14" height="7" rx="2" fill="#3a3f44"/>
-<rect x="${FX + 34}" y="${FY + FH - 7}" width="9" height="4.5" rx="2" fill="#2f7fd8"/>
-<rect x="${FX + 36.5}" y="${FY + FH - 10.5}" width="3.5" height="4" rx="1.5" fill="#2f7fd8"/>
-${this._svgTicks(FX + 2, FX + 7, FY, FH)}
+<g clip-path="url(#dtc-cp-${u})">
+  <path d="${b.front}" fill="url(#dtc-gb-${u})"/>
+  <path d="${b.side}" fill="#000" fill-opacity=".08"/></g>
+${this._tankScale(FX + 2.5, FY, FH, 7, true)}
+${DTC_UNDER}
+${cage}
+${this._capIso(u, ccx, ccy - .5, 7, 3.4, 6, base)}
+<rect x="${FX + 3}" y="${FY + 2.5}" width="9" height="9.5" rx="1" fill="#e9ecee" stroke="#000" stroke-opacity=".3" stroke-width=".6"/>
+${[5, 7.2, 9.4].map(y => `<path d="M${FX + 4.4},${FY + y} h6" stroke="#555" stroke-opacity=".5" stroke-width=".7"/>`).join('')}
+${this._ibcValve(FX + 25, BB - 6)}
 ${this._svgPct(FX + FW / 2, FY + FH / 2 + 6, label ?? `${pct.toFixed(0)}%`, 17)}
 </svg>`;
   }
 
-  // ── Water butt, front ─────────────────────────────────────────────────────
-
+  // ── Water butt, front ──────────────────────────────────────────────────────
   _svgBarrelFace(pct, base, light, label, fill) {
-    const W = 86, H = 132, BX = 8, BY = 24, BW = 70, BH = 86, R = 9;
-    const s = Math.max(0, Math.min(1, pct / 100));
-    const u = this._uid;
-    let ribs = '';
-    for (let k = 1; k <= 4; k++) {
-      const y = BY + k * BH / 5;
-      ribs += `<line x1="${BX + 2}" y1="${y}" x2="${BX + BW - 2}" y2="${y}" stroke="rgba(0,0,0,.22)" stroke-width="2.2"/>`;
-    }
-    return `<svg ${this._svgSize(fill, W, H)} viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
-<defs><clipPath id="dtc-cp-${u}"><rect x="${BX}" y="${BY}" width="${BW}" height="${BH}" rx="${R}"/></clipPath>
-${this._svgGrad(u, base, light)}
-  <linearGradient id="dtc-rd-${u}" x1="0" y1="0" x2="1" y2="0">
-    <stop offset="0%" stop-color="rgba(0,0,0,.3)"/><stop offset="22%" stop-color="rgba(0,0,0,0)"/>
-    <stop offset="72%" stop-color="rgba(0,0,0,0)"/><stop offset="100%" stop-color="rgba(0,0,0,.26)"/>
-  </linearGradient></defs>
-<rect x="${BX + 22}" y="${BY - 10}" width="26" height="11" rx="4"
-  fill="var(--secondary-background-color,#2a2a2a)" stroke="var(--divider-color,rgba(255,255,255,.18))" stroke-width="1.4"/>
-<rect x="${BX}" y="${BY}" width="${BW}" height="${BH}" rx="${R}" fill="rgba(0,0,0,.3)"/>
-<g clip-path="url(#dtc-cp-${u})">
-  <rect x="${BX}" y="${BY}" width="${BW}" height="${BH}" fill="url(#dtc-lg-${u})"
-    style="transform-box:fill-box;transform-origin:50% 100%;transform:scaleY(${s});transition:transform .9s cubic-bezier(.4,0,.2,1)"/>
-</g>
-${ribs}
-<rect x="${BX}" y="${BY}" width="${BW}" height="${BH}" rx="${R}" fill="url(#dtc-rd-${u})" pointer-events="none"/>
-<rect x="${BX}" y="${BY}" width="${BW}" height="${BH}" rx="${R}" fill="none"
-  stroke="var(--divider-color,rgba(255,255,255,.18))" stroke-width="1.5"/>
-<ellipse cx="${BX + BW / 2}" cy="${BY + 2}" rx="${BW / 2 - 1}" ry="5" fill="rgba(255,255,255,.1)"
-  stroke="var(--divider-color,rgba(255,255,255,.18))" stroke-width="1.2"/>
-<rect x="${BX + 26}" y="${BY + BH - 7}" width="13" height="7" rx="2" fill="#3a3f44"/>
-<rect x="${BX + 38}" y="${BY + BH - 6}" width="10" height="4.5" rx="2" fill="#2f7fd8"/>
-<rect x="${BX + 8}" y="${BY + BH}" width="${BW - 16}" height="8" rx="4"
-  fill="var(--secondary-background-color,#2a2a2a)" stroke="var(--divider-color,rgba(255,255,255,.18))" stroke-width="1.4"/>
-${this._svgTicks(BX + 3, BX + 14, BY, BH)}
-${this._svgPct(BX + BW / 2, BY + BH / 2 + 7, label ?? `${pct.toFixed(0)}%`, 19)}
-</svg>`;
-  }
-
-  // ── Water butt, three quarters ────────────────────────────────────────────
-
-  _svgBarrelIso(pct, base, light, label, fill) {
-    const W = 100, H = 132, CX = 48, RX = 30, RY = 11, TY = 26, BY = 110, BH = BY - TY;
-    const s = Math.max(0, Math.min(1, pct / 100));
-    const u = this._uid;
-    const edge = 'var(--divider-color,rgba(255,255,255,.18))';
-    const body = `M${CX - RX},${TY} V${BY} a${RX},${RY} 0 0 0 ${RX * 2},0 V${TY} Z`;
-    const over = BH;
-    const liq  = `M${CX - RX},${TY} V${BY + over} a${RX},${RY} 0 0 0 ${RX * 2},0 V${TY} Z`;
+    const W = 86, H = 132, X1 = 9, X2 = 77, TY = 28, BYb = 112, BH = BYb - TY;
+    const s = Math.max(0, Math.min(1, pct / 100)), u = this._uid;
+    const body = `M${X1},30 Q${X1},${TY} ${X1 + 2},${TY} H${X2 - 2} Q${X2},${TY} ${X2},30 V104 Q${X2},${BYb} ${X2 - 8},${BYb} H${X1 + 8} Q${X1},${BYb} ${X1},104 Z`;
     let ribs = '';
     for (let k = 1; k <= 4; k++) {
       const y = TY + k * BH / 5;
-      ribs += `<path d="M${CX - RX},${y} a${RX},${RY} 0 0 0 ${RX * 2},0" fill="none"
-    stroke="rgba(0,0,0,.16)" stroke-width="1.6"/>`;
+      ribs += `<path d="M${X1},${_f2(y + .9)} Q43,${_f2(y + 3.4)} ${X2},${_f2(y + .9)}" fill="none" stroke="#000" stroke-opacity=".24" stroke-width="2"/>
+<path d="M${X1},${_f2(y - .6)} Q43,${_f2(y + 1.9)} ${X2},${_f2(y - .6)}" fill="none" stroke="#fff" stroke-opacity=".22" stroke-width="1.1"/>`;
+    }
+    let knurl = '';
+    for (let x = 32.6; x < 54; x += 2.6)
+      knurl += `<path d="M${_f2(x)},19.4 v3.2" stroke="#000" stroke-opacity=".35" stroke-width=".9"/>`;
+    return `<svg ${this._svgSize(fill, W, H)} viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+<defs>${this._tankDefs(u, base, light)}<clipPath id="dtc-cp-${u}"><path d="${body}"/></clipPath></defs>
+${this._tankShadow(u, 43, 114, 38, 4.5)}
+<path d="${body}" fill="#808080" fill-opacity=".16"/>
+${this._liquidFace(u, X1, TY, X2 - X1, BH, s, light)}
+<g clip-path="url(#dtc-cp-${u})">${ribs}
+  <rect x="${X1}" y="${BYb - 7}" width="${X2 - X1}" height="7" fill="#000" fill-opacity=".12"/>
+  <path d="${body}" fill="url(#dtc-vo-${u})"/></g>
+<path d="${body}" fill="none" stroke="${DTC_OL}" stroke-opacity=".6" stroke-width="1.4" stroke-linejoin="round"/>
+${this._plastic(.58, `<rect x="30" y="17.6" width="26" height="6.4" rx="1.6" fill="#5e5e5e"/>
+  <rect x="31" y="18.2" width="24" height="1.3" rx=".6" fill="#fff" fill-opacity=".5"/>
+  <rect x="5.5" y="23" width="75" height="6.4" rx="2.6" fill="#6e6e6e"/>
+  <rect x="7" y="23.7" width="72" height="1.6" rx=".8" fill="#fff" fill-opacity=".5"/>
+  <rect x="5.5" y="27.4" width="75" height="2" rx="1" fill="#000" fill-opacity=".25"/>`)}
+${knurl}
+<rect x="30" y="17.6" width="26" height="6.4" rx="1.6" fill="none" stroke="${DTC_OL}" stroke-opacity=".5" stroke-width="1"/>
+<rect x="5.5" y="23" width="75" height="6.4" rx="2.6" fill="none" stroke="${DTC_OL}" stroke-opacity=".55" stroke-width="1.2"/>
+${this._brassTap(u, 54, 101)}
+${this._tankScale(X1 + 4, TY, BH, 9)}
+${this._svgPct(43, TY + BH / 2 + 7, label ?? `${pct.toFixed(0)}%`, 19)}
+</svg>`;
+  }
+
+  // ── Water butt, three quarters ─────────────────────────────────────────────
+  _svgBarrelIso(pct, base, light, label, fill) {
+    const W = 100, H = 132, CX = 48, RX = 30, RY = 11, TY = 28, BY = 110, BH = BY - TY;
+    const s = Math.max(0, Math.min(1, pct / 100)), u = this._uid;
+    const body = `M${CX - RX},${TY} L${CX - RX},${BY} A${RX},${RY} 0 0 0 ${CX + RX},${BY} L${CX + RX},${TY} A${RX},${RY} 0 0 0 ${CX - RX},${TY} Z`;
+    const over = BH;
+    const col = `M${CX - RX},${TY} V${BY + over} A${RX},${RY} 0 0 0 ${CX + RX},${BY + over} V${TY} Z`;
+    const t = (1 - s) * (BH + RY);
+    let ribs = '';
+    for (let i = 1; i <= 4; i++) {
+      const y = TY + i * BH / 5, r = RX, ry = RY;
+      ribs += `<path d="M${_f2(CX - r)},${_f2(y + .9)} a${_f2(r)},${_f2(ry)} 0 0 0 ${_f2(2 * r)},0" fill="none" stroke="#000" stroke-opacity=".24" stroke-width="2"/>
+<path d="M${_f2(CX - r)},${_f2(y - .6)} a${_f2(r)},${_f2(ry)} 0 0 0 ${_f2(2 * r)},0" fill="none" stroke="#fff" stroke-opacity=".22" stroke-width="1.1"/>`;
     }
     const liquid = s <= 0 ? '' : `<g clip-path="url(#dtc-cp-${u})">
-  <g style="transform:translateY(${((1 - s) * (BH + RY)).toFixed(2)}px);transition:transform .9s cubic-bezier(.4,0,.2,1)">
-    <path d="${liq}" fill="url(#dtc-lg-${u})"/>
-    <ellipse cx="${CX}" cy="${TY}" rx="${RX}" ry="${RY}" fill="${light}"/>
-    <ellipse cx="${CX}" cy="${TY}" rx="${RX}" ry="${RY}" fill="rgba(255,255,255,.2)"/>
+  <g style="transform:translateY(${_f2(t)}px);${DTC_EASE}">
+    <path d="${col}" fill="url(#dtc-lg-${u})"/>
+    <path d="${col}" fill="url(#dtc-dp-${u})"/>
+    <g>
+      <ellipse cx="${CX}" cy="${TY}" rx="${RX}" ry="${RY}" fill="${light}"/>
+      <ellipse cx="${CX}" cy="${TY}" rx="${RX}" ry="${RY}" fill="#fff" fill-opacity=".22"/>
+      <ellipse cx="${CX - 8}" cy="${TY - 3}" rx="${RX * .45}" ry="${RY * .3}" fill="#fff" fill-opacity=".18"/>
+      <ellipse cx="${CX}" cy="${TY}" rx="${RX - .6}" ry="${RY - .4}" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="1"/>
+    </g>
   </g></g>`;
     return `<svg ${this._svgSize(fill, W, H)} viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
-<defs><clipPath id="dtc-cp-${u}"><path d="${body}"/></clipPath>${this._svgGrad(u, base, light)}</defs>
-<path d="${body}" fill="rgba(0,0,0,.3)"/>
-<ellipse cx="${CX}" cy="${TY}" rx="${RX}" ry="${RY}" fill="rgba(255,255,255,.08)"/>
-${liquid}${ribs}
-<path d="${body}" fill="none" stroke="${edge}" stroke-width="1.5"/>
-<ellipse cx="${CX}" cy="${TY}" rx="${RX}" ry="${RY}" fill="none" stroke="${edge}" stroke-width="1.5"/>
-<ellipse cx="${CX}" cy="${TY - 4}" rx="13" ry="5"
-  fill="var(--secondary-background-color,#2a2a2a)" stroke="${edge}" stroke-width="1.3"/>
-<rect x="${CX - 6}" y="${BY - 5}" width="12" height="6" rx="2" fill="#3a3f44"/>
-<rect x="${CX + 5}" y="${BY - 4}" width="9" height="4" rx="2" fill="#2f7fd8"/>
-${this._svgTicks(CX - RX + 3, CX - RX + 13, TY, BH)}
+<defs>${this._tankDefs(u, base, light)}<clipPath id="dtc-cp-${u}"><path d="${body}"/></clipPath></defs>
+${this._tankShadow(u, CX + 3, BY + RY + 2, RX + 9, 5)}
+<path d="${body}" fill="#808080" fill-opacity=".16"/>
+<ellipse cx="${CX}" cy="${TY}" rx="${RX}" ry="${RY}" fill="#808080" fill-opacity=".14"/>
+${liquid}
+<g clip-path="url(#dtc-cp-${u})">${ribs}
+  <path d="M${CX - RX},${TY} L${CX - RX},${BY} A${RX},${RY} 0 0 0 ${CX + RX},${BY} L${CX + RX},${TY} Z" fill="url(#dtc-vo-${u})"/></g>
+<path d="${body}" fill="none" stroke="${DTC_OL}" stroke-opacity=".6" stroke-width="1.4" stroke-linejoin="round"/>
+<ellipse cx="${CX}" cy="${TY}" rx="${RX - 1.4}" ry="${RY - 1}" fill="none" stroke="${DTC_OL}" stroke-opacity=".45" stroke-width="2.6"/>
+<ellipse cx="${CX}" cy="${TY - .6}" rx="${RX - 1.4}" ry="${RY - 1}" fill="none" stroke="#fff" stroke-opacity=".22" stroke-width="1"/>
+${DTC_UNDER}
+${this._plastic(.6, `<path d="M${CX - 15},${TY} v-3.4 a15,5.6 0 0 1 30,0 v3.4 a15,5.6 0 0 1 -30,0 Z" fill="#5c5c5c"/>
+  <ellipse cx="${CX}" cy="${TY - 3.4}" rx="15" ry="5.6" fill="#8a8a8a"/>
+  <ellipse cx="${CX - 3}" cy="${TY - 4.6}" rx="7" ry="2" fill="#fff" fill-opacity=".45"/>
+  <rect x="${CX - 5}" y="${TY - 6.6}" width="10" height="3" rx="1.4" fill="#4a4a4a"/>`)}
+<path d="M${CX - 15},${TY - 3.4} v3.4 a15,5.6 0 0 0 30,0 v-3.4" fill="none" stroke="${DTC_OL}" stroke-opacity=".5" stroke-width="1"/>
+${this._brassTap(u, CX + 9, BY + 2)}
+${this._tankScale(CX - RX + 4, TY, BH, 9)}
 ${this._svgPct(CX, TY + BH / 2 + 6, label ?? `${pct.toFixed(0)}%`, 18)}
 </svg>`;
   }

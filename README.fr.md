@@ -215,6 +215,8 @@ Tout ce qui vaut `on` range la cuve, et un état qui contient le mot de la saiso
 
 **`winter_snowfall: false`** enlève les flocons. Ils sont la seule animation que la carte hivernée fasse tourner : coupés, elle ne se redessine plus du tout, ce dont une tablette murale un peu faible vous remerciera. La neige posée sur la cuve reste. Une tablette réglée en mouvement réduit les fige déjà sans rien configurer.
 
+![Avec et sans la neige qui tombe](https://raw.githubusercontent.com/ADNPolymerase/ha-dosing-tank-card/main/docs/snowfall.fr.gif)
+
 
 ---
 
