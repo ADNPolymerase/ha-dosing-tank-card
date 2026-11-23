@@ -1004,6 +1004,46 @@ check('éditeur : décochée quand l\'alerte est coupée',
 contains('éditeur : le champ du seuil est désactivé', markup(edAlertOff), 'disabled>');
 contains('éditeur : et grisé', markup(edAlertOff), 'class="field off" id="alert-field"');
 
+// Les deux options d'hivernage n'ont rien à régler tant que ni la case ni un
+// interrupteur ne peuvent ranger la cuve. L'interrupteur seul suffit (#4).
+{
+  const edW = cfg => {
+    const e = new Editor();
+    e.setConfig({ pump_entity: 'switch.pump', ...cfg });
+    return markup(e);
+  };
+  const none = edW({});
+  check('éditeur : sans hivernage, quantité grisée',
+    none.includes('class="check off" id="wntvol-row"'), true);
+  check('éditeur : sans hivernage, neige grisée',
+    none.includes('class="check off" id="snowfall-row"'), true);
+  check('éditeur : et désactivées',
+    /id="wntvol" disabled/.test(none) && /id="snowfall" checked disabled/.test(none), true);
+  check('éditeur : case cochée, options actives',
+    /check off|disabled>/.test(edW({ winter: true }).replace(/id="alert"[^>]*>/, '')), false);
+  check('éditeur : interrupteur seul, options actives aussi',
+    edW({ winter_entity: 'input_boolean.wnt' }).includes('class="check off"'), false);
+
+  // Après coup, sans reconstruire le formulaire : choisir ou retirer
+  // l'interrupteur passe par setConfig, qui ne fait que resynchroniser.
+  const els = {};
+  const stub = id => (els[id] ??= { disabled: false, checked: false, value: '', style: {},
+    querySelector: () => null,
+    classList: { on: new Set(), toggle(c, v) { v ? this.on.add(c) : this.on.delete(c); } } });
+  const edLive = new Editor();
+  edLive.setConfig({ pump_entity: 'switch.pump' });
+  edLive.shadowRoot.getElementById = stub;
+  edLive.setConfig({ pump_entity: 'switch.pump', winter_entity: 'input_boolean.wnt' });
+  check('éditeur : interrupteur choisi, la neige se réactive',
+    els.snowfall.disabled || els['snowfall-row'].classList.on.has('off'), false);
+  check('éditeur : et la quantité aussi',
+    els.wntvol.disabled || els['wntvol-row'].classList.on.has('off'), false);
+  edLive.setConfig({ pump_entity: 'switch.pump' });
+  check('éditeur : interrupteur retiré, elles se regrisent',
+    els.snowfall.disabled && els['snowfall-row'].classList.on.has('off')
+      && els.wntvol.disabled && els['wntvol-row'].classList.on.has('off'), true);
+}
+
 // ── Hivernage (#3) ───────────────────────────────────────────────────────────
 // Une cuve rangée pour l'hiver ne garde que son dessin, sous la neige : plus
 // de niveau à surveiller, plus de pompe à compter.
@@ -1185,6 +1225,43 @@ contains('éditeur : et grisé', markup(edAlertOff), 'class="field off" id="aler
   // La case cochée gagne, même sans entité.
   check('case cochée sans entité',
     wn({ winter: true }).includes('badge badge-winter'), true);
+
+  // ── L'interrupteur basculé après coup (#4) ─────────────────────────────────
+  // La carte ne se redessine que sur ce qui la concerne, et l'interrupteur en
+  // fait partie : basculé une fois la carte affichée, elle doit suivre sans
+  // attendre la prochaine mesure du niveau ou la prochaine marche de la pompe.
+  const flip = (card, state, other) => {
+    const prev = card._hass;
+    card._lastHistoryFetch = now();
+    card.hass = { ...prev, states: { ...prev.states,
+      [other || 'input_boolean.wnt']: { state, attributes: {} } } };
+    return markup(card).includes('badge badge-winter');
+  };
+  const live = makeDirect({ value: 55, full: 100, empty: 0,
+    winterEntity: 'input_boolean.wnt',
+    extra: { 'input_boolean.wnt': { state: 'off', attributes: {} } } }).card;
+  check('niveau direct : basculé sur on, la carte passe en hivernage',
+    flip(live, 'on'), true);
+  check('niveau direct : rebasculé sur off, elle revient', flip(live, 'off'), false);
+
+  const pumpLive = new Card();
+  pumpLive.setConfig({ pump_entity: 'switch.pump', flow_rate_ml_per_min: FLOW,
+                       tank_volume_liters: 5, winter_entity: 'input_boolean.wnt' });
+  pumpLive._hass = { locale: { language: 'en' }, states: {
+    'switch.pump': { state: 'off', last_changed: new Date(now()).toISOString() },
+    'input_boolean.wnt': { state: 'off', attributes: {} } } };
+  pumpLive._dailyStats = pumpLive._emptyDays();
+  pumpLive._render();
+  check('mode pompe : basculé sur on, la carte passe en hivernage',
+    flip(pumpLive, 'on'), true);
+  check('mode pompe : rebasculé sur off, elle revient', flip(pumpLive, 'off'), false);
+
+  // Le reste de la maison qui bouge ne doit toujours rien redessiner.
+  let renders = 0;
+  const draw = live._render.bind(live);
+  live._render = () => { renders++; draw(); };
+  flip(live, '3', 'sensor.autre');
+  check('une autre entité qui bouge : aucun rendu', renders, 0);
 
   // ── Hivernage sans les flocons (#120) ──────────────────────────────────────
   // Une tablette murale faible n'encaisse pas une animation continue. Les

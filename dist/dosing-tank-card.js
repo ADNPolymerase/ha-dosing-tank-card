@@ -784,6 +784,9 @@ class DosingTankCardEditor extends HTMLElement {
     return true;
   }
 
+  // No way left for the tank to be put away: neither ticked nor switched.
+  _noWinter(c) { return c.winter !== true && !c.winter_entity; }
+
   // Refreshes values without touching the DOM structure.
   _syncFields() {
     const c = this._config;
@@ -827,6 +830,14 @@ class DosingTankCardEditor extends HTMLElement {
     const alertInput = this.shadowRoot.getElementById('alert');
     if (alertInput) alertInput.disabled = alertOff;
     this.shadowRoot.getElementById('alert-field')?.classList.toggle('off', alertOff);
+    // Either the tick box or a switch can put the tank away: only with neither
+    // are the winter options left with nothing to act on.
+    const noWinter = this._noWinter(c);
+    for (const id of ['wntvol', 'snowfall']) {
+      const input = this.shadowRoot.getElementById(id);
+      if (input) input.disabled = noWinter;
+      this.shadowRoot.getElementById(`${id}-row`)?.classList.toggle('off', noWinter);
+    }
 
     this._syncOrder();
 
@@ -926,6 +937,7 @@ class DosingTankCardEditor extends HTMLElement {
     const T = this._t();
     const direct = this._mode === 'direct';
     const tiered = c.color_mode === 'level';
+    const noWinter = this._noWinter(c);
     const LANG_LABELS = {
       auto:'Auto (HA locale)', en:'English', fr:'Français',
       es:'Español', de:'Deutsch', it:'Italiano', nl:'Nederlands',
@@ -971,6 +983,10 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
    disabled rather than left sitting there accepting values nobody reads. */
 .field.off{opacity:.45}
 .field.off input:disabled{cursor:not-allowed}
+/* Same for the two winter options: they shape a wintered card, so with
+   neither the tick box nor a switch set there is no winter for them to act on. */
+.check.off{opacity:.45;cursor:not-allowed}
+.check.off input{cursor:not-allowed}
 </style>
 <div class="form">
   <div class="field">
@@ -1115,12 +1131,12 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
     ${T.edWinter}
   </label>
   <div class="field" id="winter-wrap"></div>
-  <label class="check">
-    <input type="checkbox" id="wntvol"${c.winter_volume?' checked':''}>
+  <label class="check${noWinter?' off':''}" id="wntvol-row">
+    <input type="checkbox" id="wntvol"${c.winter_volume?' checked':''}${noWinter?' disabled':''}>
     ${T.edWinterVol}
   </label>
-  <label class="check">
-    <input type="checkbox" id="snowfall"${c.winter_snowfall===false?'':' checked'}>
+  <label class="check${noWinter?' off':''}" id="snowfall-row">
+    <input type="checkbox" id="snowfall"${c.winter_snowfall===false?'':' checked'}${noWinter?' disabled':''}>
     ${T.edSnowfall}
   </label>
   <div class="field">
@@ -1568,12 +1584,18 @@ class DosingTankCard extends HTMLElement {
     this._hass = hass;
     if (!this._config) return;
 
+    /* The winter switch is only read when the card renders, so its flips
+       must render too, or the card waits for the next level reading or pump
+       run before it notices it has been put away (#4). */
+    const wnt = this._config.winter_entity;
+    const winterChanged = !!prev && hass.states[wnt]?.state !== prev.states[wnt]?.state;
+
     if (this._isDirect) {
       const lvl     = hass.states[this._config.level_entity];
       const prevLvl = prev?.states[this._config.level_entity];
       if (!this._historyLoading && Date.now() - this._lastHistoryFetch > 900000)
         this._loadLevelHistory();
-      if (!prev || lvl?.state !== prevLvl?.state) this._render();
+      if (!prev || winterChanged || lvl?.state !== prevLvl?.state) this._render();
       return;
     }
 
@@ -1603,7 +1625,7 @@ class DosingTankCard extends HTMLElement {
     // Only re-render when entities that affect the display actually change
     const pumpChanged  = !prev || pump?.state !== prevPump?.state || pump?.last_changed !== prevPump?.last_changed;
     const resetChanged = reset?.state !== prevReset?.state;
-    if (pumpChanged || resetChanged) this._render();
+    if (pumpChanged || resetChanged || winterChanged) this._render();
   }
 
   // ── History ───────────────────────────────────────────────────────────────
