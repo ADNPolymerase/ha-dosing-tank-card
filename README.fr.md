@@ -120,6 +120,7 @@ liquid_color: "#3b82f6"
 | `tank_view` | `string` | | `"face"` | `"iso"` dessine la cuve en 3/4 plutôt que de face, avec la surface du liquide visible en perspective. Le défaut garde le dessin à plat, donc une carte déjà installée ne bouge pas |
 | `winter` | `boolean` | | `false` | Hivernage : la carte ne garde que son dessin, sous la neige. L'alerte, les avertissements, les tuiles, le graphe, le bloc Paramètres, la ligne de dernière mise à jour et le panneau de correction disparaissent. Une case existe pour ça dans l'éditeur visuel |
 | `winter_entity` | `string` | | | La même chose, pilotée par une entité plutôt qu'à la main : `on` range la cuve, et un état qui contient le mot de la saison dans l'une des langues de la carte aussi (`Hivernage`, `Winter storage`, `Zimowanie`…). Fonctionne dans les deux modes |
+| `winter_invert` | `boolean` | | `false` | Inverse l'interrupteur : la cuve est rangée quand il vaut `off`. Pour un interrupteur qui reste allumé toute la saison et qu'on coupe pour l'hiver, un arrosage ou une filtration. `unavailable` et `unknown` ne rangent jamais la cuve, et un mot de la saison la range toujours |
 | `winter_volume` | `boolean` | | `false` | Garde une ligne sous le dessin en hiver : ce qu'il reste dans la cuve. Rien n'est écrit quand le niveau n'est plus connu, plutôt qu'un tiret qui ne dirait rien |
 | `winter_snowfall` | `boolean` | | `true` | `false` enlève les flocons qui tombent. La neige posée sur la cuve reste, et la carte ne se redessine plus du tout |
 | `layout` | `string` | | `"rows"` | `"columns"` donne au bidon la hauteur de la carte et déplace les trois tuiles à côté. Un sélecteur existe pour ça dans l'éditeur visuel |
@@ -210,6 +211,8 @@ winter_entity: input_boolean.cuve_hivernage
 ```
 
 Tout ce qui vaut `on` range la cuve, et un état qui contient le mot de la saison dans l'une des langues de la carte aussi, ce que contient en général un `input_select` ou un capteur d'état : `Hivernage`, `Winter storage`, `Vinterlagring`, `Zimowanie`…
+
+**`winter_invert: true`** inverse l'interrupteur, pour celui qui reste allumé toute la saison et qu'on coupe pour l'hiver, un arrosage ou une filtration : la cuve est rangée quand il vaut `off`. Choisissez un interrupteur qui ne change qu'avec la saison, jamais la vanne qui s'ouvre à chaque arrosage, sinon la carte neigerait à chaque fois qu'elle se ferme. `unavailable` et `unknown` ne rangent jamais la cuve : un redémarrage ou une intégration perdue n'amène pas la neige.
 
 **`winter_volume: true`** remet une ligne sous le dessin : ce qu'il reste dans la cuve. Une cuve hivernée dont le capteur répond encore garde donc sa quantité, et celle dont le capteur est éteint n'affiche rien.
 

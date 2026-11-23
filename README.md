@@ -120,6 +120,7 @@ liquid_color: "#3b82f6"
 | `tank_view` | `string` | | `"face"` | `"iso"` draws the tank from a three quarter angle instead of head on, with the surface of the liquid visible in perspective. The default keeps the flat drawing, so an existing card is untouched |
 | `winter` | `boolean` | | `false` | Winter storage: the card is kept to its drawing, under the snow. The alert, the warnings, the metric tiles, the chart, the Settings block, the last-update line and the adjustment panel all go away. There is a tick box for it in the visual editor |
 | `winter_entity` | `string` | | | The same, driven by an entity instead of by hand: `on` puts the tank away, and so does a state holding a word for winter in any of the card's languages (`Winter storage`, `Hivernage`, `Zimowanie`…). Works in both modes |
+| `winter_invert` | `boolean` | | `false` | Turns the switch the other way round: the tank is put away when it reads `off`. For a switch that stays on all season and is turned off for the winter, an irrigation or a filtration. `unavailable` and `unknown` never put the tank away, and a word for winter still does |
 | `winter_volume` | `boolean` | | `false` | Keeps one line under the drawing in winter: what is left in the tank. Nothing is printed when the level is no longer known, rather than a dash that would say nothing |
 | `winter_snowfall` | `boolean` | | `true` | `false` leaves out the falling flakes. The snow lying on the tank stays, and the card stops repainting altogether |
 | `layout` | `string` | | `"rows"` | `"columns"` gives the tank the height of the card and moves the three metric tiles beside it. A selector for it sits in the visual editor |
@@ -210,6 +211,8 @@ winter_entity: input_boolean.tank_winter
 ```
 
 Anything that reads `on` puts the tank away, and so does a state holding a word for winter in any of the card's languages, which is what an `input_select` or a status sensor usually holds: `Winter storage`, `Hivernage`, `Vinterlagring`, `Zimowanie`…
+
+**`winter_invert: true`** turns the switch the other way round, for one that stays on all season and is turned off for the winter, an irrigation or a filtration: the tank is put away when it reads `off`. Pick a switch that only changes with the season, never the valve that opens at every run, or the card would show snow each time it closes. `unavailable` and `unknown` never put the tank away, so a restart or a lost integration does not bring the snow.
 
 **`winter_volume: true`** adds back one line under the drawing: what is left in the tank. A wintered tank whose sensor still answers then keeps its quantity, and one whose sensor is gone shows nothing at all.
 

@@ -28,7 +28,7 @@ const T0   = freezeClock('2026-08-12T12:00:00Z'); // midday, so day buckets are
 function makeCard({ pumpOn = true, onSinceMin = 30, lastFetchMin = null,
                     todayMl = 0, sync = true, reset = true, showSettings, showChart,
                     lastUpdate, pumpChangedH = 0, lastRunH, order,
-                    winter, winterEntity, winterVolume, winterSnowfall, extra,
+                    winter, winterEntity, winterVolume, winterSnowfall, winterInvert, extra,
                     counterAgeDays = 30, name = 'Chlorine' } = {}) {
   const states = {
     'switch.pump': { state: pumpOn ? 'on' : 'off',
@@ -49,6 +49,7 @@ function makeCard({ pumpOn = true, onSinceMin = 30, lastFetchMin = null,
     show_settings: showSettings, show_chart: showChart, last_update: lastUpdate,
     metrics_order: order, winter, winter_entity: winterEntity,
     winter_volume: winterVolume, winter_snowfall: winterSnowfall,
+    winter_invert: winterInvert,
   });
   Object.assign(states, extra || {});
   c._hass             = { states, locale: { language: 'en' } };
@@ -130,7 +131,7 @@ function makeDirect({ series = null, value = null, unit = '%',
                       show_chart, last_update, lastChangedH, lastReportedMin,
                       window, seriesStepDays, order, extra, names, format,
                       shape, view, showAlert,
-                      winter, winterEntity, winterVolume, winterSnowfall,
+                      winter, winterEntity, winterVolume, winterSnowfall, winterInvert,
                       entity = 'sensor.salt', present = true } = {}) {
   const cur    = value ?? (series ? series.at(-1) : null);
   const states = {};
@@ -154,7 +155,8 @@ function makeDirect({ series = null, value = null, unit = '%',
                 show_chart, last_update, window, warn_threshold_percent: warn,
                 metrics_order: order, tank_shape: shape, tank_view: view,
                 show_alert: showAlert, winter, winter_entity: winterEntity,
-                winter_volume: winterVolume, winter_snowfall: winterSnowfall });
+                winter_volume: winterVolume, winter_snowfall: winterSnowfall,
+                winter_invert: winterInvert });
   Object.assign(states, extra || {});
   c._hass = { states, locale: { language: 'en' }, entities: names || {},
               ...(format ? { formatEntityState: format } : {}) };
@@ -1020,9 +1022,21 @@ contains('éditeur : et grisé', markup(edAlertOff), 'class="field off" id="aler
   check('éditeur : et désactivées',
     /id="wntvol" disabled/.test(none) && /id="snowfall" checked disabled/.test(none), true);
   check('éditeur : case cochée, options actives',
-    /check off|disabled>/.test(edW({ winter: true }).replace(/id="alert"[^>]*>/, '')), false);
+    /class="check off" id="(wntvol|snowfall)-row"|id="(wntvol|snowfall)"[^>]*disabled/
+      .test(edW({ winter: true })), false);
   check('éditeur : interrupteur seul, options actives aussi',
     edW({ winter_entity: 'input_boolean.wnt' }).includes('class="check off"'), false);
+
+  // L'inversion n'a de sens qu'avec un interrupteur à inverser : la case seule
+  // ne suffit pas (#4).
+  check('éditeur : sans interrupteur, inversion grisée',
+    none.includes('class="check off" id="wntinv-row"') && /id="wntinv" disabled/.test(none), true);
+  check('éditeur : case cochée seule, inversion toujours grisée',
+    edW({ winter: true }).includes('class="check off" id="wntinv-row"'), true);
+  check('éditeur : interrupteur choisi, inversion active',
+    /id="wntinv"[^>]*disabled/.test(edW({ winter_entity: 'input_boolean.wnt' })), false);
+  check('éditeur : inversion cochée quand configurée',
+    /id="wntinv" checked/.test(edW({ winter_entity: 'input_boolean.wnt', winter_invert: true })), true);
 
   // Après coup, sans reconstruire le formulaire : choisir ou retirer
   // l'interrupteur passe par setConfig, qui ne fait que resynchroniser.
@@ -1034,6 +1048,8 @@ contains('éditeur : et grisé', markup(edAlertOff), 'class="field off" id="aler
   edLive.setConfig({ pump_entity: 'switch.pump' });
   edLive.shadowRoot.getElementById = stub;
   edLive.setConfig({ pump_entity: 'switch.pump', winter_entity: 'input_boolean.wnt' });
+  check('éditeur : interrupteur choisi, l\'inversion se réactive',
+    els.wntinv.disabled || els['wntinv-row']?.classList.on.has('off'), false);
   check('éditeur : interrupteur choisi, la neige se réactive',
     els.snowfall.disabled || els['snowfall-row'].classList.on.has('off'), false);
   check('éditeur : et la quantité aussi',
@@ -1042,6 +1058,11 @@ contains('éditeur : et grisé', markup(edAlertOff), 'class="field off" id="aler
   check('éditeur : interrupteur retiré, elles se regrisent',
     els.snowfall.disabled && els['snowfall-row'].classList.on.has('off')
       && els.wntvol.disabled && els['wntvol-row'].classList.on.has('off'), true);
+  check('éditeur : interrupteur retiré, l\'inversion se regrise',
+    els.wntinv.disabled && els['wntinv-row']?.classList.on.has('off'), true);
+  edLive.setConfig({ pump_entity: 'switch.pump', winter: true });
+  check('éditeur : case cochée seule, l\'inversion reste grisée',
+    els.wntinv.disabled && els['wntinv-row']?.classList.on.has('off'), true);
 }
 
 // ── Hivernage (#3) ───────────────────────────────────────────────────────────
@@ -1219,6 +1240,26 @@ contains('éditeur : et grisé', markup(edAlertOff), 'class="field off" id="aler
   check('ou Vinterlagring',                 byEnt('Vinterlagring'), true);
   check('ou Zimowanie',                     byEnt('Zimowanie'), true);
   check('mais pas Été',                     byEnt('Été'), false);
+  // Inversé (#4) : un arrosage ou une filtration reste allumé toute la saison
+  // et se coupe pour l'hiver. Seuls on et off changent de camp.
+  const byInv = state => makeDirect({
+    value: 55, full: 100, empty: 0, winterEntity: 'input_boolean.wnt', winterInvert: true,
+    extra: { 'input_boolean.wnt': { state, attributes: {} } },
+  }).html.includes('badge badge-winter');
+  check('inversé : off → hivernage',            byInv('off'), true);
+  check('inversé : on → saison normale',        byInv('on'), false);
+  check('inversé : false → hivernage',          byInv('false'), true);
+  check('inversé : indisponible → saison normale', byInv('unavailable'), false);
+  check('inversé : inconnu → saison normale',   byInv('unknown'), false);
+  check('inversé : un select qui dit Hivernage reste en hivernage', byInv('Hivernage'), true);
+  check('inversé : mais Été reste la saison normale', byInv('Été'), false);
+  check('inversé sans interrupteur : saison normale', makeDirect({
+    value: 55, full: 100, empty: 0, winterInvert: true,
+  }).html.includes('badge badge-winter'), false);
+  check('inversé : la case cochée gagne toujours',
+    wn({ winter: true, winterEntity: 'input_boolean.wnt', winterInvert: true,
+         extra: { 'input_boolean.wnt': { state: 'on', attributes: {} } } })
+      .includes('badge badge-winter'), true);
   check('entité absente de hass → saison normale', makeDirect({
     value: 55, full: 100, empty: 0, winterEntity: 'input_boolean.absent',
   }).html.includes('badge badge-winter'), false);
@@ -1255,6 +1296,13 @@ contains('éditeur : et grisé', markup(edAlertOff), 'class="field off" id="aler
   check('mode pompe : basculé sur on, la carte passe en hivernage',
     flip(pumpLive, 'on'), true);
   check('mode pompe : rebasculé sur off, elle revient', flip(pumpLive, 'off'), false);
+
+  // Inversé, la bascule est suivie de la même façon, dans l'autre sens.
+  const inv = makeDirect({ value: 55, full: 100, empty: 0,
+    winterEntity: 'input_boolean.wnt', winterInvert: true,
+    extra: { 'input_boolean.wnt': { state: 'on', attributes: {} } } }).card;
+  check('inversé : arrosage coupé, la carte passe en hivernage', flip(inv, 'off'), true);
+  check('inversé : arrosage rallumé, elle revient', flip(inv, 'on'), false);
 
   // Le reste de la maison qui bouge ne doit toujours rien redessiner.
   let renders = 0;
@@ -1348,6 +1396,24 @@ check('éditeur : la case des flocons se décoche',
   // laisse tomber en écrivant le YAML, donc rien dans la configuration.
   check('éditeur : recocher n\'écrit rien, c\'est le défaut',
     e.events.at(-1)?.detail?.config?.winter_snowfall, undefined);
+}
+
+// La case d'inversion s'écrit : true cochée, rien décochée, c'est le défaut.
+{
+  const box = { checked: null, _on: null,
+                addEventListener: (_t, fn) => { box._on = fn; } };
+  const e = new Editor();
+  e.shadowRoot.getElementById = id => (id === 'wntinv' ? box : null);
+  const cfg = { pump_entity: 'switch.pump', winter_entity: 'input_boolean.wnt' };
+  e.setConfig(cfg);
+  e.setConfig({ ...cfg, winter_invert: true });
+  check('éditeur : la case d\'inversion suit la configuration', box.checked, true);
+  box._on({ target: { checked: false } });
+  check('éditeur : décocher l\'inversion n\'écrit rien',
+    e.events.at(-1)?.detail?.config?.winter_invert, undefined);
+  box._on({ target: { checked: true } });
+  check('éditeur : cocher l\'inversion écrit true',
+    e.events.at(-1)?.detail?.config?.winter_invert, true);
 }
 
 report();
