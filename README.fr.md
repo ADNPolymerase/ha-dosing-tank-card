@@ -116,8 +116,9 @@ liquid_color: "#3b82f6"
 | `warn_threshold_percent` | `number` | | `50` | Orange en dessous, rouge sous `alert_threshold_percent`. Utilisé uniquement par `color_mode: level` |
 | `alert_threshold_percent` | `number` | | `20` | Seuil d'alerte (%) |
 | `show_alert` | `boolean` | | `true` | `false` coupe entièrement l'alerte de niveau bas : plus de bandeau, et plus rien ne passe au rouge, ni le liquide ni la quantité restante. Pour une cuve qui se vide et se remplit toute seule, de l'eau de pluie par exemple, où il n'y a rien à recharger. Une case à cocher existe pour ça dans l'éditeur visuel |
-| `tank_shape` | `string` | | `"can"` | Le dessin : `can` le bidon que la carte a toujours affiché, `ibc` une cuve IBC en cage sur sa palette, `barrel` un récupérateur cylindrique. Un sélecteur existe dans l'éditeur visuel |
+| `tank_shape` | `string` | | `"can"` | Le dessin : `can` le bidon que la carte a toujours affiché, `ibc` une cuve IBC en cage sur sa palette, `barrel` un récupérateur cylindrique, `softener` un adoucisseur dont on voit le sel par une fenêtre. Un sélecteur existe dans l'éditeur visuel |
 | `tank_view` | `string` | | `"face"` | `"iso"` dessine la cuve en 3/4 plutôt que de face, avec la surface du liquide visible en perspective. Le défaut garde le dessin à plat, donc une carte déjà installée ne bouge pas |
+| `cabinet_color` | `string` | | `"blue"` | Couleur du meuble du dessin `softener` : `blue`, `black`, `grey` ou `white`. Les autres formes l'ignorent. Un sélecteur existe dans l'éditeur visuel |
 | `winter` | `boolean` | | `false` | Hivernage : la carte ne garde que son dessin, sous la neige. L'alerte, les avertissements, les tuiles, le graphe, le bloc Paramètres, la ligne de dernière mise à jour et le panneau de correction disparaissent. Une case existe pour ça dans l'éditeur visuel |
 | `winter_entity` | `string` | | | La même chose, pilotée par une entité plutôt qu'à la main : `on` range la cuve, et un état qui contient le mot de la saison dans l'une des langues de la carte aussi (`Hivernage`, `Winter storage`, `Zimowanie`…). Fonctionne dans les deux modes |
 | `winter_invert` | `boolean` | | `false` | Inverse l'interrupteur : la cuve est rangée quand il vaut `off`. Pour un interrupteur qui reste allumé toute la saison et qu'on coupe pour l'hiver, un arrosage ou une filtration. `unavailable` et `unknown` ne rangent jamais la cuve, et un mot de la saison la range toujours |
@@ -173,6 +174,15 @@ level_empty: 30         # cm, cuve vide
 Les trois tuiles changent de sens dans ce mode. Deux sont fixes : la consommation des 7 derniers jours, et l'**autonomie**, combien de temps la cuve tient au rythme moyen récent. La première s'adapte : sur un capteur en `%` seul elle affiche la consommation moyenne par jour, puisque le niveau est déjà inscrit sur le bidon ; sinon elle affiche ce qu'il reste, ce qui sur une sonde inversée est la hauteur de liquide et non la distance brute. Renseigner `capacity` donne à ce chiffre un sens propre, il repasse donc en quantité restante.
 
 Cette moyenne ignore délibérément les journées où le niveau est **monté** : un remplissage masque ce qui a été consommé en parallèle, et le compter comme une journée à consommation nulle gonflerait l'autonomie d'une cuve qui est en réalité en train de se vider. Les jours de remplissage apparaissent en `+` vert dans le graphe. Les journées où le niveau n'a réellement pas bougé sont conservées, car un adoucisseur qui n'a pas régénéré, c'est une vraie information. L'autonomie affiche `—` tant qu'il n'y a pas au moins deux journées complètes de baisse.
+
+**Un adoucisseur a son propre dessin.** `tank_shape: softener` dessine un meuble fermé avec une fenêtre de toute la hauteur du bac à sel, qui montre le sel à son niveau réel. Le meuble est bleu par défaut, `cabinet_color` accepte `black`, `grey` ou `white`.
+
+![Adoucisseur](https://raw.githubusercontent.com/ADNPolymerase/ha-dosing-tank-card/main/docs/softener.fr.png)
+
+```yaml
+tank_shape: softener
+cabinet_color: grey
+```
 
 ---
 

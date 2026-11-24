@@ -29,8 +29,10 @@
  *   capacity_unit: "kg" # be read in kg or L behind a percentage-only sensor
  *
  * Config — both modes:
- *   tank_shape: "ibc"          # can (default) / ibc / barrel
+ *   tank_shape: "ibc"          # can (default) / ibc / barrel / softener
  *   tank_view: "iso"           # face (default) / iso, three-quarter view
+ *   cabinet_color: "grey"      # softener only: blue (default) / black /
+ *                              # grey / white
  *   show_alert: false          # turn the low-level alert off entirely: no
  *                              # banner, and nothing turns red. Default true.
  *   color_mode: "level"        # green / amber / red by fill instead of
@@ -90,6 +92,7 @@ const DTL = {
     edShowAlert:'Low level alert',
     edLayout:'Layout', edLayoutRows:'Metrics on top', edLayoutCols:'Tank on the side',
     edShape:'Shape', edShapeCan:'Jerrycan', edShapeIbc:'IBC tank', edShapeBarrel:'Water butt',
+    edShapeSoftener:'Water softener', edCabinet:'Cabinet color', edCabBlue:'Blue', edCabBlack:'Black', edCabGrey:'Gray', edCabWhite:'White',
     edView:'View', edViewFace:'Front', edViewIso:'Three-quarter',
     edShowChart:'Show the daily chart', edLastUpdate:'Last update',
     winter:'Winter storage', edWinter:'Winter storage',
@@ -140,6 +143,7 @@ const DTL = {
     edShowAlert:'Alerte de niveau bas',
     edLayout:'Disposition', edLayoutRows:'Métriques en haut', edLayoutCols:'Bidon sur le côté',
     edShape:'Forme', edShapeCan:'Bidon', edShapeIbc:'Cuve IBC', edShapeBarrel:'Récupérateur',
+    edShapeSoftener:'Adoucisseur', edCabinet:'Couleur du meuble', edCabBlue:'Bleu', edCabBlack:'Noir', edCabGrey:'Gris', edCabWhite:'Blanc',
     edView:'Vue', edViewFace:'De face', edViewIso:'3/4',
     edShowChart:'Afficher le graphe journalier', edLastUpdate:'Dernière MAJ',
     winter:'Hivernage', edWinter:'Hivernage',
@@ -190,6 +194,7 @@ const DTL = {
     edShowAlert:'Alerta de nivel bajo',
     edLayout:'Disposición', edLayoutRows:'Métricas arriba', edLayoutCols:'Depósito al lado',
     edShape:'Forma', edShapeCan:'Bidón', edShapeIbc:'Depósito IBC', edShapeBarrel:'Depósito cilíndrico',
+    edShapeSoftener:'Descalcificador', edCabinet:'Color de la carcasa', edCabBlue:'Azul', edCabBlack:'Negro', edCabGrey:'Gris', edCabWhite:'Blanco',
     edView:'Vista', edViewFace:'Frontal', edViewIso:'Tres cuartos',
     edShowChart:'Mostrar el gráfico diario', edLastUpdate:'Última act.',
     winter:'Invernaje', edWinter:'Invernaje',
@@ -240,6 +245,7 @@ const DTL = {
     edShowAlert:'Оповещение о низком уровне',
     edLayout:'Расположение', edLayoutRows:'Метрики сверху', edLayoutCols:'Бак сбоку',
     edShape:'Форма', edShapeCan:'Канистра', edShapeIbc:'IBC-контейнер', edShapeBarrel:'Бочка',
+    edShapeSoftener:'Умягчитель воды', edCabinet:'Цвет корпуса', edCabBlue:'Синий', edCabBlack:'Чёрный', edCabGrey:'Серый', edCabWhite:'Белый',
     edView:'Вид', edViewFace:'Спереди', edViewIso:'В три четверти',
     edShowChart:'Показывать суточный график', edLastUpdate:'Обновлено',
     winter:'Консервация на зиму', edWinter:'Консервация на зиму',
@@ -290,6 +296,7 @@ const DTL = {
     edShowAlert:'Warnung bei niedrigem Stand',
     edLayout:'Anordnung', edLayoutRows:'Kennzahlen oben', edLayoutCols:'Tank an der Seite',
     edShape:'Form', edShapeCan:'Kanister', edShapeIbc:'IBC-Container', edShapeBarrel:'Regentonne',
+    edShapeSoftener:'Enthärtungsanlage', edCabinet:'Gehäusefarbe', edCabBlue:'Blau', edCabBlack:'Schwarz', edCabGrey:'Grau', edCabWhite:'Weiß',
     edView:'Ansicht', edViewFace:'Vorderansicht', edViewIso:'Schrägansicht',
     edShowChart:'Tagesdiagramm anzeigen', edLastUpdate:'Zuletzt akt.',
     winter:'Winterpause', edWinter:'Winterpause',
@@ -340,6 +347,7 @@ const DTL = {
     edShowAlert:'Avviso di livello basso',
     edLayout:'Disposizione', edLayoutRows:'Metriche in alto', edLayoutCols:'Serbatoio di lato',
     edShape:'Forma', edShapeCan:'Tanica', edShapeIbc:'Cisterna IBC', edShapeBarrel:'Cisterna cilindrica',
+    edShapeSoftener:'Addolcitore', edCabinet:'Colore del mobile', edCabBlue:'Blu', edCabBlack:'Nero', edCabGrey:'Grigio', edCabWhite:'Bianco',
     edView:'Vista', edViewFace:'Frontale', edViewIso:'Tre quarti',
     edShowChart:'Mostra il grafico giornaliero', edLastUpdate:'Ultimo agg.',
     winter:'Rimessaggio invernale', edWinter:'Rimessaggio invernale',
@@ -390,6 +398,7 @@ const DTL = {
     edShowAlert:'Waarschuwing bij laag niveau',
     edLayout:'Indeling', edLayoutRows:'Metrieken bovenaan', edLayoutCols:'Tank aan de zijkant',
     edShape:'Vorm', edShapeCan:'Jerrycan', edShapeIbc:'IBC-tank', edShapeBarrel:'Regenton',
+    edShapeSoftener:'Waterontharder', edCabinet:'Kastkleur', edCabBlue:'Blauw', edCabBlack:'Zwart', edCabGrey:'Grijs', edCabWhite:'Wit',
     edView:'Aanzicht', edViewFace:'Vooraanzicht', edViewIso:'Driekwart',
     edShowChart:'Dagelijkse grafiek tonen', edLastUpdate:'Laatste update',
     winter:'Winterstop', edWinter:'Winterstop',
@@ -440,6 +449,7 @@ const DTL = {
     edShowAlert:'Larm vid låg nivå',
     edLayout:'Layout', edLayoutRows:'Mätvärden överst', edLayoutCols:'Tank vid sidan',
     edShape:'Form', edShapeCan:'Dunk', edShapeIbc:'IBC-tank', edShapeBarrel:'Regntunna',
+    edShapeSoftener:'Avhärdare', edCabinet:'Höljets färg', edCabBlue:'Blå', edCabBlack:'Svart', edCabGrey:'Grå', edCabWhite:'Vit',
     edView:'Vy', edViewFace:'Framifrån', edViewIso:'Snedifrån',
     edShowChart:'Visa dagsdiagrammet', edLastUpdate:'Senast uppdaterad',
     winter:'Vinterförvaring', edWinter:'Vinterförvaring',
@@ -490,6 +500,7 @@ const DTL = {
     edShowAlert:'Varsel ved lavt nivå',
     edLayout:'Oppsett', edLayoutRows:'Måltall øverst', edLayoutCols:'Tank på siden',
     edShape:'Form', edShapeCan:'Kanne', edShapeIbc:'IBC-tank', edShapeBarrel:'Regntønne',
+    edShapeSoftener:'Vannmykner', edCabinet:'Kabinettets farge', edCabBlue:'Blå', edCabBlack:'Svart', edCabGrey:'Grå', edCabWhite:'Hvit',
     edView:'Visning', edViewFace:'Forfra', edViewIso:'Skrått',
     edShowChart:'Vis daglig graf', edLastUpdate:'Sist oppdatert',
     winter:'Vinterlagring', edWinter:'Vinterlagring',
@@ -540,6 +551,7 @@ const DTL = {
     edShowAlert:'Advarsel ved lavt niveau',
     edLayout:'Layout', edLayoutRows:'Måltal øverst', edLayoutCols:'Tank i siden',
     edShape:'Form', edShapeCan:'Dunk', edShapeIbc:'IBC-tank', edShapeBarrel:'Regntønde',
+    edShapeSoftener:'Blødgøringsanlæg', edCabinet:'Kabinettets farve', edCabBlue:'Blå', edCabBlack:'Sort', edCabGrey:'Grå', edCabWhite:'Hvid',
     edView:'Visning', edViewFace:'Forfra', edViewIso:'Skråt',
     edShowChart:'Vis dagligt diagram', edLastUpdate:'Sidst opdateret',
     winter:'Vinteropbevaring', edWinter:'Vinteropbevaring',
@@ -590,6 +602,7 @@ const DTL = {
     edShowAlert:'Alert niskiego poziomu',
     edLayout:'Układ', edLayoutRows:'Metryki u góry', edLayoutCols:'Zbiornik z boku',
     edShape:'Kształt', edShapeCan:'Kanister', edShapeIbc:'Zbiornik IBC', edShapeBarrel:'Beczka',
+    edShapeSoftener:'Zmiękczacz wody', edCabinet:'Kolor obudowy', edCabBlue:'Niebieski', edCabBlack:'Czarny', edCabGrey:'Szary', edCabWhite:'Biały',
     edView:'Widok', edViewFace:'Z przodu', edViewIso:'Ukośny',
     edShowChart:'Pokaż wykres dzienny', edLastUpdate:'Ostatnia akt.',
     winter:'Zimowanie', edWinter:'Zimowanie',
@@ -644,7 +657,9 @@ const DTC_MAX_TILES = 6;
    what spreads the fall over the whole tank instead of capping it. `caps` is
    the snow on a face a three quarter angle shows, `rims` the lip hanging over
    the front of a round opening, and `arcs` the snow caught on a curved rib.
-   `under` holds the snow that goes beneath the parts standing on a top. */
+   `under` holds the snow that goes beneath the parts standing on a top.
+   The softener has no entry: it stands indoors, so a wintered softener
+   keeps a bare drawing. */
 const DTC_SNOW = {
   'can/face': { w: 86, h: 140,
     drifts: [[58, 75, 6.5, 2.6], [17, 49, 12, 3.4], [20.5, 45.5, 30, 3],
@@ -679,7 +694,16 @@ const DTC_SNOW = {
    buries them. The drawings mark that spot; everything else goes on last. */
 const DTC_UNDER = '<!--dtc-under-->';
 
-// Line colour of the six drawings: follows the theme, light or dark.
+/* Softener cabinet: the blue of a BWT my PERLA by default, or one of the
+   usual casings. front, hood, top of the box seen from three quarters, side. */
+const DTC_CABINET = {
+  blue:  { front: '#2f338a', hood: '#363b9c', top: '#3d43a8', side: '#1a1b26' },
+  black: { front: '#26282e', hood: '#2e3138', top: '#363942', side: '#141519' },
+  grey:  { front: '#8b919a', hood: '#969ca5', top: '#a4aab2', side: '#5c6168' },
+  white: { front: '#e4e6e9', hood: '#eceef0', top: '#f4f5f6', side: '#b6bac0' },
+};
+
+// Line colour of the eight drawings: follows the theme, light or dark.
 const DTC_OL   = 'var(--secondary-text-color,#8a8a8a)';
 const DTC_EASE = 'transition:transform .9s cubic-bezier(.4,0,.2,1)';
 const _f2 = v => (+v).toFixed(2);
@@ -810,6 +834,7 @@ class DosingTankCardEditor extends HTMLElement {
     set('cmode',  c.color_mode               ?? 'fixed');
     set('shape',  c.tank_shape               ?? 'can');
     set('tview',  c.tank_view                ?? 'face');
+    set('cab',    c.cabinet_color            ?? 'blue');
     set('layout', c.layout                   ?? 'rows');
     set('lastup', c.last_update              ?? 'off');
     set('window', c.window                   ?? 7);
@@ -841,6 +866,11 @@ class DosingTankCardEditor extends HTMLElement {
       if (input) input.disabled = noWinter;
       this.shadowRoot.getElementById(`${id}-row`)?.classList.toggle('off', noWinter);
     }
+    // The casing colour belongs to the softener drawing alone.
+    const noCab = c.tank_shape !== 'softener';
+    const cabInput = this.shadowRoot.getElementById('cab');
+    if (cabInput) cabInput.disabled = noCab;
+    this.shadowRoot.getElementById('cab-field')?.classList.toggle('off', noCab);
     // Inverting means something only once there is a switch to invert.
     const noSwitch = !c.winter_entity;
     const invInput = this.shadowRoot.getElementById('wntinv');
@@ -1104,9 +1134,16 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
   <div class="field">
     <label>${T.edShape}</label>
     <select id="shape">
-      <option value="can"${c.tank_shape==='ibc'||c.tank_shape==='barrel'?'':' selected'}>${T.edShapeCan}</option>
+      <option value="can"${['ibc','barrel','softener'].includes(c.tank_shape)?'':' selected'}>${T.edShapeCan}</option>
       <option value="ibc"${c.tank_shape==='ibc'?' selected':''}>${T.edShapeIbc}</option>
       <option value="barrel"${c.tank_shape==='barrel'?' selected':''}>${T.edShapeBarrel}</option>
+      <option value="softener"${c.tank_shape==='softener'?' selected':''}>${T.edShapeSoftener}</option>
+    </select>
+  </div>
+  <div class="field${c.tank_shape==='softener'?'':' off'}" id="cab-field">
+    <label>${T.edCabinet}</label>
+    <select id="cab"${c.tank_shape==='softener'?'':' disabled'}>
+      ${['blue','black','grey','white'].map(k => `<option value="${k}"${(c.cabinet_color??'blue')===k?' selected':''}>${T['edCab'+k[0].toUpperCase()+k.slice(1)]}</option>`).join('')}
     </select>
   </div>
   <div class="field">
@@ -1262,6 +1299,7 @@ input:focus,select:focus{border-color:var(--primary-color,#03a9f4)}
     bind('cmode',  'color_mode',              v => v);
     bind('shape',  'tank_shape',              v => v);
     bind('tview',  'tank_view',               v => v);
+    bind('cab',    'cabinet_color',           v => v === 'blue' ? undefined : v);
     bind('layout', 'layout',                  v => v);
     bind('lastup', 'last_update',             v => v);
     bind('window', 'window',                  Number);
@@ -1445,9 +1483,12 @@ class DosingTankCard extends HTMLElement {
       layout:                  config.layout === 'columns' ? 'columns' : 'rows',
       // Shape of the drawing, and whether it is seen from the front or from a
       // three quarter angle. Both default to what the card has always drawn.
-      tank_shape:              ['ibc','barrel'].includes(config.tank_shape)
+      tank_shape:              ['ibc','barrel','softener'].includes(config.tank_shape)
                                  ? config.tank_shape : 'can',
       tank_view:               config.tank_view === 'iso' ? 'iso' : 'face',
+      // Casing of the softener drawing; the other shapes ignore it.
+      cabinet_color:           ['black','grey','white'].includes(config.cabinet_color)
+                                 ? config.cabinet_color : 'blue',
       // Direct mode only, and always seven bars: 7 days of one, 4 weeks of
       // four, 12 weeks of twelve. Each window is a multiple of the one before
       // it. A softener regenerating twice a month says nothing over 7 days.
@@ -2169,7 +2210,7 @@ class DosingTankCard extends HTMLElement {
 
   // ── SVG tank ─────────────────────────────────────────────────────────────
 
-  /* Six drawings: three shapes, each from the front or from a three quarter
+  /* Eight drawings: four shapes, each from the front or from a three quarter
      angle. The front views are the original geometry, so a card that does not
      set the options keeps exactly the drawing it had. */
   /* A bank of snow lying on a horizontal edge. Its crest is uneven and its
@@ -2259,6 +2300,7 @@ class DosingTankCard extends HTMLElement {
     const a = [pct, base, light, label, fill];
     const svg = shape === 'ibc'    ? (iso ? this._svgIbcIso(...a)    : this._svgIbcFace(...a))
               : shape === 'barrel' ? (iso ? this._svgBarrelIso(...a) : this._svgBarrelFace(...a))
+              : shape === 'softener' ? (iso ? this._svgSoftenerIso(...a) : this._svgSoftenerFace(...a))
               :                      (iso ? this._svgCanIso(...a)    : this._svgCanFace(...a));
     /* Winter (#3): the snow goes on last, over the finished drawing, so the
        drifts live in one place rather than threaded through each shape. The
@@ -2296,7 +2338,7 @@ class DosingTankCard extends HTMLElement {
   stroke-linejoin="round">${label}</text>`;
   }
 
-  /* Shared paint for the six drawings. Gradients and flat greys only, no SVG
+  /* Shared paint for the eight drawings. Gradients and flat greys only, no SVG
      filter: a wall tablet repaints these on every level change. */
   _tankDefs(u, base, light) {
     return `${this._svgGrad(u, base, light)}
@@ -2774,6 +2816,155 @@ ${this._plastic(.6, `<path d="M${CX - 15},${TY} v-3.4 a15,5.6 0 0 1 30,0 v3.4 a1
 ${this._brassTap(u, CX + 9, BY + 2)}
 ${this._tankScale(CX - RX + 4, TY, BH, 9)}
 ${this._svgPct(CX, TY + BH / 2 + 6, label ?? `${pct.toFixed(0)}%`, 18)}
+</svg>`;
+  }
+
+  /* Softener (HACF, Freeman59): a closed cabinet in the manner of a BWT my
+     PERLA, the resin bottle beside the salt bin rather than in it. Nothing
+     shows through the casing, so the front carries a window as tall as the
+     bin and nearly as wide as the cabinet: the salt is read off directly,
+     where it really stands. The tablets take the configured colour washed
+     with white, so they read as salt and still follow liquid_color. */
+  _saltDefs(u, X, Y, base, light) {
+    const tab = (x, y) => `<rect x="${x}" y="${y}" width="3.6" height="2" rx="1" fill="${light}"/>
+    <rect x="${x}" y="${y}" width="3.6" height="2" rx="1" fill="#fff" fill-opacity=".55"/>
+    <rect x="${x + .6}" y="${y + .3}" width="2.4" height=".55" rx=".27" fill="#fff" fill-opacity=".7"/>
+    <rect x="${x}" y="${y}" width="3.6" height="2" rx="1" fill="none" stroke="#000" stroke-opacity=".16" stroke-width=".3"/>`;
+    // Staggered and a little askew, so the bin reads as loose tablets rather
+    // than as a brick wall.
+    const rot = (x, y, a) => `<g transform="rotate(${a} ${x + 1.8} ${y + 1})">${tab(x, y)}</g>`;
+    return `<pattern id="dtc-sp-${u}" patternUnits="userSpaceOnUse" x="${X}" y="${Y}" width="7.4" height="5.6">
+    <rect width="7.4" height="5.6" fill="${base}"/><rect width="7.4" height="5.6" fill="#000" fill-opacity=".34"/>
+    ${tab(.1, .3)}${rot(3.8, .55, -9)}${tab(1.9, 3.05)}${rot(5.7, 3.35, 11)}${rot(-1.7, 3.35, 11)}</pattern>
+  <linearGradient id="dtc-bn-${u}" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#05070b" stop-opacity=".88"/>
+    <stop offset="100%" stop-color="#1b2029" stop-opacity=".82"/></linearGradient>
+  <linearGradient id="dtc-cb-${u}" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%" stop-color="#000" stop-opacity=".22"/>
+    <stop offset="10%" stop-color="#fff" stop-opacity=".16"/>
+    <stop offset="22%" stop-color="#fff" stop-opacity="0"/>
+    <stop offset="85%" stop-color="#000" stop-opacity="0"/>
+    <stop offset="100%" stop-color="#000" stop-opacity=".28"/></linearGradient>`;
+  }
+
+  /* The bin seen through the window: dark back wall, the brine well standing
+     in it, and the salt as a column twice the bin height that slides up like
+     the liquid of the other drawings, topped by a heap of loose tablets
+     instead of a flat surface. */
+  _saltBin(u, X, Y, W, H, s, base, light) {
+    const wx = X + W * .7, ww = 6.5;
+    const well = `<rect x="${_f2(wx)}" y="${Y + 8}" width="${ww}" height="${H}" fill="#cfd6dc" fill-opacity=".22"/>
+<rect x="${_f2(wx)}" y="${Y + 8}" width="${ww}" height="${H}" fill="none" stroke="#fff" stroke-opacity=".28" stroke-width=".7"/>
+<rect x="${_f2(wx - 1)}" y="${Y + 6.5}" width="${ww + 2}" height="2.6" rx="1" fill="#9aa3ab" fill-opacity=".55"/>`;
+    let heap = '';
+    const n = Math.max(6, Math.round(W / 3.1)), step = W / n;
+    for (let i = 0; i <= n; i++) {
+      const cx = X + i * step + (i % 2 ? step * .3 : -step * .15);
+      const cy = Y - (i % 3 === 1 ? .9 : .3);
+      heap += `<rect x="${_f2(cx - 1.8)}" y="${_f2(cy - 1)}" width="3.6" height="2" rx="1" fill="${light}"/>
+<rect x="${_f2(cx - 1.8)}" y="${_f2(cy - 1)}" width="3.6" height="2" rx="1" fill="#fff" fill-opacity=".6" stroke="#000" stroke-opacity=".16" stroke-width=".3"/>`;
+    }
+    const salt = s <= 0 ? '' : `<g style="transform:translateY(${((1 - s) * H).toFixed(2)}px);${DTC_EASE}">
+  <rect x="${X}" y="${Y}" width="${W}" height="${2 * H}" fill="url(#dtc-sp-${u})"/>
+  <rect x="${X}" y="${Y}" width="${W}" height="${2 * H}" fill="url(#dtc-dp-${u})"/>
+  ${heap}</g>`;
+    return `<g clip-path="url(#dtc-cp-${u})">
+<rect x="${X}" y="${Y}" width="${W}" height="${H}" fill="url(#dtc-bn-${u})"/>
+${well}${salt}
+<path d="M${X},${Y + H * .62} L${X + W * .55},${Y} H${X + W * .78} L${X},${Y + H * .98} Z" fill="#fff" fill-opacity=".07"/>
+<rect x="${X}" y="${Y}" width="${W}" height="2.4" fill="#000" fill-opacity=".35"/></g>
+<rect x="${X}" y="${Y}" width="${W}" height="${H}" rx="4" fill="none" stroke="#0b0c18" stroke-opacity=".75" stroke-width="2.4"/>
+<rect x="${X - 1.2}" y="${Y - 1.2}" width="${W + 2.4}" height="${H + 2.4}" rx="5" fill="none" stroke="#fff" stroke-opacity=".16" stroke-width=".8"/>`;
+  }
+
+  // The control head on top of the cabinet: dark console, colour screen.
+  _softenerHead(x, y, w, h) {
+    return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3.6" fill="#17181e"/>
+<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3.6" fill="none" stroke="#e7a3b6" stroke-opacity=".75" stroke-width=".9"/>
+<rect x="${x + w * .22}" y="${y + 2.4}" width="${w * .56}" height="${h * .42}" rx="1.2" fill="#0e3440"/>
+<rect x="${x + w * .26}" y="${y + 3.2}" width="${w * .2}" height="1.2" rx=".6" fill="#7fe3ff" fill-opacity=".75"/>
+${[0, 1, 2, 3].map(i => `<circle cx="${_f2(x + w * (.32 + i * .12))}" cy="${_f2(y + h * .78)}" r=".75" fill="#c9ced6" fill-opacity=".7"/>`).join('')}`;
+  }
+
+  // ── Softener, front ────────────────────────────────────────────────────────
+  _svgSoftenerFace(pct, base, light, label, fill) {
+    const W = 86, H = 140, BX = 21, BY = 36, BW = 44, BH = 92;          // body
+    const WX = 26, WY = 47, WW = 34, WH = 72;                            // window
+    const s = Math.max(0, Math.min(1, pct / 100)), u = this._uid;
+    const hood = `M19,38 V30 Q19,22 27,22 H59 Q67,22 67,30 V38 Z`;
+    const cab  = DTC_CABINET[this._config.cabinet_color] ?? DTC_CABINET.blue;
+    return `<svg ${this._svgSize(fill, W, H)} viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+<defs>${this._tankDefs(u, base, light)}${this._saltDefs(u, WX, WY, base, light)}
+  <clipPath id="dtc-cp-${u}"><rect x="${WX}" y="${WY}" width="${WW}" height="${WH}" rx="4"/></clipPath></defs>
+${this._tankShadow(u, 43, 130, 36, 4.5)}
+<rect x="24" y="123" width="38" height="6.5" rx="2" fill="#15161f"/>
+<rect x="${BX}" y="${BY}" width="${BW}" height="${BH}" rx="6" fill="${cab.front}"/>
+<rect x="${BX}" y="${BY}" width="${BW}" height="${BH}" rx="6" fill="url(#dtc-cb-${u})"/>
+${this._softenerHead(29, 11, 28, 12)}
+<path d="${hood}" fill="${cab.hood}"/>
+<path d="${hood}" fill="url(#dtc-cb-${u})"/>
+<path d="M23,25 Q25,23.6 29,23.6 H57" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="1.2" stroke-linecap="round"/>
+<path d="M20,38.2 H66" stroke="#000" stroke-opacity=".45" stroke-width="1.2"/>
+${this._saltBin(u, WX, WY, WW, WH, s, base, light)}
+${[0, 1, 2].map(i => `<circle cx="${55 + i * 2.6}" cy="121.6" r=".6" fill="#000" fill-opacity=".35"/>`).join('')}
+<rect x="${BX}" y="${BY}" width="${BW}" height="${BH}" rx="6" fill="none" stroke="${DTC_OL}" stroke-opacity=".6" stroke-width="1.3"/>
+<path d="${hood}" fill="none" stroke="${DTC_OL}" stroke-opacity=".6" stroke-width="1.3" stroke-linejoin="round"/>
+${this._tankScale(WX + 3, WY, WH, 7)}
+${this._svgPct(WX + WW / 2, WY + WH / 2 + 4.5, label ?? `${pct.toFixed(0)}%`, 12.5)}
+</svg>`;
+  }
+
+  // ── Softener, three quarters ───────────────────────────────────────────────
+  _svgSoftenerIso(pct, base, light, label, fill) {
+    const W = 100, H = 140, FX = 14, FY = 34, FW = 42, FH = 94, DX = 22, DY = -12;
+    const WX = FX + 5, WY = FY + 12, WW = FW - 10, WH = FH - 22;
+    const s = Math.max(0, Math.min(1, pct / 100)), u = this._uid;
+    const cab = DTC_CABINET[this._config.cabinet_color] ?? DTC_CABINET.blue;
+    const X2 = FX + FW, BBY = FY + FH;
+    // A point on the top of the cabinet, x across the front, t into the depth.
+    const P = (x, t, up = 0) => [FX + x + DX * t, FY + DY * t - up];
+    const pp = pts => pts.map(p => p.map(_f2).join(',')).join(' ');
+    const front = this._roundPoly([[FX, FY], [X2, FY], [X2, BBY], [FX, BBY]], 5);
+    const side  = this._roundPoly([[X2, FY], [X2 + DX, FY + DY], [X2 + DX, BBY + DY], [X2, BBY]], 3);
+    const top   = this._roundPoly([P(0, 0), P(FW, 0), P(FW, 1), P(0, 1)], 4);
+    // Console on the back half of the top, as on the real cabinet.
+    const hx0 = 6, hx1 = 36, t0 = .48, t1 = .95, hh = 7;
+    const hFront = [P(hx0, t0), P(hx1, t0), P(hx1, t0, hh), P(hx0, t0, hh)];
+    const hSide  = [P(hx1, t0), P(hx1, t1), P(hx1, t1, hh), P(hx1, t0, hh)];
+    const hTop   = [P(hx0, t0, hh), P(hx1, t0, hh), P(hx1, t1, hh), P(hx0, t1, hh)];
+    const scr    = [P(hx0 + 6, t0 + .08, hh), P(hx1 - 6, t0 + .08, hh), P(hx1 - 6, t1 - .12, hh), P(hx0 + 6, t1 - .12, hh)];
+    // The grip moulded into the side, just under the top.
+    const sp = (t, y) => [X2 + DX * t, y + DY * t];
+    const grip = this._roundPoly([sp(.18, FY + 5), sp(.72, FY + 5), sp(.72, FY + 17), sp(.18, FY + 17)], 3);
+    return `<svg ${this._svgSize(fill, W, H)} viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+<defs>${this._tankDefs(u, base, light)}${this._saltDefs(u, WX, WY, base, light)}
+  <clipPath id="dtc-cp-${u}"><rect x="${WX}" y="${WY}" width="${WW}" height="${WH}" rx="4"/></clipPath></defs>
+${this._tankShadow(u, FX + FW / 2 + 11, BBY + 1, 46, 6)}
+<path d="${side}" fill="${cab.side}"/>
+<path d="${grip}" fill="#08090e"/>
+<path d="${grip}" fill="none" stroke="#fff" stroke-opacity=".12" stroke-width=".7"/>
+<path d="${front}" fill="${cab.front}"/>
+<path d="${front}" fill="url(#dtc-cb-${u})"/>
+<path d="${top}" fill="${cab.top}"/>
+<path d="M${FX + 4},${FY + .9} H${X2 - 3}" stroke="#fff" stroke-opacity=".32" stroke-width="1.2" stroke-linecap="round"/>
+<path d="M${FX + 1},${FY + 13} H${X2 - 1}" stroke="#000" stroke-opacity=".35" stroke-width="1"/>
+<rect x="${FX + 3}" y="${BBY - 5}" width="${FW - 6}" height="5" fill="#15161f"/>
+${this._saltBin(u, WX, WY, WW, WH, s, base, light)}
+${[0, 1, 2].map(i => `<circle cx="${X2 - 10 + i * 2.6}" cy="${BBY - 8}" r=".6" fill="#000" fill-opacity=".35"/>`).join('')}
+<path d="${front}" fill="none" stroke="${DTC_OL}" stroke-opacity=".6" stroke-width="1.3" stroke-linejoin="round"/>
+<path d="${side}" fill="none" stroke="${DTC_OL}" stroke-opacity=".5" stroke-width="1.1" stroke-linejoin="round"/>
+<path d="${top}" fill="none" stroke="${DTC_OL}" stroke-opacity=".45" stroke-width="1" stroke-linejoin="round"/>
+${/* The console goes on after the outlines: drawn before, the back edge of
+      the top ran across it and the console read as glass. */''}
+<polygon points="${pp(hSide)}" fill="#101116"/>
+<polygon points="${pp(hFront)}" fill="#1f2027"/>
+<polygon points="${pp(hTop)}" fill="#33353f"/>
+<polygon points="${pp(scr)}" fill="#0e3440"/>
+<polygon points="${pp(scr.slice(0, 2).concat([P(hx1 - 6, t0 + .2, hh), P(hx0 + 6, t0 + .2, hh)]))}" fill="#7fe3ff" fill-opacity=".18"/>
+<polygon points="${pp(hTop)}" fill="none" stroke="#e7a3b6" stroke-opacity=".75" stroke-width=".8" stroke-linejoin="round"/>
+<path d="M${pp([P(hx0, t0, hh), P(hx0, t0)])}" stroke="#000" stroke-opacity=".5" stroke-width=".6"/>
+${this._tankScale(WX + 3, WY, WH, 7)}
+${this._svgPct(WX + WW / 2, WY + WH / 2 + 4.5, label ?? `${pct.toFixed(0)}%`, 12)}
 </svg>`;
   }
 

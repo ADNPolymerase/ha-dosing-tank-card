@@ -25,7 +25,7 @@
 
   Query params:
     lang=en|fr|…        card language
-    mode=direct|pump|all|winter|before|snowfall
+    mode=direct|pump|all|winter|before|snowfall|softener
     theme=light|dark    Home Assistant's two default palettes
     colors=fixed|level  color_mode on every card
     adjust=1            open the adjustment panel (pump mode)
@@ -171,6 +171,23 @@ if (mode === 'snowfall') {
     add(lang === 'fr' ? 'Sans' : 'Without',
       { ...base, tank_shape: shape, winter_snowfall: false }, silent, history([]));
   }
+}
+
+/* The softener drawing (HACF): the four casings, front and three quarters,
+   at four levels. */
+if (mode === 'softener') {
+  for (const [cab, view, level] of [['blue', 'face', 72], ['black', 'iso', 48],
+                                    ['grey', 'face', 30], ['white', 'iso', 61]])
+    add(`${cab} / ${view}`,
+      { level_entity: 'sensor.salt_level',
+        name: lang === 'fr' ? 'Sel adoucisseur' : 'Softener salt',
+        capacity: 42, capacity_unit: 'kg', liquid_color: '#94a3b8',
+        alert_threshold_percent: 15, tank_shape: 'softener', tank_view: view,
+        cabinet_color: cab, show_settings: false },
+      { 'sensor.salt_level': { state: String(level),
+          attributes: { unit_of_measurement: '%' },
+          last_changed: new Date(now - 25 * 60000).toISOString() } },
+      history([58, 52, 46, 92, 78, 62, 48, level]));
 }
 
 if (mode === 'pump' || mode === 'all') {

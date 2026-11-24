@@ -116,8 +116,9 @@ liquid_color: "#3b82f6"
 | `warn_threshold_percent` | `number` | | `50` | Amber below this, red below `alert_threshold_percent`. Only used by `color_mode: level` |
 | `alert_threshold_percent` | `number` | | `20` | Alert threshold (%) |
 | `show_alert` | `boolean` | | `true` | `false` switches the low level alert off entirely: no banner, and nothing turns red, not the liquid and not the quantity left. For a tank that empties and refills on its own, like rainwater, where there is nothing to refill. There is a tick box for it in the visual editor |
-| `tank_shape` | `string` | | `"can"` | The drawing: `can` is the jerrycan the card has always shown, `ibc` a caged IBC tank on its pallet, `barrel` a cylindrical water butt. A selector sits in the visual editor |
+| `tank_shape` | `string` | | `"can"` | The drawing: `can` is the jerrycan the card has always shown, `ibc` a caged IBC tank on its pallet, `barrel` a cylindrical water butt, `softener` a water softener cabinet whose salt shows through a window. A selector sits in the visual editor |
 | `tank_view` | `string` | | `"face"` | `"iso"` draws the tank from a three quarter angle instead of head on, with the surface of the liquid visible in perspective. The default keeps the flat drawing, so an existing card is untouched |
+| `cabinet_color` | `string` | | `"blue"` | Casing of the `softener` drawing: `blue`, `black`, `grey` or `white`. The other shapes ignore it. A selector sits in the visual editor |
 | `winter` | `boolean` | | `false` | Winter storage: the card is kept to its drawing, under the snow. The alert, the warnings, the metric tiles, the chart, the Settings block, the last-update line and the adjustment panel all go away. There is a tick box for it in the visual editor |
 | `winter_entity` | `string` | | | The same, driven by an entity instead of by hand: `on` puts the tank away, and so does a state holding a word for winter in any of the card's languages (`Winter storage`, `Hivernage`, `Zimowanie`…). Works in both modes |
 | `winter_invert` | `boolean` | | `false` | Turns the switch the other way round: the tank is put away when it reads `off`. For a switch that stays on all season and is turned off for the winter, an irrigation or a filtration. `unavailable` and `unknown` never put the tank away, and a word for winter still does |
@@ -173,6 +174,15 @@ level_empty: 30         # cm, tank empty
 The three tiles change meaning in this mode. Two are fixed: consumption over the last 7 days, and **autonomy**, how long the tank lasts at the recent average rate. The first one adapts: on a bare `%` sensor it shows the average daily consumption, since the level itself is already printed on the tank; otherwise it shows what is left, which on an inverted probe is the liquid height and not the raw distance reading. Setting `capacity` gives that figure a meaning of its own, so it goes back to showing what remains.
 
 That average deliberately ignores days when the level went **up**: a refill hides whatever was consumed alongside it, and counting it as a zero-consumption day would inflate the autonomy of a tank that is in fact running out. Refill days appear as a green `+` in the chart. Days where the level genuinely did not move are kept, because a softener that did not regenerate is real information. Autonomy shows `—` until there are at least two complete days of decline.
+
+**A softener has its own drawing.** `tank_shape: softener` draws a closed cabinet with a window as tall as the salt bin, so the salt shows where it really stands. The casing is blue by default, `cabinet_color` takes `black`, `grey` or `white`.
+
+![Softener](https://raw.githubusercontent.com/ADNPolymerase/ha-dosing-tank-card/main/docs/softener.png)
+
+```yaml
+tank_shape: softener
+cabinet_color: grey
+```
 
 ---
 

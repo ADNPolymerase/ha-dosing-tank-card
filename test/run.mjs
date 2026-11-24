@@ -130,7 +130,7 @@ function makeDirect({ series = null, value = null, unit = '%',
                       capacity, capacity_unit, color_mode, warn, show_settings, layout,
                       show_chart, last_update, lastChangedH, lastReportedMin,
                       window, seriesStepDays, order, extra, names, format,
-                      shape, view, showAlert,
+                      shape, view, showAlert, cabinet,
                       winter, winterEntity, winterVolume, winterSnowfall, winterInvert,
                       entity = 'sensor.salt', present = true } = {}) {
   const cur    = value ?? (series ? series.at(-1) : null);
@@ -154,7 +154,7 @@ function makeDirect({ series = null, value = null, unit = '%',
                 capacity, capacity_unit, color_mode, show_settings, layout,
                 show_chart, last_update, window, warn_threshold_percent: warn,
                 metrics_order: order, tank_shape: shape, tank_view: view,
-                show_alert: showAlert, winter, winter_entity: winterEntity,
+                cabinet_color: cabinet, show_alert: showAlert, winter, winter_entity: winterEntity,
                 winter_volume: winterVolume, winter_snowfall: winterSnowfall,
                 winter_invert: winterInvert });
   Object.assign(states, extra || {});
@@ -1414,6 +1414,118 @@ check('éditeur : la case des flocons se décoche',
   box._on({ target: { checked: true } });
   check('éditeur : cocher l\'inversion écrit true',
     e.events.at(-1)?.detail?.config?.winter_invert, true);
+}
+
+// ── Adoucisseur (HACF, Freeman59) ────────────────────────────────────────────
+// Un meuble fermé façon BWT my PERLA : le sel ne se voit que par la fenêtre
+// de la façade, qui doit couvrir tout le bac pour montrer le niveau réel.
+{
+  const sd = o => makeDirect({ value: 55, full: 100, empty: 0, shape: 'softener', ...o });
+  const salt = h => (h.match(/fill="url\(#dtc-sp-/g) || []).length;
+  const box = h => [...h.matchAll(/viewBox="0 0 \d+ \d+"/g)]
+    .map(m => m[0]).filter(v => v !== 'viewBox="0 0 24 24"').pop();
+
+  check('adoucisseur de face : son gabarit', box(sd({}).html), 'viewBox="0 0 86 140"');
+  check('adoucisseur en 3/4 : son gabarit', box(sd({ view: 'iso' }).html), 'viewBox="0 0 100 140"');
+  check('adoucisseur de face : du sel en pastilles', salt(sd({}).html) > 0, true);
+  check('adoucisseur en 3/4 : aussi', salt(sd({ view: 'iso' }).html) > 0, true);
+  check('bac vide : pas un grain', salt(sd({ value: 0 }).html), 0);
+  check('les autres formes n\'ont pas de sel',
+    ['can', 'ibc', 'barrel'].some(shape => salt(sd({ shape }).html) > 0), false);
+  check('la forme est gardée dans la configuration', sd({}).card._config.tank_shape, 'softener');
+
+  // Le sel monte et descend comme le liquide : une colonne qui glisse sous la
+  // fenêtre, et la fenêtre fait toute la hauteur du bac.
+  for (const view of ['face', 'iso']) {
+    const h = sd({ view }).html;
+    const win = h.match(/<clipPath id="dtc-cp-[a-z0-9]+"><rect x="([\d.]+)" y="([\d.]+)" width="([\d.]+)" height="([\d.]+)"/);
+    check(`${view} : la fenêtre est trouvée`, !!win, true);
+    const [ , , , ww, wh] = win.map(Number);
+    contains(`${view} : à 55 % le sel est à 45 % du haut de la fenêtre`,
+      h, `translateY(${(wh * .45).toFixed(2)}px)`);
+    // Le pourcentage tient dans la fenêtre, « 100% » compris : à la taille
+    // des autres dessins il débordait sur le meuble.
+    const size = Number(sd({ view, value: 100 }).html
+      .match(/<text [^>]*font-size="([\d.]+)"[^>]*>100%<\/text>/)[1]);
+    check(`${view} : « 100% » tient dans la fenêtre`, size * 4 * .62 < ww, true);
+    // Assez large pour lire le niveau : les trois quarts de la façade au moins.
+    check(`${view} : la fenêtre couvre le gros de la façade`, ww >= 30, true);
+    check(`${view} : sept graduations`, (h.match(/stroke-opacity="\.78"/g) || []).length, 7);
+    const ids = [...h.matchAll(/id="(dtc-[a-z]+)-([a-z0-9]+)"/g)].map(m => m[2]);
+    check(`${view} : tous les identifiants portent le suffixe de la carte`,
+      ids.length > 3 && new Set(ids).size === 1, true);
+  }
+
+  // Le meuble : bleu par défaut, ou une des teintes courantes.
+  contains('meuble bleu par défaut', sd({}).html, 'fill="#2f338a"');
+  check('la couleur par défaut est écrite bleue', sd({}).card._config.cabinet_color, 'blue');
+  for (const [k, hex] of [['black', '#26282e'], ['grey', '#8b919a'], ['white', '#e4e6e9']]) {
+    contains(`meuble ${k} de face`, sd({ cabinet: k }).html, `fill="${hex}"`);
+    contains(`meuble ${k} en 3/4`, sd({ cabinet: k, view: 'iso' }).html, `fill="${hex}"`);
+    check(`meuble ${k} : plus de bleu`, sd({ cabinet: k }).html.includes('#2f338a'), false);
+  }
+  check('une teinte inconnue retombe sur le bleu', sd({ cabinet: 'rose' }).card._config.cabinet_color, 'blue');
+  check('les autres formes ignorent la teinte',
+    makeDirect({ value: 55, full: 100, empty: 0, cabinet: 'black' }).html.includes('#26282e'), false);
+
+  // En 3/4 la console est posée après les contours : avant, le bord arrière
+  // du dessus la traversait et elle avait l'air de verre.
+  {
+    const h = sd({ view: 'iso' }).html;
+    check('3/4 : la console vient après le contour du dessus',
+      h.indexOf('fill="#33353f"') > h.lastIndexOf('stroke-opacity=".45" stroke-width="1" stroke-linejoin="round"'), true);
+  }
+
+  // Un adoucisseur est à l'intérieur : hiverné, pas de neige dessus, mais le
+  // dessin reste.
+  for (const view of ['face', 'iso']) {
+    const h = sd({ view, winter: true }).html;
+    check(`hiver ${view} : pas de neige posée`, h.includes('class="dtc-snow"'), false);
+    check(`hiver ${view} : pas de flocons`, h.includes('class="dtc-fl"'), false);
+    check(`hiver ${view} : le repère ne traîne pas`, h.includes('dtc-under'), false);
+    contains(`hiver ${view} : le meuble est toujours là`, h, 'fill="#2f338a"');
+  }
+
+  // L'éditeur : la forme, et la teinte grisée tant que ce n'est pas un
+  // adoucisseur.
+  const edS = o => { const e = new Editor(); e.setConfig({ level_entity: 'sensor.salt', ...o }); return markup(e); };
+  contains('éditeur : l\'adoucisseur est proposé', edS({}), '<option value="softener"');
+  contains('éditeur : l\'adoucisseur configuré est coché',
+    edS({ tank_shape: 'softener' }), '<option value="softener" selected>');
+  check('éditeur : le bidon n\'est plus coché avec un adoucisseur',
+    edS({ tank_shape: 'softener' }).includes('<option value="can" selected>'), false);
+  check('éditeur : teinte grisée sur un bidon',
+    edS({}).includes('class="field off" id="cab-field"') && /id="cab" disabled/.test(edS({})), true);
+  check('éditeur : teinte active sur un adoucisseur',
+    /id="cab"[^>]*disabled/.test(edS({ tank_shape: 'softener' })), false);
+  contains('éditeur : la teinte configurée est cochée',
+    edS({ tank_shape: 'softener', cabinet_color: 'grey' }), '<option value="grey" selected>');
+
+  // Après coup, sans reconstruire le formulaire.
+  const els = {};
+  const stub = id => (els[id] ??= { disabled: false, checked: false, value: '', style: {},
+    querySelector: () => null,
+    classList: { on: new Set(), toggle(c, v) { v ? this.on.add(c) : this.on.delete(c); } } });
+  const live = new Editor();
+  live.setConfig({ level_entity: 'sensor.salt' });
+  live.shadowRoot.getElementById = stub;
+  live.setConfig({ level_entity: 'sensor.salt', tank_shape: 'softener', cabinet_color: 'black' });
+  check('éditeur : adoucisseur choisi, la teinte se réactive',
+    els.cab.disabled || els['cab-field'].classList.on.has('off'), false);
+  check('éditeur : et suit la configuration', els.cab.value, 'black');
+  live.setConfig({ level_entity: 'sensor.salt', tank_shape: 'ibc' });
+  check('éditeur : autre forme, la teinte se regrise',
+    els.cab.disabled && els['cab-field'].classList.on.has('off'), true);
+
+  // Le choix s'écrit : bleu, le défaut, n'écrit rien.
+  const sel = { value: 'blue', _on: null, addEventListener: (_t, fn) => { sel._on = fn; } };
+  const e = new Editor();
+  e.shadowRoot.getElementById = id => (id === 'cab' ? sel : null);
+  e.setConfig({ level_entity: 'sensor.salt', tank_shape: 'softener' });
+  sel._on({ target: { value: 'grey' } });
+  check('éditeur : choisir gris écrit grey', e.events.at(-1)?.detail?.config?.cabinet_color, 'grey');
+  sel._on({ target: { value: 'blue' } });
+  check('éditeur : revenir au bleu n\'écrit rien', e.events.at(-1)?.detail?.config?.cabinet_color, undefined);
 }
 
 report();
